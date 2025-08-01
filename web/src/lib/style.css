@@ -1,7 +1,33 @@
 @import "tailwindcss";
+body {
+  color: white;
+}
 button {
-  @apply px-4 py-2 bg-blue-600 text-white rounded-lg 
+  @apply px-4 py-2 bg-blue-600 text-white rounded
          hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 
          disabled:opacity-50 disabled:cursor-not-allowed 
          transition-colors duration-200 cursor-pointer;
+}
+
+.bg-primary {
+  background-color: #1e1e1e;
+}
+
+.table-view {
+  @apply  text-left font-mono;
+  font-size: 14px;
+  thead {
+    tr {
+      th {
+        @apply px-2 py-1 border border-gray-800;
+      }
+    }
+  }
+  tbody {
+    tr {
+      td {
+        @apply px-2 py-1 border border-gray-800;
+      }
+    }
+  }
 }
