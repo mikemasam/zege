@@ -17,6 +17,7 @@ use tokio::{
     sync::mpsc::{self, Receiver},
 };
 
+const MAX_RECORDS: i64 = 100;
 #[derive(Debug, Clone)]
 pub enum DBPool {
     PostgresCon(Pool<Postgres>),
@@ -43,7 +44,7 @@ pub struct QueryResult {
     pub connection_id: String,
     pub sql: String,
     pub data: Vec<Value>,
-    pub size: CountResult,
+    pub count: i64,
 }
 #[derive(Debug, Serialize)]
 struct ColumnValue {
@@ -189,20 +190,14 @@ impl DbManager {
         connection_id: String,
         sql: String,
     ) -> Result<QueryResult, sqlx::Error> {
-        let results = self
+        let (results, count) = self
             .exec_table(connection_id.clone(), sql.clone())
-            .await
-            .unwrap();
-        let _size = self
-            .exec_count(connection_id.clone(), sql.clone())
-            .await
-            .unwrap();
-
+            .await?;
         Ok(QueryResult {
             connection_id,
             sql,
             data: results,
-            size: _size,
+            count: count
         })
     }
 
@@ -228,29 +223,30 @@ impl DbManager {
         &mut self,
         connection_id: String,
         sql: String,
-    ) -> Result<Vec<Value>, sqlx::Error> {
+    ) -> Result<(Vec<Value>, i64), sqlx::Error> {
         let _con = self.get_connection(connection_id).await?;
         let con_guard = _con.lock().await;
         let pool = match con_guard.connection.as_ref().unwrap() {
             DBPool::PostgresCon(pg_pool) => pg_pool,
-            _ => panic!("Not a Postgres connection"),
+            _ => return Err(sqlx::Error::Protocol("Not a Postgres connection".into())),
         };
         let mut results = Vec::new();
         let mut rows = sqlx::query(sql.as_str()).fetch(pool);
-        let mut l = 10;
+        let mut l: i64 = 0;
         while let Some(row) = rows.try_next().await? {
             let mut row_info = Vec::new();
-            for i in 0..row.columns().len() {
+            let col_count = row.columns().len();
+            for i in 0..col_count {
                 //let col = row.columns().get(i).unwrap();
                 let col_info = get_column_info(&row, i);
                 row_info.push(serde_json::to_value(col_info).unwrap());
             }
             results.push(Value::Array(row_info));
-            l -= 1;
-            if l < 0 {
+            l += 1;
+            if l >= MAX_RECORDS {
                 break;
             }
         }
-        Ok(results)
+        Ok((results, l))
     }
 }
