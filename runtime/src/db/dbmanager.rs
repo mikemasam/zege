@@ -1,51 +1,30 @@
 #![allow(dead_code)]
-use futures::StreamExt;
 use futures::TryStreamExt;
-use futures::lock;
 use serde::Serialize;
 use serde::Serializer;
-use serde_json::{Value, json};
-use sqlx::{MySql, postgres::PgRow};
+use serde_json::Value;
+use sqlx::SqlitePool;
+use sqlx::postgres::PgRow;
+use sqlx::sqlite::SqlitePoolOptions;
 use std::env;
+use std::fmt::Debug;
 use std::sync::Arc;
-use std::{fmt::Debug, time::Duration};
 use tokio::sync::Mutex;
 
-use sqlx::{Column, Pool, Postgres, Row, TypeInfo, postgres::PgPoolOptions};
-use tokio::{
-    runtime::Handle,
-    sync::mpsc::{self, Receiver},
-};
+use sqlx::{Column, Row, TypeInfo, postgres::PgPoolOptions};
+
+use crate::db::lib::DBConnection;
+use crate::db::lib::DBPool;
+use crate::db::lib::DBPoolType;
+use crate::db::lib::DbManager;
+use crate::db::lib::QueryResult;
 
 const MAX_RECORDS: i64 = 100;
-#[derive(Debug, Clone)]
-pub enum DBPool {
-    PostgresCon(Pool<Postgres>),
-    MySqlCon(Pool<MySql>),
-}
-
-#[derive(Debug, Clone)]
-pub struct DBConnection {
-    id: String,
-    url: String,
-    connection: Option<DBPool>,
-}
-#[derive(Debug, Clone)]
-pub struct DbManager {
-    pub connections: Vec<Arc<Mutex<DBConnection>>>,
-}
 #[derive(sqlx::FromRow, Debug, Clone, Serialize)]
 pub struct CountResult {
     total: i64,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct QueryResult {
-    pub connection_id: String,
-    pub sql: String,
-    pub data: Vec<Value>,
-    pub count: i64,
-}
 #[derive(Debug, Serialize)]
 struct ColumnValue {
     index: usize,
@@ -130,13 +109,37 @@ impl DbManager {
         }
     }
 
-    pub fn add_sample_connection(&mut self) {
+    pub fn create_connection(
+        &mut self,
+        id: String,
+        _dbtype: String,
+        url: String,
+    ) -> Option<Arc<Mutex<DBConnection>>> {
+        let dbtype: DBPoolType = match _dbtype.as_str() {
+            "postgres" => DBPoolType::PostgresCon(),
+            "sqlite" => DBPoolType::SqliteCon(),
+            _ => DBPoolType::UnknownCon(),
+        };
+        let d = DBConnection {
+            dbtype,
+            url,
+            id,
+            pool: None,
+        };
+        let con = Arc::new(Mutex::new(d));
+        self.connections.push(con.clone());
+        Some(con)
+    }
+    pub fn add_sample_connection(&mut self) -> Option<Arc<Mutex<DBConnection>>> {
         let d = DBConnection {
             url: env::var("DEV_CONNECTION").unwrap(),
             id: String::from("sample"),
-            connection: None,
+            pool: None,
+            dbtype: DBPoolType::PostgresCon(),
         };
-        self.connections.push(Arc::new(Mutex::new(d)));
+        let con = Arc::new(Mutex::new(d));
+        self.connections.push(con.clone());
+        Some(con)
     }
     pub async fn find_connection_by_id(&self, id: String) -> Option<Arc<Mutex<DBConnection>>> {
         for conn in &self.connections {
@@ -159,17 +162,33 @@ impl DbManager {
     ) -> Result<Arc<Mutex<DBConnection>>, sqlx::Error> {
         let con = self.find_connection_by_id(id).await.unwrap();
         let mut conn = con.lock().await;
-        if conn.connection.is_none() {
+        if conn.pool.is_none() {
             println!("connecting.... {}", conn.id);
-            let pool = PgPoolOptions::new()
-                .max_connections(5)
-                .connect(conn.url.as_str())
-                .await?;
-            conn.connection = Some(DBPool::PostgresCon(pool));
+            match conn.dbtype {
+                DBPoolType::PostgresCon() => {
+                    println!("connecting to postgres {}", conn.url);
+                    let pool = PgPoolOptions::new()
+                        .max_connections(5)
+                        .connect(conn.url.as_str())
+                        .await?;
+                    conn.pool = Some(DBPool::PostgresCon(pool));
+                }
+                DBPoolType::SqliteCon() => {
+                    println!("connecting to sqlite {}", conn.url);
+                    let pool = SqlitePoolOptions::new()
+                        .max_connections(5)
+                        .connect(conn.url.as_str())
+                        .await?;
+                    conn.pool = Some(DBPool::SqliteCon(pool));
+                }
+                _ => {
+                    println!("connect type not supported {}", conn.id);
+                }
+            };
             println!("connected to {}", conn.id);
         }
 
-        let pool = conn.connection.as_ref().unwrap();
+        let pool = conn.pool.as_ref().unwrap();
         match pool {
             DBPool::PostgresCon(pg_pool) => {
                 if pg_pool.is_closed() {
@@ -177,8 +196,14 @@ impl DbManager {
                 }
                 println!("~ postgres pool");
             }
+            DBPool::SqliteCon(lite_pool) => {
+                if lite_pool.is_closed() {
+                    return Err(sqlx::Error::PoolClosed);
+                }
+                println!("~ pool");
+            }
             _ => {
-                panic!("Not a Postgres connection");
+                panic!("Connection type not implemented");
             }
         };
         Ok(con.clone())
@@ -190,25 +215,50 @@ impl DbManager {
         connection_id: String,
         sql: String,
     ) -> Result<QueryResult, sqlx::Error> {
-        let (results, count) = self
-            .exec_table(connection_id.clone(), sql.clone())
-            .await?;
+        let (results, count) = self.exec_table(connection_id.clone(), sql.clone()).await?;
         Ok(QueryResult {
             connection_id,
             sql,
             data: results,
-            count: count
+            count,
         })
     }
 
+    pub async fn get_sqlite_pool(&mut self, connection_id: String) -> sqlx::SqlitePool {
+        let con = self
+            .get_connection(connection_id)
+            .await
+            .expect("Connection must exist");
+        let con_guard = con.lock().await;
+
+        match con_guard.pool.as_ref().unwrap() {
+            DBPool::SqliteCon(pg_pool) => pg_pool.clone(),
+            _ => panic!("Not a Sqlite connection"),
+        }
+    }
+    pub async fn get_postgres_pool(&mut self, connection_id: String) -> sqlx::PgPool {
+        let con = self
+            .get_connection(connection_id)
+            .await
+            .expect("Connection must exist");
+        let con_guard = con.lock().await;
+
+        match con_guard.pool.as_ref().unwrap() {
+            DBPool::PostgresCon(pg_pool) => pg_pool.clone(),
+            _ => panic!("Not a Postgres connection"),
+        }
+    }
     async fn exec_count(
         &mut self,
         connection_id: String,
         sql: String,
     ) -> Result<CountResult, sqlx::Error> {
-        let _con = self.get_connection(connection_id).await?;
+        let _con = self
+            .get_connection(connection_id)
+            .await
+            .expect("Connection must exist");
         let con_guard = _con.lock().await;
-        let pool = match con_guard.connection.as_ref().unwrap() {
+        let pool = match con_guard.pool.as_ref().unwrap() {
             DBPool::PostgresCon(pg_pool) => pg_pool,
             _ => panic!("Not a Postgres connection"),
         };
@@ -226,7 +276,7 @@ impl DbManager {
     ) -> Result<(Vec<Value>, i64), sqlx::Error> {
         let _con = self.get_connection(connection_id).await?;
         let con_guard = _con.lock().await;
-        let pool = match con_guard.connection.as_ref().unwrap() {
+        let pool = match con_guard.pool.as_ref().unwrap() {
             DBPool::PostgresCon(pg_pool) => pg_pool,
             _ => return Err(sqlx::Error::Protocol("Not a Postgres connection".into())),
         };

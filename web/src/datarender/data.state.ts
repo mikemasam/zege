@@ -18,7 +18,7 @@ export const execQuery = async (sql: string | undefined) => {
     sql,
     connection_id: "sample",
   };
-  const res = await axios.post("http://localhost:3000/query", payload);
+  const res = await axios.post("http://localhost:3000/editor/query", payload);
   useDataStore.setState({
     result: res.data?.data,
     error: res.data?.error,

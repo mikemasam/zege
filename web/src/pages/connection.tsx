@@ -19,24 +19,16 @@ export default function DatabaseConnection() {
 
 function TableList({ tables, onView }: any) {
   return (
-    <div className="overflow-x-auto overflow-y-auto border-2 border-muted h-full flex-1">
+    <div className="overflow-x-auto overflow-y-auto h-full flex-1 border border-gray-300 rounded">
       <table className="min-w-full divide-y divide-muted rounded-lg">
         <tbody className="divide-y border-secondary">
           {tables.map((table: any, idx: any) => (
             <tr
               key={idx}
-              className="hover:bg-muted transition-colors cursor-pointer"
+              className="transition-colors cursor-pointer hover:bg-gray-300"
             >
               <td className="px-2 py-1 whitespace-nowrap font-mono text-sm font-medium">
-                {table.name}
-              </td>
-              <td className="px-2 py-1 whitespace-nowrap text-right text-sm">
-                <span
-                  className="material-icons text-sm"
-                  onClick={() => onView(table.name)}
-                >
-                  visibility
-                </span>
+                <span className="text-gray-400 text-xs">{">"}</span> {table.name}
               </td>
             </tr>
           ))}

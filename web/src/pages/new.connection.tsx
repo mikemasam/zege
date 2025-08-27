@@ -28,7 +28,7 @@ export default function NewDatabaseConnectionForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-6 space-y-4">
+    <form onSubmit={handleSubmit} className="max-w-md p-4 space-y-4">
       <h2 className="text-xl font-bold">Database Connection</h2>
       <UIInput
         label="Name"
