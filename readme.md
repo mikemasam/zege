@@ -55,6 +55,8 @@ This API accepts an event payload in JSON format. Each field is optional unless 
   "http": {
     "method": "POST",
     "path": "/api/events",
+    "url": "/api/events",
+    "origin": "/api/events",
     "status": 200,
     "client_ip": "192.168.0.1",
     "user_agent": "Mozilla/5.0"
@@ -148,6 +150,8 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | ------------ | ------- | ------------------------------------ |
 | `method`     | string  | HTTP method: `"GET"`, `"POST"`, etc. |
 | `path`       | string  | Request path.                        |
+| `url`       | string  | Request url.                        |
+| `origin`       | string  | Request origin.                        |
 | `status`     | integer | HTTP response status code.           |
 | `client_ip`  | string  | IP address of the client.            |
 | `user_agent` | string  | User agent string.                   |

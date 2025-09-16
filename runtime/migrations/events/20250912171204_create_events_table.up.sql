@@ -42,6 +42,8 @@ CREATE TABLE evt_events (
   -- HTTP context
   http_method TEXT,
   http_path TEXT,
+  http_url TEXT,
+  http_origin TEXT,
   http_status INT,
   client_ip TEXT,
   user_agent TEXT,

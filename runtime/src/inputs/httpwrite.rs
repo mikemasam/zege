@@ -3,16 +3,11 @@ use crate::ctx::appcontext::AppContext;
 use crate::event::event::LogEvent;
 use crate::http::AppResponse;
 use anyhow::Result;
-use axum::Extension;
 use axum::response::IntoResponse;
-use serde::{Deserialize, Serialize};
+use axum::{Extension};
+use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct WriteResponse {
-    pub total: i64,
-}
 
 pub async fn event_route(
     Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
@@ -23,7 +18,7 @@ pub async fn event_route(
         Ok(p) => p,
         Err(err) => {
             eprintln!("failed to parse events body {err}");
-            return AppResponse {
+            return AppResponse::<Value> {
                 status: 400,
                 message: format!("JSON parse error: {err}"),
                 data: None,
@@ -43,19 +38,9 @@ pub async fn event_route(
         };
         total += 1;
     }
-
-    /*
-        let _rows = sqlx::query("SELECT id, name, email FROM evt_events ORDER BY id")
-            .fetch_all(eventsdb.pool.as_ref().unwrap())
-            .await
-            .unwrap_or_default();
-    */
-    let data = WriteResponse {
-        total: total as i64,
-    };
-    AppResponse {
+    AppResponse::<Value> {
         status: 200,
-        message: format!("{total} events saved"),
-        data: Some(data),
+        message: String::new(),
+        data: None,
     }
 }

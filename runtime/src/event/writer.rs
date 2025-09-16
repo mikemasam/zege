@@ -47,7 +47,8 @@ async fn write_event(eventsdb: Arc<Mutex<DbManager>>, e: LogEvent) -> Result<u64
 
     request_id, referrer, protocol, response_size_bytes,
 
-    tags,  labels, meta, event_name
+    tags,  labels, meta, event_name,
+    http_url, http_origin
     ) VALUES 
 (
 $1,$2,$3,
@@ -59,7 +60,8 @@ $18,$19,$20,
 $21,$22,$23,$24,
 $25,$26,$27,$28,$29,
 $30,$31,$32,$33,
-$34,$35,$36, $37
+$34,$35,$36, $37,
+$38, $39
 )
 ",
     );
@@ -103,6 +105,8 @@ $34,$35,$36, $37
         .bind(e.labels.map(|v| serde_json::to_value(v).ok()))
         .bind(e.meta.map(|v| serde_json::to_value(v).ok()))
         .bind(e.event_name)
+        .bind(e.http.as_ref().map(|v| &v.url))
+        .bind(e.http.as_ref().map(|v| &v.origin))
         .execute(db.pool.as_ref().unwrap())
         .await?;
     Ok(res.rows_affected())

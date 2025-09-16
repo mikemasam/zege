@@ -52,7 +52,7 @@ fn start_events_thread(receiver: Receiver<LogEvent>) {
 }
 
 async fn start_http(ctx: AppContext) {
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3432));
     println!("Server running at http://{addr}");
     let arc_ctx = Arc::new(Mutex::new(ctx));
     let cors = CorsLayer::new()

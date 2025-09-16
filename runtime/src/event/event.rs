@@ -56,6 +56,8 @@ pub struct UserInfo {
 pub struct HttpInfo {
     pub method: Option<String>,
     pub path: Option<String>,
+    pub url: Option<String>,
+    pub origin: Option<String>,
     pub status: Option<i32>,
     pub client_ip: Option<String>,
     pub user_agent: Option<String>,

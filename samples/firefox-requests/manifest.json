@@ -1,0 +1,16 @@
+{
+  "description": "webRequests logging",
+  "manifest_version": 2,
+  "name": "webRequest-zege-sample",
+  "version": "1.0",
+  "permissions": [
+    "webRequest",
+    "<all_urls>",
+    "tabs",
+    "storage",
+    "http://zege.dot/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  }
+}
