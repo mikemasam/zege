@@ -1,0 +1,1 @@
+sqlx migrate add -r --source migrations/events create_events_table

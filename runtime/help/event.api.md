@@ -1,6 +1,3 @@
-## Zege
-## Logger 
-
 ---
 
 # Event API 
