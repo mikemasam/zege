@@ -1,3 +1,4 @@
 runtime/.env
 runtime/target
 runtime.old
+web/.env

@@ -38,7 +38,7 @@ export default function QueryFilter({
   };
 
   return (
-    <div className="flex flex-col rounded border shadow-sm bg-white">
+    <div className="flex flex-col rounded-md border-4 border-gray-200 bg-white">
       {/* Header */}
       <div
         className="flex justify-between items-center px-3 py-2 border-b cursor-pointer hover:bg-gray-50"
