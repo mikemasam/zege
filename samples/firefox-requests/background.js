@@ -10,10 +10,16 @@ function post_event(event) {
       version: manifest.version,
       environment: "development",
     },
+    user: {
+      id: "user-01",
+      name: "Alice",
+      email: "alice@example.com",
+      session_id: "sess-123",
+    },
     ...event,
   };
   //console.log("Event:", payload);
-  fetch("http://zg-firefox-logger.dot:3432/e/i/basic", {
+  fetch("http://zg-firefox-logger.dot:3432/api/v1/e/i/basic", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -38,7 +44,7 @@ function logRequest(req) {
   const payload = {
     timestamp: new Date().toISOString(),
     severity: "INFO",
-    message: "Network request made",
+    message: `${req.method} ${req.url}`,
     event_name: "http_request",
     http: {
       method: req.method,
@@ -66,7 +72,7 @@ const logNewTab = (tab) => {
   const payload = {
     timestamp: new Date().toISOString(),
     severity: "INFO",
-    message: "New tab created",
+    message: `Tab ${tab.url || "about:blank"}`,
     event_name: "tab_created",
     meta: {
       tabId: tab.id,

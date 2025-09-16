@@ -17,7 +17,7 @@ use crate::inputs::event_input_routes;
 use crate::output::event_output_routes;
 use crate::{
     ctx::{
-        appcontext::{self, AppContext},
+        appcontext::AppContext,
         dbmanager::DbManager,
     },
     event::{writer::event_write_worker},
@@ -61,8 +61,8 @@ async fn start_http(ctx: AppContext) {
         .allow_headers(Any);
 
     let app = Router::new()
-        .nest("/e/i", event_input_routes())
-        .nest("/events", event_output_routes())
+        .nest("/api/v1/e/i", event_input_routes())
+        .nest("/api/v1/events", event_output_routes())
         .layer(cors)
         .layer(Extension(Arc::clone(&arc_ctx)));
     axum::Server::bind(&addr)

@@ -22,6 +22,14 @@
   }
 }
 
+.tile-content {
+    @apply bg-gray-200 p-2 rounded;
+}
+.tile-title {
+    @apply bg-gray-100 p-2 rounded;
+}
+
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -137,3 +145,5 @@
     @apply bg-background text-foreground;
   }
 }
+
+
