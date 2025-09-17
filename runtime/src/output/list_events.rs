@@ -9,9 +9,7 @@ use axum::response::IntoResponse;
 use axum::{Extension, extract::Query};
 use futures::StreamExt;
 use serde::Deserialize;
-use serde_json::{Map, Value, json};
-use sqlx::sqlite::SqliteArguments;
-use sqlx::{Column, QueryBuilder, Row, SqlitePool};
+use sqlx::{QueryBuilder, Row};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -61,9 +59,11 @@ pub async fn list_events_route(
 
     let mut results = Vec::new();
     while let Some(Ok(row)) = rows.next().await {
+        println!("parsing item");
         let e = LogEvent {
             timestamp: row.get("timestamp"),
             event_name: row.get("event_name"),
+            ui: row.get("ui"),
             service_name: row.get("service_name"),
             severity: row.get("severity"),
             message: row.get("message"),
@@ -123,7 +123,7 @@ pub async fn list_events_route(
 
     AppResponse {
         status: 200,
-        message: String::new(),
+        message: "Ok".to_owned(),
         data: Some(results),
     }
 }

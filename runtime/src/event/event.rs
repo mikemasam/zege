@@ -8,6 +8,7 @@ pub struct LogEvent {
     pub timestamp: DateTime<Utc>,
     pub event_name: String,
     pub service_name: String,
+    pub ui: Option<String>,
     pub severity: Option<String>,
     pub message: Option<String>,
     pub error: Option<ErrorInfo>,

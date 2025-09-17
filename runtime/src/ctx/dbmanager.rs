@@ -1,11 +1,10 @@
 #![allow(dead_code)]
-use std::error::Error;
 use std::fmt::Debug;
 use std::path::Path;
 
+use sqlx::SqlitePool;
 use sqlx::migrate::Migrator;
 use sqlx::sqlite::SqlitePoolOptions;
-use sqlx::{Pool, Sqlite, SqlitePool};
 
 #[derive(Debug, Clone)]
 pub struct DBConnection {}
@@ -34,23 +33,32 @@ impl DbManager {
         Ok(row.0 > 0)
     }
 
-    pub async fn new(
-        id: &str,
-        migration_path: Option<&str>,
+    pub async fn connect_to_event_db(
+        should_migrate: bool,
     ) -> Result<DbManager, sqlx::migrate::MigrateError> {
-        let dbname = id.clone();
-        let pool = SqlitePoolOptions::new()
-            .max_connections(5)
-            .connect(dbname)
-            .await?;
-        if let Some(_path) = migration_path {
-            let migrator: Migrator = Migrator::new(Path::new(_path)).await.unwrap();
+        let dbname = "data/events.db";
+        DbManager::connect_to_event_db_with_name(dbname, should_migrate).await
+    }
+    pub async fn connect_to_event_db_with_name(
+        dbname: &str,
+        should_migrate: bool,
+    ) -> Result<DbManager, sqlx::migrate::MigrateError> {
+        let migration_path = "migrations/events";
+        let pool = SqlitePoolOptions::new().connect(dbname).await?;
+        if should_migrate {
+            let migrator: Migrator = Migrator::new(Path::new(migration_path)).await.unwrap();
             migrator.run(&pool).await?;
+            println!("migrations sucessful on {dbname}");
         }
         Ok(DbManager {
-            id: id.to_owned(),
+            id: dbname.to_owned(),
             pool: Some(pool),
         })
+    }
+    pub async fn close_db(self) {
+        if let Some(_p) = self.pool {
+            let _ = _p.close().await;
+        }
     }
 }
 

@@ -2,7 +2,6 @@
 use crate::ctx::appcontext::AppContext;
 use crate::event::event::LogEvent;
 use crate::http::AppResponse;
-use anyhow::Result;
 use axum::response::IntoResponse;
 use axum::{Extension};
 use serde_json::Value;
@@ -25,7 +24,6 @@ pub async fn event_route(
             };
         }
     };
-    let mut total: u64 = 0;
     let app = appcontext.lock().await;
     for event in payload {
         if let Err(err) = app.event_writer.send(event) {
@@ -36,7 +34,6 @@ pub async fn event_route(
                 data: None,
             };
         };
-        total += 1;
     }
     AppResponse::<Value> {
         status: 200,

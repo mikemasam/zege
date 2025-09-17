@@ -3,6 +3,7 @@ CREATE TABLE evt_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   timestamp TEXT NOT NULL,
   severity TEXT,
+  ui TEXT,
   message TEXT,
   event_name TEXT,
 

@@ -1,11 +1,12 @@
 #![allow(dead_code)]
 use crate::{ctx::dbmanager::DbManager, event::event::LogEvent};
-use anyhow::Result;
+use sqlx::Error;
 use std::sync::{Arc, mpsc::Receiver};
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
 pub async fn event_write_worker(receiver: Receiver<LogEvent>) {
-    let _db = DbManager::new("data/events.db", None).await;
+    let _db = DbManager::connect_to_event_db(false).await;
     if _db.is_err() {
         panic!(
             "Failed to open events db with error {:?}",
@@ -14,19 +15,27 @@ pub async fn event_write_worker(receiver: Receiver<LogEvent>) {
     };
 
     let db = Arc::new(Mutex::new(_db.unwrap()));
-    for event in receiver {
-        write_event(db.clone(), event).await;
+    for mut event in receiver {
+        let uuid_v7 = Uuid::now_v7();
+        event.ui = Some(uuid_v7.simple().to_string());
+        let out = write_event(db.clone(), event).await;
+        let _ = out.map_err(|err| {
+            println!("##### WRITE ERROR: {err}");
+        });
     }
 }
 
-async fn write_event(eventsdb: Arc<Mutex<DbManager>>, e: LogEvent) -> Result<u64> {
-    println!(
-        "> {} - {}:{} - {}",
-        e.timestamp,
-        e.service_name,
-        e.event_name,
-        e.message.clone().unwrap_or("".to_owned()).as_str()
-    );
+async fn write_event(eventsdb: Arc<Mutex<DbManager>>, e: LogEvent) -> Result<u64, Error> {
+    /*
+        println!(
+            "> {} - {}:{} - {}",
+            e.timestamp,
+            e.service_name,
+            e.event_name,
+            e.message.clone().unwrap_or("".to_owned()).as_str()
+        );
+    */
+    println!("> new event");
     let query = String::from(
         "INSERT INTO evt_events (
     timestamp, severity, message,
@@ -48,7 +57,7 @@ async fn write_event(eventsdb: Arc<Mutex<DbManager>>, e: LogEvent) -> Result<u64
     request_id, referrer, protocol, response_size_bytes,
 
     tags,  labels, meta, event_name,
-    http_url, http_origin
+    http_url, http_origin, ui 
     ) VALUES 
 (
 $1,$2,$3,
@@ -61,7 +70,7 @@ $21,$22,$23,$24,
 $25,$26,$27,$28,$29,
 $30,$31,$32,$33,
 $34,$35,$36, $37,
-$38, $39
+$38, $39, $40
 )
 ",
     );
@@ -107,6 +116,7 @@ $38, $39
         .bind(e.event_name)
         .bind(e.http.as_ref().map(|v| &v.url))
         .bind(e.http.as_ref().map(|v| &v.origin))
+        .bind(e.ui)
         .execute(db.pool.as_ref().unwrap())
         .await?;
     Ok(res.rows_affected())
