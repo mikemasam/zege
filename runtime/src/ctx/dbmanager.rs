@@ -1,10 +1,11 @@
 #![allow(dead_code)]
 use std::fmt::Debug;
 use std::path::Path;
+use std::time::Duration;
 
 use sqlx::SqlitePool;
 use sqlx::migrate::Migrator;
-use sqlx::sqlite::SqlitePoolOptions;
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 
 #[derive(Debug, Clone)]
 pub struct DBConnection {}
@@ -44,11 +45,19 @@ impl DbManager {
         should_migrate: bool,
     ) -> Result<DbManager, sqlx::migrate::MigrateError> {
         let migration_path = "migrations/events";
-        let pool = SqlitePoolOptions::new().connect(dbname).await?;
+        let options = SqliteConnectOptions::new()
+            .filename(dbname)
+            .create_if_missing(true)
+            .pragma("journal_mode", "WAL")
+            .pragma("busy_timeout", "10000")
+            .auto_vacuum(sqlx::sqlite::SqliteAutoVacuum::Full);
+        let pool = SqlitePoolOptions::new()
+            .max_connections(10)
+            .connect_with(options)
+            .await?;
         if should_migrate {
             let migrator: Migrator = Migrator::new(Path::new(migration_path)).await.unwrap();
             migrator.run(&pool).await?;
-            println!("migrations sucessful on {dbname}");
         }
         Ok(DbManager {
             id: dbname.to_owned(),

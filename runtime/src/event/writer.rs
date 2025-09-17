@@ -2,7 +2,7 @@
 use crate::{ctx::dbmanager::DbManager, event::event::LogEvent};
 use sqlx::Error;
 use std::sync::{Arc, mpsc::Receiver};
-use tokio::sync::Mutex;
+use tokio::{sync::Mutex, time::Instant};
 use uuid::Uuid;
 
 pub async fn event_write_worker(receiver: Receiver<LogEvent>) {
@@ -16,12 +16,15 @@ pub async fn event_write_worker(receiver: Receiver<LogEvent>) {
 
     let db = Arc::new(Mutex::new(_db.unwrap()));
     for mut event in receiver {
+        let start_time = Instant::now();
         let uuid_v7 = Uuid::now_v7();
         event.ui = Some(uuid_v7.simple().to_string());
         let out = write_event(db.clone(), event).await;
         let _ = out.map_err(|err| {
             println!("##### WRITE ERROR: {err}");
         });
+        let elapsed_time = start_time.elapsed();
+        println!("# event write time: {elapsed_time:?}");
     }
 }
 
@@ -35,7 +38,6 @@ async fn write_event(eventsdb: Arc<Mutex<DbManager>>, e: LogEvent) -> Result<u64
             e.message.clone().unwrap_or("".to_owned()).as_str()
         );
     */
-    println!("> new event");
     let query = String::from(
         "INSERT INTO evt_events (
     timestamp, severity, message,

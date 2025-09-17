@@ -8,10 +8,11 @@ use axum::{Extension, Router};
 use dotenv::dotenv;
 use std::sync::Arc;
 use std::sync::mpsc::Receiver;
+use std::time::Duration;
 use std::{net::SocketAddr, sync::mpsc};
-use tokio::runtime::Runtime;
+use tokio::runtime::{Handle, Runtime};
 use tokio::sync::Mutex;
-use tokio::time;
+use tokio::time::{self, Instant};
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::event::event::LogEvent;
@@ -73,14 +74,24 @@ async fn start_http(ctx: AppContext) {
 }
 
 async fn start_scheduler() {
-    let mut interval = time::interval(time::Duration::from_secs(10));
-    interval.tick().await;
-    println!("Starting Background Job #{:?}.", std::thread::current().id());
+    let mut interval = time::interval(time::Duration::from_secs(60));
+    println!(
+        "Starting Background Job #{:?}.",
+        std::thread::current().id()
+    );
     loop {
         interval.tick().await;
-        tokio::task::spawn(async {
-            println!("Spawning a new blocking task at the next interval.#{:?}.", std::thread::current().id());
-            rotate_events().await;
-        });
+        let start_time = Instant::now();
+        let _ = tokio::task::spawn_blocking(|| {
+            let rt = tokio::runtime::Handle::current();
+            rt.block_on(async {
+                rotate_events().await;
+            });
+        })
+        .await;
+        let elapsed_time = start_time.elapsed();
+        println!("# rotation time: {elapsed_time:?}");
+        let metric = Handle::current().metrics().num_workers();
+        println!("# tokio: {metric}");
     }
 }
