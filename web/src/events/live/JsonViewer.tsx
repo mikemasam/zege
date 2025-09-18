@@ -28,7 +28,7 @@ const JsonArray = ({
     );
   }
   return (
-    <span>
+    <span className="overflow-x-hidden">
       <span
         onClick={() => setOpen((v) => !v)}
         className="bg-gray-200 rounded px-1 hover:bg-gray-300 hover:cursor-pointer"
@@ -39,7 +39,7 @@ const JsonArray = ({
       {arr.map((item, idx) => {
         const out = renderValue(null, item, indent + 1);
         return (
-          <div key={idx} className="ml-4">
+          <div key={idx} className="ml-4 overflow-x-hidden">
             {out}
             {idx < arr.length - 1 ? "," : ""}
           </div>
@@ -57,9 +57,9 @@ const renderValue = (
   const type = typeof value;
   switch (type) {
     case "string":
-      return <span className="text-gray-700">"{value}"</span>;
+      return <span className="text-gray-700 px-1 text-wrap whitespace-pre-wrap break-words">"{value}"</span>;
     case "number":
-      return <span className="text-blue-500">{value}</span>;
+      return <span className="text-blue-500 text-wrap whitespace-pre">{value}</span>;
     case "boolean":
       return <span className="text-purple-500">{value.toString()}</span>;
     case "object":
@@ -113,7 +113,7 @@ const JsonObject = ({ itemKey, obj, indent }: any): any => {
         const out = renderValue(key, value, indent + 1);
         if (out === null) return null;
         return (
-          <div key={key} className="ml-4">
+          <div key={key} className="ml-4 overflow-x-hidden">
             <span className="text-lime-700">"{key}"</span>: {out}
             {idx < entries.length - 1 ? "," : ""}
           </div>
@@ -125,7 +125,7 @@ const JsonObject = ({ itemKey, obj, indent }: any): any => {
 };
 const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
   return (
-    <pre className="bg-gray-100 p-2 rounded border border-gray-200 overflow-x-auto text-xs">
+    <pre className="bg-gray-100 p-2 rounded border border-gray-200 overflow-x-hidden text-xs">
       {renderValue(null, data)}
     </pre>
   );
