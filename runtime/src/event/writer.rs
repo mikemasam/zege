@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use crate::{ctx::dbmanager::DbManager, event::event::LogEvent};
+use chrono::SecondsFormat;
 use sqlx::Error;
 use std::sync::{Arc, mpsc::Receiver};
 use tokio::{sync::Mutex, time::Instant};
@@ -59,7 +60,7 @@ async fn write_event(eventsdb: Arc<Mutex<DbManager>>, e: LogEvent) -> Result<u64
     request_id, referrer, protocol, response_size_bytes,
 
     tags,  labels, meta, event_name,
-    http_url, http_origin, ui 
+    http_url, http_origin, ui, _time
     ) VALUES 
 (
 $1,$2,$3,
@@ -72,10 +73,11 @@ $21,$22,$23,$24,
 $25,$26,$27,$28,$29,
 $30,$31,$32,$33,
 $34,$35,$36, $37,
-$38, $39, $40
+$38, $39, $40, $41
 )
 ",
     );
+   
     let db = eventsdb.as_ref().lock().await;
     let res = sqlx::query(query.as_str())
         .bind(e.timestamp)
@@ -119,6 +121,7 @@ $38, $39, $40
         .bind(e.http.as_ref().map(|v| &v.url))
         .bind(e.http.as_ref().map(|v| &v.origin))
         .bind(e.ui)
+        .bind(e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string())
         .execute(db.pool.as_ref().unwrap())
         .await?;
     Ok(res.rows_affected())

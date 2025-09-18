@@ -2,6 +2,7 @@
 CREATE TABLE evt_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   timestamp TEXT NOT NULL,
+  _time TEXT NOT NULL,
   severity TEXT,
   ui TEXT,
   message TEXT,

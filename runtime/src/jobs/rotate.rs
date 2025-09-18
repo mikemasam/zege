@@ -3,7 +3,7 @@ use core::panic;
 use crate::ctx::dbmanager::DbManager;
 
 pub async fn rotate_events() {
-    let backup_db_name = "data/backup2.events.db";
+    let backup_db_name = "data/backup.events.db";
     {
         let _bk_db = DbManager::connect_to_event_db_with_name(backup_db_name, true)
             .await
@@ -34,9 +34,12 @@ pub async fn rotate_events() {
     let rows_affected = sqlx::query(
         "
             INSERT INTO db2.evt_events
-            SELECT * FROM main.evt_events as a 
-            WHERE datetime(a.timestamp) < datetime('now', '-2 minute') 
-            AND NOT EXISTS (SELECT b.ui from db2.evt_events as b where b.ui = a.ui);
+            SELECT a.*
+            FROM main.evt_events AS a
+            LEFT JOIN db2.evt_events AS b
+            ON a.ui = b.ui
+            WHERE b.ui IS NULL
+            AND a._time < datetime('now', '-2 minute');
         ",
     )
     .execute(&mut *conn)

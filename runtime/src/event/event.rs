@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LogEvent {
     pub timestamp: DateTime<Utc>,
+    pub _time: Option<DateTime<Utc>>,
     pub event_name: String,
     pub service_name: String,
     pub ui: Option<String>,

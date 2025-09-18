@@ -1,4 +1,5 @@
 import { useState } from "react";
+import JsonViewer from "./JsonViewer";
 
 const severityColors: Record<string, string> = {
   INFO: "bg-blue-100 text-blue-800",
@@ -77,7 +78,7 @@ export function EventBox({ event }: { event: any }) {
         </button>
       </div>
 
-      {open && <EventContent event={event} />}
+      {open && <JsonViewer data={event} />}
     </div>
   );
 }

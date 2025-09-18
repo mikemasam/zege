@@ -59,9 +59,9 @@ pub async fn list_events_route(
 
     let mut results = Vec::new();
     while let Some(Ok(row)) = rows.next().await {
-        println!("parsing item");
         let e = LogEvent {
             timestamp: row.get("timestamp"),
+            _time: row.get("_time"),
             event_name: row.get("event_name"),
             ui: row.get("ui"),
             service_name: row.get("service_name"),
