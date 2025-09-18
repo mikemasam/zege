@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use crate::ctx::appcontext::AppContext;
 use crate::event::event::LogEvent;
+use crate::event::writer::LogEventMessage;
 use crate::http::AppResponse;
 use axum::response::IntoResponse;
 use axum::{Extension};
@@ -26,7 +27,7 @@ pub async fn event_route(
     };
     let app = appcontext.lock().await;
     for event in payload {
-        if let Err(err) = app.event_writer.send(event) {
+        if let Err(err) = app.event_writer.send(LogEventMessage::Data(Box::new(event))) {
             eprintln!("Failed to process event {err}");
             return AppResponse {
                 status: 400,
