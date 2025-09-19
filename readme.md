@@ -1,6 +1,6 @@
 
 Ship better logs. 📦
-# Zege — a simple, flexible, fast ⚡ event logging API for observability, debugging, and analytics written in Rust.
+# Zege — a simple, flexible, fast ⚡ event logging service for observability, debugging, and analytics written in Rust.
 JSON in → Insights out. 
 ## Logger 
 
