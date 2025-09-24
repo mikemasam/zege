@@ -22,7 +22,7 @@ pub struct LogEvent {
     pub request: Option<RequestInfo>,
     pub tags: Option<Vec<String>>,
     pub labels: Option<HashMap<String, String>>,
-    pub meta: Option<HashMap<String, serde_json::Value>>,
+    pub data: Option<HashMap<String, serde_json::Value>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

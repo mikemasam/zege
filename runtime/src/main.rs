@@ -99,7 +99,7 @@ async fn start_http(ctx: AppContext) {
 }
 
 async fn start_scheduler() {
-    let mut interval = time::interval(time::Duration::from_secs(60));
+    let mut interval = time::interval(time::Duration::from_secs(60 * 5));
     println!(
         "Starting Background Job #{:?}.",
         std::thread::current().id()

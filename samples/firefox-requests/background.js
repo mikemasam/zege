@@ -54,7 +54,7 @@ function logRequest(req) {
     },
     tags: ["client", "web-request"],
     labels: { browser: "firefox" },
-    meta: {
+    data: {
       url: req.url,
       method: req.method,
       type: req.type,
@@ -74,7 +74,7 @@ const logNewTab = (tab) => {
     severity: "INFO",
     message: `Tab ${tab.url || "about:blank"}`,
     event_name: "tab_created",
-    meta: {
+    data: {
       tabId: tab.id,
       url: tab.url || "about:blank",
       windowId: tab.windowId,

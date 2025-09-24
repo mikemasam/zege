@@ -58,7 +58,7 @@ This API accepts an event payload in JSON format. Each field is optional unless 
   },
   "tags": ["backend", "critical"],
   "labels": { "feature": "login", "team": "auth" },
-  "meta": { "custom_field": "value" }
+  "data": { "custom_field": "value" }
 }
 ```
 
@@ -83,7 +83,7 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | `http`      | object           | HTTP request/response context (see **HttpInfo**).      |
 | `tags`      | array of strings | Optional tags for categorization.                      |
 | `labels`    | object           | Flexible key/value labels.                             |
-| `meta`      | object           | Additional custom metadata.                            |
+| `data`      | object           | Additional custom metadata.                            |
 
 ---
 

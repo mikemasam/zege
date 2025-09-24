@@ -116,7 +116,7 @@ pub async fn list_events_route(
             }),
             tags: Some(serde_json::from_str(row.get("tags")).unwrap_or_default()),
             labels: Some(serde_json::from_str(row.get("labels")).unwrap_or_default()),
-            meta: Some(serde_json::from_str(row.get("meta")).unwrap_or_default()),
+            data: Some(serde_json::from_str(row.get("data")).unwrap_or_default()),
         };
         results.push(e);
     }

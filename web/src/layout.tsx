@@ -1,10 +1,10 @@
-import { Outlet } from "react-router";
+import { Link, Outlet } from "react-router";
 
 export default function AppLayout() {
   return (
     <div className="flex gap-2">
       <Header />
-      <div className="flex-1 flex flex-col p-2 overflow-x-hidden">
+      <div className="flex-1 flex flex-col p-2 overflow-y-scroll">
         <Outlet />
       </div>
     </div>
@@ -13,18 +13,19 @@ export default function AppLayout() {
 
 const menu_items = [
   { label: "Home", href: "/" },
-  { label: "Events", href: "/events" },
   { label: "Live Events", href: "/events/live" },
+  { label: "Events", href: "/events" },
+  { label: "Reports", href: "/reports" },
 ];
 function Menu() {
   return (
     <div className="p-2 flex flex-col gap-2">
       {menu_items.map((m) => (
-        <a href={m.href}>
+        <Link to={m.href}>
           <div className="p-2 border-b border-b-gray-200 hover:shadow-md rounded-md cursor-pointer">
             {m.label}
           </div>
-        </a>
+        </Link>
       ))}
     </div>
   );

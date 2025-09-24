@@ -47,6 +47,7 @@ pub async fn rotate_events() {
     .unwrap_or_else(|err| {
         panic!("Failed to copy in events rotation with error {err}");
     });
+    println!("###DEBUG copy done");
     let rows_deleted = sqlx::query(
         "
             DELETE FROM main.evt_events as a 
@@ -59,21 +60,35 @@ pub async fn rotate_events() {
         println!("> {} events were archived.", rows_affected.rows_affected());
         panic!("Failed to delete in events rotation with error {err}");
     });
+    println!("###DEBUG delete done");
     println!(
         "> {} archived & {} cleared.",
         rows_affected.rows_affected(),
         rows_deleted.rows_affected()
     );
 
-    let checker = r#"
-            SELECT COUNT(DISTINCT a.ui), COUNT(DISTINCT b.ui) FROM main.evt_events as a, db2.evt_events as b 
-        "#;
-    let row: (i64, i64) = sqlx::query_as(checker)
-        .fetch_one(&mut *conn)
-        .await
-        .unwrap_or_else(|err| {
-            panic!("Failed to read stats in events rotation with error {err}");
-        });
-    println!("> Stats: {} live, {} archives .", row.0, row.1);
+    let live_row: (i64,) = sqlx::query_as(
+        r#"
+            SELECT COUNT(a.ui) FROM main.evt_events as a 
+        "#,
+    )
+    .fetch_one(&mut *conn)
+    .await
+    .unwrap_or_else(|err| {
+        panic!("Failed to read stats in events rotation with error {err}");
+    });
+    println!("###DEBUG live_count done");
+    let archive_row: (i64,) = sqlx::query_as(
+        r#"
+            SELECT COUNT(b.ui) FROM db2.evt_events as b 
+        "#,
+    )
+    .fetch_one(&mut *conn)
+    .await
+    .unwrap_or_else(|err| {
+        panic!("Failed to read stats in events rotation with error {err}");
+    });
+    println!("###DEBUG archive_count done");
+    println!("> Stats: {} live, {} archives .", live_row.0, archive_row.0);
     let _ = conn.close().await;
 }

@@ -55,10 +55,12 @@ impl DbManager {
             .max_connections(10)
             .connect_with(options)
             .await?;
-        if should_migrate {
-            let migrator: Migrator = Migrator::new(Path::new(migration_path)).await.unwrap();
-            migrator.run(&pool).await?;
-        }
+        /*
+                if should_migrate {
+                    let migrator: Migrator = Migrator::new(Path::new(migration_path)).await.unwrap();
+                    migrator.run(&pool).await?;
+                }
+        */
         Ok(DbManager {
             id: dbname.to_owned(),
             pool: Some(pool),

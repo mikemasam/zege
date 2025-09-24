@@ -58,5 +58,5 @@ CREATE TABLE evt_events (
 
   tags JSONB, 
   labels JSONB,
-  meta JSONB  
+  data JSONB  
 );

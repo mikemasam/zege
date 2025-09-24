@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+body {
+}
 @custom-variant dark (&:is(.dark *));
 .table-view {
   @apply text-left font-mono bg-secondary border-primary;
