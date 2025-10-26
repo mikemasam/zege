@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_imports, unused_variables)]
 use std::fmt::Debug;
 use std::path::Path;
 use std::time::Duration;
@@ -19,21 +19,6 @@ impl DbManager {
     pub fn is_connected(&self) -> bool {
         self.pool.is_some()
     }
-    pub async fn check_table_exists(
-        pool: &SqlitePool,
-        table_name: &str,
-    ) -> Result<bool, sqlx::Error> {
-        let checker = r#"
-            SELECT COUNT(*) FROM information_schema.tables 
-            WHERE table_schema = 'public' AND table_name = $1
-        "#;
-        let row: (i64,) = sqlx::query_as(checker)
-            .bind(table_name)
-            .fetch_one(pool)
-            .await?;
-        Ok(row.0 > 0)
-    }
-
     pub async fn connect_to_event_db(
         should_migrate: bool,
     ) -> Result<DbManager, sqlx::migrate::MigrateError> {
@@ -45,6 +30,16 @@ impl DbManager {
         should_migrate: bool,
     ) -> Result<DbManager, sqlx::migrate::MigrateError> {
         let migration_path = "migrations/events";
+        if should_migrate {
+            DbManager::connect_to_db(dbname, migration_path).await
+        } else {
+            DbManager::connect_to_db(dbname, "").await
+        }
+    }
+    pub async fn connect_to_db(
+        dbname: &str,
+        migration_path: &str,
+    ) -> Result<DbManager, sqlx::migrate::MigrateError> {
         let options = SqliteConnectOptions::new()
             .filename(dbname)
             .create_if_missing(true)
@@ -55,12 +50,10 @@ impl DbManager {
             .max_connections(10)
             .connect_with(options)
             .await?;
-        /*
-                if should_migrate {
-                    let migrator: Migrator = Migrator::new(Path::new(migration_path)).await.unwrap();
-                    migrator.run(&pool).await?;
-                }
-        */
+        if !migration_path.is_empty() {
+            let migrator: Migrator = Migrator::new(Path::new(migration_path)).await.unwrap();
+            migrator.run(&pool).await?;
+        }
         Ok(DbManager {
             id: dbname.to_owned(),
             pool: Some(pool),
@@ -71,6 +64,18 @@ impl DbManager {
             let _ = _p.close().await;
         }
     }
+}
+
+pub async fn check_table_exists(pool: &SqlitePool, table_name: &str) -> Result<bool, sqlx::Error> {
+    let checker = r#"
+            SELECT COUNT(*) FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_name = $1
+        "#;
+    let row: (i64,) = sqlx::query_as(checker)
+        .bind(table_name)
+        .fetch_one(pool)
+        .await?;
+    Ok(row.0 > 0)
 }
 
 async fn _migrate(pool: &SqlitePool) {

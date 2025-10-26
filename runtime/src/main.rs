@@ -4,6 +4,16 @@ mod http;
 mod inputs;
 mod jobs;
 mod output;
+mod config;
+use crate::config::report_routes;
+use crate::event::writer::LogEventMessage;
+use crate::inputs::event_input_routes;
+use crate::jobs::rotate::rotate_events;
+use crate::output::event_output_routes;
+use crate::{
+    ctx::{appcontext::AppContext, dbmanager::DbManager},
+    event::writer::event_write_worker,
+};
 use axum::{Extension, Router};
 use dotenv::dotenv;
 use std::process;
@@ -16,14 +26,6 @@ use tokio::runtime::{Handle, Runtime};
 use tokio::sync::Mutex;
 use tokio::time::{self, Instant, sleep};
 use tower_http::cors::{Any, CorsLayer};
-use crate::event::writer::LogEventMessage;
-use crate::inputs::event_input_routes;
-use crate::jobs::rotate::rotate_events;
-use crate::output::event_output_routes;
-use crate::{
-    ctx::{appcontext::AppContext, dbmanager::DbManager},
-    event::writer::event_write_worker,
-};
 
 #[tokio::main]
 async fn main() {
@@ -42,13 +44,26 @@ async fn main() {
         };
         ctx.eventsdb = Some(Arc::new(Mutex::new(_db.unwrap())));
     }
+    {
+        let _db = DbManager::connect_to_db("data/config.db", "migrations/config").await;
+        if _db.is_err() {
+            panic!(
+                "Failed to open config db with error {:?}",
+                _db.err().unwrap()
+            );
+        };
+        ctx.configdb = Some(Arc::new(Mutex::new(_db.unwrap())));
+    }
     let _events_writer_thread = start_events_writer_thread(events_reader);
     tokio::task::spawn(start_scheduler());
     tokio::task::spawn(start_http(ctx));
     wait_for_signal_impl(events_writer, _events_writer_thread).await;
 }
 
-async fn wait_for_signal_impl(events_writer: Sender<LogEventMessage>, writer_thread: JoinHandle<()>) {
+async fn wait_for_signal_impl(
+    events_writer: Sender<LogEventMessage>,
+    writer_thread: JoinHandle<()>,
+) {
     use tokio::signal::unix;
     let mut signal_terminate = unix::signal(unix::SignalKind::terminate()).unwrap();
     let mut signal_quit = unix::signal(unix::SignalKind::quit()).unwrap();
@@ -90,6 +105,7 @@ async fn start_http(ctx: AppContext) {
     let app = Router::new()
         .nest("/api/v1/e/i", event_input_routes())
         .nest("/api/v1/events", event_output_routes())
+        .nest("/api/v1/config", report_routes())
         .layer(cors)
         .layer(Extension(Arc::clone(&arc_ctx)));
     axum::Server::bind(&addr)

@@ -43,10 +43,10 @@ pub async fn list_events_route(
     if let Some(path) = query.http_path.filter(|s| !s.trim().is_empty()) {
         qb.push(" AND http_path LIKE ").push_bind(format!("%{path}%"));
     }
-    if let Some(severity) = query.severity {
+    if query.severity.is_some() {
         //qb.push(" AND severity = ").push_bind(severity);
     }
-    if let Some(url) = query.http_url {
+    if query.http_url.is_some() {
         //qb.push(" AND http_url LIKE ").push_bind(format!("%{url}%"));
     }
 

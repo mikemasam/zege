@@ -1,0 +1,32 @@
+- archive
+
+-- Attach the historical database file
+ATTACH DATABASE 'historical_data.db' AS historical;
+
+-- Copy the old data
+INSERT INTO db2.evt_events
+SELECT * FROM main.evt_events WHERE time < date('now', '-1 minute');
+
+-- Detach the historical database
+DETACH DATABASE historical;
+
+
+
+- history table
+  - label
+  - file
+  - id
+  - timestamp
+
+- select/query
+  - use live for latest data
+  - use a specific index historical data
+
+
+- instructs
+  - use uuidv7 as unique id -
+  - connect to backup
+  - run migrations
+  - select data from main db to backup db
+  - delete data from main db that has been sent to backup db
+  - disconnect

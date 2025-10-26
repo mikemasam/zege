@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_imports, unused_variables)]
 use crate::{ctx::dbmanager::DbManager, event::event::LogEvent};
 use chrono::SecondsFormat;
 use sqlx::{Error, QueryBuilder};
