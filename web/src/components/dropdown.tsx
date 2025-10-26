@@ -1,3 +1,4 @@
+import { useController } from "react-hook-form";
 import {
   Select,
   SelectContent,
@@ -7,6 +8,7 @@ import {
 } from "./ui/select";
 
 export default function UIDropdown({ placeholder, name, label, items }: any) {
+  const methods = useController({ name });
   return (
     <div className="grid w-full items-center gap-3">
       <label
@@ -15,7 +17,11 @@ export default function UIDropdown({ placeholder, name, label, items }: any) {
       >
         {label}
       </label>
-      <Select name={name} >
+      <Select
+        name={name}
+        value={methods.field.value}
+        onValueChange={methods.field.onChange}
+      >
         <SelectTrigger className="w-full bg-white">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

@@ -1,8 +1,32 @@
 use core::panic;
-
+use tokio::runtime::{Handle};
+use tokio::time::{self, Instant};
 use crate::ctx::dbmanager::DbManager;
 
-pub async fn rotate_events() {
+
+pub async fn start_scheduler() {
+    let mut interval = time::interval(time::Duration::from_secs(60 * 5));
+    println!(
+        "Starting Background Job #{:?}.",
+        std::thread::current().id()
+    );
+    loop {
+        interval.tick().await;
+        let start_time = Instant::now();
+        let _ = tokio::task::spawn_blocking(|| {
+            let rt = tokio::runtime::Handle::current();
+            rt.block_on(async {
+                rotate_events().await;
+            });
+        })
+        .await;
+        let elapsed_time = start_time.elapsed();
+        let workers_count = Handle::current().metrics().num_workers();
+        println!("# rotation time: {elapsed_time:?}, workers: {workers_count}");
+    }
+}
+
+async fn rotate_events() {
     let backup_db_name = "data/backup.events.db";
     {
         let _bk_db = DbManager::connect_to_event_db_with_name(backup_db_name, true)

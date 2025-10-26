@@ -1,6 +1,7 @@
 #![allow(dead_code, unused_imports, unused_variables)]
-use crate::{ctx::dbmanager::DbManager, event::event::LogEvent};
+use crate::{ctx::dbmanager::DbManager, dto::logevent::{LogEvent, LogEventChannelMessage}};
 use chrono::SecondsFormat;
+use tokio::runtime::{Handle, Runtime};
 use sqlx::{Error, QueryBuilder};
 use std::{
     ops::DerefMut,
@@ -13,12 +14,16 @@ use std::{
 use tokio::{sync::Mutex, time::Instant};
 use uuid::Uuid;
 
-pub enum LogEventMessage {
-    Data(Box<LogEvent>),
-    Shutdown,
+
+pub fn start_events_writer_thread(receiver: Receiver<LogEventChannelMessage>) -> std::thread::JoinHandle<()> {
+    std::thread::spawn(|| {
+        let rt = Runtime::new().unwrap();
+        rt.block_on(async { event_write_worker(receiver).await });
+    })
 }
 
-pub async fn event_write_worker(receiver: Receiver<LogEventMessage>) {
+
+async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
     let _db = DbManager::connect_to_event_db(false).await;
     if _db.is_err() {
         panic!(
@@ -31,14 +36,14 @@ pub async fn event_write_worker(receiver: Receiver<LogEventMessage>) {
     let db = Arc::new(Mutex::new(_db.unwrap()));
     loop {
         match receiver.recv_timeout(Duration::from_secs(1)) {
-            Ok(LogEventMessage::Data(mut event)) => {
+            Ok(LogEventChannelMessage::Data(mut event)) => {
                 event.ui = Some(Uuid::now_v7().simple().to_string());
                 events_batch.push(*event);
                 if events_batch.len() >= 100 {
                     time_write_events(db.clone(), &mut events_batch).await;
                 }
             }
-            Ok(LogEventMessage::Shutdown) => {
+            Ok(LogEventChannelMessage::Shutdown) => {
                 time_write_events(db.clone(), &mut events_batch).await;
                 break;
             }

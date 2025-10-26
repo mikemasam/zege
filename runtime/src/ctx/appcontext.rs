@@ -6,17 +6,16 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::ctx::dbmanager::DbManager;
-use crate::event::event::LogEvent;
-use crate::event::writer::LogEventMessage;
+use crate::dto::logevent::{LogEvent, LogEventChannelMessage};
 
 #[derive(Debug, Clone)]
 pub struct AppContext {
     pub eventsdb: Option<Arc<Mutex<DbManager>>>,
     pub configdb: Option<Arc<Mutex<DbManager>>>,
-    pub event_writer: Sender<LogEventMessage>
+    pub event_writer: Sender<LogEventChannelMessage>
 }
 impl AppContext {
-    pub fn new(sender: Sender<LogEventMessage>) -> Self {
+    pub fn new(sender: Sender<LogEventChannelMessage>) -> Self {
         AppContext {  eventsdb: None, event_writer: sender, configdb: None }
     }
 }

@@ -1,13 +1,15 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { useController } from "react-hook-form";
 
 export default function UITextAreaInput({
   label,
   name,
   className,
   ...props
-}: React.ComponentProps<"textarea"> & { label: string }) {
+}: React.ComponentProps<"textarea"> & { label: string; name: string }) {
+  const methods = useController({ name });
   return (
     <div className="grid w-full items-center gap-2 py-2">
       <label
@@ -26,6 +28,8 @@ export default function UITextAreaInput({
           "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
           className,
         )}
+        value={methods.field.value}
+        onChange={methods.field.onChange}
         {...props}
       />
     </div>

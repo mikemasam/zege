@@ -86,3 +86,10 @@ pub struct RequestInfo {
     pub protocol: Option<String>,
     pub response_size_bytes: Option<f64>,
 }
+
+
+pub enum LogEventChannelMessage {
+    Data(Box<LogEvent>),
+    Shutdown,
+}
+
