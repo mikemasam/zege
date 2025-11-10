@@ -76,13 +76,13 @@ const renderValue = (
   }
 };
 const JsonObject = ({ itemKey, obj, indent }: any): any => {
-  const [open, setOpen] = useState<boolean>(itemKey == "meta" || indent == 0);
+  const [open, setOpen] = useState<boolean>(itemKey == "data" || indent == 0);
   const entries = useMemo(() => {
     let l = Object.entries(obj);
     l = l.filter(([_, value]) => value);
     l = l.sort((a, b) => {
-      if (a[0] === "meta") return -1;
-      if (b[0] === "meta") return 1;
+      if (a[0] === "data") return -1;
+      if (b[0] === "data") return 1;
       return a[0].localeCompare(b[0] as string);
     });
     return l;

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Input } from "./ui/input";
+import { Input } from "./input";
 import { useController } from "react-hook-form";
 
 export default function UIInput({

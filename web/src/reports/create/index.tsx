@@ -1,47 +1,75 @@
-import UICard from "@/components/Card";
-import UIDropdown from "@/components/dropdown";
-import UIInput from "@/components/Input";
-import UITextAreaInput from "@/components/TextAreaInput";
+import UICard from "@/components/ui/ui-card";
+import UIDropdown from "@/components/ui/ui-dropdown";
+import UIInput from "@/components/ui/ui-input";
+import UITextAreaInput from "@/components/ui/ui-text-area-input";
 import { Button } from "@/components/ui/button";
-import RenderCharts from "./render";
-import { useForm } from "react-hook-form";
-import api from "@/lib/api";
-import type { FormEvent } from "react";
-import UIForm from "@/components/ui-form";
+import api, { useApi } from "@/lib/api";
+import UIForm from "@/components/ui/ui-form";
+import Page from "@/components/ui/ui-page";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router";
+import ReportRender from "@/components/report/report.render";
 
-export default function CreateZegeReport() {
+export default function ZegeReportEditor() {
+  const [id, setId] = useState(null);
   return (
-    <div className="flex flex-col gap-4 p-2">
-      <UICard>
-        <div>Create Zege report</div>
-      </UICard>
-      <ReportForm />
-      <RenderCharts />
-    </div>
+    <Page title="New Zege Report" className="space-y-4">
+      <ReportForm onChange={setId} />
+      {id && <ReportRender report_id={id} />}
+    </Page>
   );
 }
 
 const reportTypes = [
+  { label: "Table", value: "table" },
+  { label: "Tiles", value: "tiles" },
   { label: "Bar", value: "bar" },
   { label: "Line", value: "line" },
-  { label: "Table", value: "table" },
 ];
-function ReportForm() {
+function ReportForm({ onChange }: any) {
+  const params = useParams();
+  const [defaultValues, setDefaultValues] = useState<any>(undefined);
+  const { data: report, load } = useApi(
+    (params: any) => api.get(`/reports/${params.id}`),
+    { prefrech: false },
+  );
+  useEffect(() => {
+    if (params.id) {
+      onChange(params?.id);
+      console.log("loading edit report");
+      load(params).then((r) => {
+        if (!r?.data) return;
+        setDefaultValues(() => ({
+          report_name: r.data.report_name,
+          report_type: r.data.report_type,
+          report_sql: r.data.report_sql,
+        }));
+      });
+    } else {
+      console.log("default values for new report");
+      setDefaultValues(() => ({
+        report_name: "test",
+        report_type: "",
+        report_sql: "",
+      }));
+    }
+  }, []);
   const onSubmit = async (form: any, e: any) => {
-    console.log(form);
+    onChange(null);
+    if (report) {
+      form.id = report.id;
+    }
     const res = await api.post("/reports", form);
     console.log(res);
+    if (res.status != 201) return;
+    load({ id: res.data.id });
+    onChange(res.data.id);
   };
+  console.log(report, defaultValues);
+  if (defaultValues == undefined) return null;
   return (
     <UICard className="flex flex-col gap-2">
-      <UIForm
-        onSubmit={onSubmit}
-        defaultValues={{
-          report_name: "test",
-          report_type: "",
-          report_sql: "",
-        }}
-      >
+      <UIForm onSubmit={onSubmit} defaultValues={defaultValues}>
         <UIInput
           label="Name"
           name="report_name"
@@ -59,7 +87,6 @@ function ReportForm() {
           placeholder="Enter report sql"
         ></UITextAreaInput>
         <div className="flex flex-row justify-end gap-2">
-          <Button variant="outline">Preview</Button>
           <Button type="submit">Save</Button>
         </div>
       </UIForm>

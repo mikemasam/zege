@@ -5,7 +5,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
+} from "./select";
 
 export default function UIDropdown({ placeholder, name, label, items }: any) {
   const methods = useController({ name });

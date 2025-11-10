@@ -1,4 +1,3 @@
-
 export default function UICard({ children, className }: any) {
   return (
     <div

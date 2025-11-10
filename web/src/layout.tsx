@@ -14,7 +14,6 @@ export default function AppLayout() {
 const menu_items = [
   { label: "Home", href: "/" },
   { label: "Live Events", href: "/events/live" },
-  { label: "Events", href: "/events" },
   { label: "Reports", href: "/reports" },
 ];
 function Menu() {
