@@ -8,6 +8,7 @@ pub struct LogEvent {
     pub timestamp: DateTime<Utc>,
     pub _time: Option<DateTime<Utc>>,
     pub event_name: String,
+    pub event_type: String,
     pub service_name: String,
     pub ui: Option<String>,
     pub severity: Option<String>,
@@ -56,6 +57,7 @@ pub struct UserInfo {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct HttpInfo {
+    pub headers: Option<HashMap<String, serde_json::Value>>,
     pub method: Option<String>,
     pub path: Option<String>,
     pub url: Option<String>,

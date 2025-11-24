@@ -22,7 +22,7 @@ export default function ZegeReportEditor() {
 
 const reportTypes = [
   { label: "Table", value: "table" },
-  { label: "Tiles", value: "tiles" },
+  { label: "Tile", value: "tile" },
   { label: "Bar", value: "bar" },
   { label: "Line", value: "line" },
 ];

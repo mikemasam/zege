@@ -23,6 +23,8 @@ This API accepts an event payload in JSON format. Each field is optional unless 
   "severity": "ERROR",
   "message": "Something went wrong",
   "service_name": "user-service",
+  "event_name": "user.logged.in",
+  "event_type": "event.auth",
   "error": {
     "error_type": "RuntimeError",
     "error_message": "Division by zero",
@@ -63,6 +65,7 @@ This API accepts an event payload in JSON format. Each field is optional unless 
     "status": 200,
     "client_ip": "192.168.0.1",
     "user_agent": "Mozilla/5.0"
+    "headers": { "Referer": "http://app.dev/" } 
   },
   "tags": ["backend", "critical"],
   "labels": { "feature": "login", "team": "auth" },
@@ -79,7 +82,7 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | Field       | Type             | Description                                            |
 | ----------- | ---------------- | ------------------------------------------------------ |
 | `timestamp` | string (RFC3339) | When the event occurred. **Required**.                 |
-| `service` | string           | name of service . **Required**.                    |
+| `service`   | string           | name of service . **Required**.                    |
 | `severity`  | string           | Severity level: `"INFO"`, `"WARN"`, `"ERROR"`, etc.    |
 | `message`   | string           | Human-readable description of the event.               |
 | `error`     | object           | Error details (see **ErrorInfo**).                     |
@@ -153,11 +156,12 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | ------------ | ------- | ------------------------------------ |
 | `method`     | string  | HTTP method: `"GET"`, `"POST"`, etc. |
 | `path`       | string  | Request path.                        |
-| `url`       | string  | Request url.                        |
-| `origin`       | string  | Request origin.                        |
+| `url`        | string  | Request url.                         |
+| `origin`     | string  | Request origin.                      |
 | `status`     | integer | HTTP response status code.           |
 | `client_ip`  | string  | IP address of the client.            |
 | `user_agent` | string  | User agent string.                   |
+| `headers`    | object  | headers.                             |
 
 ---
 

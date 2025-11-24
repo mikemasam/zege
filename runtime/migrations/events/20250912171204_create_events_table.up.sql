@@ -7,6 +7,7 @@ CREATE TABLE evt_events (
   ui TEXT,
   message TEXT,
   event_name TEXT,
+  event_type TEXT,
 
   -- Error info
   error_type TEXT,
@@ -47,6 +48,7 @@ CREATE TABLE evt_events (
   http_url TEXT,
   http_origin TEXT,
   http_status INT,
+  http_headers JSONB,
   client_ip TEXT,
   user_agent TEXT,
 

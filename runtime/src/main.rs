@@ -6,6 +6,7 @@ mod server;
 mod dto;
 mod utils;
 use crate::dto::logevent::LogEventChannelMessage;
+use crate::inputs::rediswrite::start_redis_reader;
 use crate::jobs::rotate::start_scheduler;
 use crate::server::start_http;
 use crate::utils::quitsignal::wait_for_signal_impl;
@@ -47,7 +48,9 @@ async fn main() {
     }
     let _events_writer_thread = start_events_writer_thread(events_reader);
     tokio::task::spawn(start_scheduler());
-    tokio::task::spawn(start_http(ctx));
+    tokio::task::spawn(start_http(ctx.clone()));
+    tokio::task::spawn(start_redis_reader(ctx.clone()));
+
     wait_for_signal_impl(events_writer, _events_writer_thread).await;
 }
 

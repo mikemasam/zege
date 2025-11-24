@@ -46,6 +46,7 @@ function logRequest(req) {
     severity: "INFO",
     message: `${req.method} ${req.url}`,
     event_name: "http_request",
+    event_type: "browsing.activity",
     http: {
       method: req.method,
       path: req.url,
@@ -74,6 +75,7 @@ const logNewTab = (tab) => {
     severity: "INFO",
     message: `Tab ${tab.url || "about:blank"}`,
     event_name: "tab_created",
+    event_type: "browsing.activity",
     data: {
       tabId: tab.id,
       url: tab.url || "about:blank",

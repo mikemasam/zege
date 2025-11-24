@@ -114,8 +114,8 @@ async fn write_events(
 
     request_id, referrer, protocol, response_size_bytes,
 
-    tags,  labels, data, event_name,
-    http_url, http_origin, ui, _time
+    tags,  labels, data, event_name, event_type,
+    http_url, http_origin, http_headers, ui, _time
     )",
     );
 
@@ -157,8 +157,10 @@ async fn write_events(
             .push_bind(e.labels.clone().map(|v| serde_json::to_value(v).ok()))
             .push_bind(e.data.clone().map(|v| serde_json::to_value(v).ok()))
             .push_bind(e.event_name.clone())
+            .push_bind(e.event_type.clone())
             .push_bind(e.http.as_ref().map(|v| &v.url))
             .push_bind(e.http.as_ref().map(|v| &v.origin))
+            .push_bind(e.http.as_ref().map(|v| serde_json::to_value(v.headers.clone()).ok()))
             .push_bind(e.ui.clone())
             .push_bind(e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string());
     });

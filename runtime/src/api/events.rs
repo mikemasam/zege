@@ -63,6 +63,7 @@ pub async fn list_events_route(
             timestamp: row.get("timestamp"),
             _time: row.get("_time"),
             event_name: row.get("event_name"),
+            event_type: row.get("event_type"),
             ui: row.get("ui"),
             service_name: row.get("service_name"),
             severity: row.get("severity"),
@@ -107,6 +108,7 @@ pub async fn list_events_route(
                 status: row.get("http_status"),
                 client_ip: row.get("client_ip"),
                 user_agent: row.get("user_agent"),
+                headers: Some(serde_json::from_str(row.get("http_headers")).unwrap_or_default()) ,
             }),
             request: Some(RequestInfo {
                 request_id: row.get("request_id"),

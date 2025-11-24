@@ -28,10 +28,8 @@ function KeyValueGrid({ data }: { data: Record<string, any> }) {
 }
 
 export function EventBox({ event }: { event: any }) {
-  const [open, setOpen] = useState(false);
-
   return (
-    <div className="flex flex-col gap-2 border rounded p-3 bg-white hover:bg-gray-50 transition">
+    <div className="flex flex-col gap-2 border rounded p-3 bg-gray-200 transition">
       <div className="flex items-center gap-2">
         <span
           className={`px-2 py-0.5 text-xs font-semibold rounded-md ${
@@ -43,12 +41,13 @@ export function EventBox({ event }: { event: any }) {
         <div className="font-semibold text-sm flex-1 text-gray-600">
           {event.event_name}
         </div>
-        <span className="font-mono text-xs text-gray-500">
+        <span className="font-mono text-xs text-gray-800">
           {new Date(event.timestamp).toLocaleString()}
         </span>
       </div>
 
-      <div className="text-sm text-gray-700 tile-content text-wrap  overflow-x-hidden break-all">{event.message}</div>
+      {event.message && 
+      <div className="text-sm text-gray-700 tile-content text-wrap  overflow-x-hidden break-all">{event.message}</div>}
 
       <div className="flex flex-row gap-2">
         <div className="flex flex-wrap gap-1 flex-1">
@@ -70,15 +69,8 @@ export function EventBox({ event }: { event: any }) {
               </span>
             ))}
         </div>
-        <button
-          onClick={() => setOpen(!open)}
-          className="self-start text-xs text-blue-600 hover:underline"
-        >
-          {open ? "Hide details" : "Show details"}
-        </button>
       </div>
-
-      {open && <JsonViewer data={event} />}
+      <JsonViewer data={event} />
     </div>
   );
 }

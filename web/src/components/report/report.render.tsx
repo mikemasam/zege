@@ -2,14 +2,25 @@ import api, { useApi } from "@/lib/api";
 import { TableView } from "./table.view";
 import UICard from "@/components/ui/ui-card";
 import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
+import { TileView } from "./tile.view";
 
 export default function ReportRender({ report_id }: { report_id: number }) {
-  const { data, loading, error } = useApi(
+  const [type, setType] = useState("");
+  const { data: output } = useApi(
     () => api.get(`/reports/${report_id}/read`),
     {},
     [report_id],
   );
-  console.log(data);
+  const [report, data] = useMemo(() => {
+    if (!output) return [null, null];
+    return [output.report, output.data];
+  }, [output]);
+  useEffect(() => {
+    if (!report) return;
+    setType(report.report_type);
+  }, [report]);
+  console.log(report, data);
   return (
     <div>
       <UICard className="flex flex-row justify-between items-center">
@@ -20,7 +31,8 @@ export default function ReportRender({ report_id }: { report_id: number }) {
           <Button variant="outline">Line</Button>
         </div>
       </UICard>
-      <TableView data={data} />
+      {type == "table" && <TableView data={data} />}
+      {type == "tile" && <TileView data={data} />}
     </div>
   );
 }

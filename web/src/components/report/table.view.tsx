@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 
-
 interface TableProps<T> {
   data: T[]; // Array of row data
   className?: string; // Optional Tailwind classes for wrapper
@@ -12,11 +11,11 @@ export function TableView<T extends Record<string, unknown>>({
 }: TableProps<T>) {
   // Memoize sorted data if needed; extend for sorting later
   const tableData = useMemo(() => {
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data) || !data?.length) return [];
     return data;
   }, [data]);
   const columns = useMemo(() => {
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data) || !data?.length) return [];
     return Object.keys(data[0]).map((c) => ({
       key: c,
       label: c,
