@@ -1,10 +1,9 @@
 use futures::{Stream, StreamExt};
 use serde_json::{Map, Value, json};
-use sqlx::sqlite::SqliteRow;
-use sqlx::{Column, Error as SqlxError, Row, TypeInfo, ValueRef};
+use sqlx::{postgres::PgRow, Column, Error as SqlxError, Row, TypeInfo, ValueRef};
 use std::collections::HashMap;
 
-fn get_column_info(row: &SqliteRow, idx: usize) -> (String, Value, &str) {
+fn get_column_info(row: &PgRow, idx: usize) -> (String, Value, &str) {
     let col_name = row.column(idx).name().to_owned();
     macro_rules! try_get {
         ($t:ty) => {
@@ -26,7 +25,7 @@ fn get_column_info(row: &SqliteRow, idx: usize) -> (String, Value, &str) {
 }
 
 pub async fn rows_to_json_vec(
-    mut stream: impl Stream<Item = Result<SqliteRow, SqlxError>> + Unpin,
+    mut stream: impl Stream<Item = Result<PgRow, SqlxError>> + Unpin,
 ) -> Result<Vec<Value>, SqlxError> {
     let mut results = Vec::new();
     while let Some(row_result) = stream.next().await {

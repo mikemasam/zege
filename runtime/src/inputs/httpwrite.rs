@@ -2,8 +2,8 @@
 use crate::ctx::appcontext::AppContext;
 use crate::dto::logevent::{LogEvent, LogEventChannelMessage};
 use crate::utils::http::AppResponse;
+use axum::Extension;
 use axum::response::IntoResponse;
-use axum::{Extension};
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -12,6 +12,7 @@ pub async fn event_route(
     Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
     body: axum::body::Bytes, // take raw body
 ) -> impl IntoResponse {
+    //println!("{:?}", body);
     let parser: Result<Vec<LogEvent>, serde_json::Error> = serde_json::from_slice(&body);
     let payload = match parser {
         Ok(p) => p,
@@ -24,9 +25,14 @@ pub async fn event_route(
             };
         }
     };
+
+    //println!("{}", serde_json::to_string_pretty(&payload).unwrap());
     let app = appcontext.lock().await;
     for event in payload {
-        if let Err(err) = app.event_writer.send(LogEventChannelMessage::Data(Box::new(event))) {
+        if let Err(err) = app
+            .event_writer
+            .send(LogEventChannelMessage::Data(Box::new(event)))
+        {
             eprintln!("Failed to process event {err}");
             return AppResponse {
                 status: 400,

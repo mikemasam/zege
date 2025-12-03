@@ -26,41 +26,27 @@ pub async fn report_create_route(
     println!("{:?}", item);
     let sql = match id {
         Some(_) => {
-            " update zg_reports set report_name = ?, report_type = ?, report_sql = ?, updated_at = ? where id = ? "
+            " update zg_reports set report_name = ?, report_type = ?, report_sql = ?, updated_at = ? where id = ?  RETURNING *"
         }
         None => {
-            " insert into zg_reports (report_name, report_type, report_sql, created_at, updated_at) VALUES (?, ?, ?, ?, ?) "
+            " insert into zg_reports (report_name, report_type, report_sql, created_at, updated_at) VALUES (?, ?, ?, ?, ?) RETURNING *"
         }
     };
 
-    let mut q = query(sql);
-    let app = appcontext.lock().await;
-    let configdb = app.configdb.as_ref().unwrap();
-    let _db = configdb.lock().await;
-
-    q = q
+    let mut q = sqlx::query_as::<_, ZegeReport>(sql)
         .bind(&item.report_name)
         .bind(item.report_type)
         .bind(item.report_sql)
-        .bind(Local::now());
+        .bind(Local::now().to_rfc3339());
+    let app = appcontext.lock().await;
+    let configdb = app.storage.as_ref().unwrap();
+    let _db = configdb.lock().await;
     if id.is_some() {
         q = q.bind(item.id);
     } else {
-        q = q.bind(Local::now());
+        q = q.bind(Local::now().to_rfc3339());
     }
     println!("SQL: {}", q.sql());
-    let res = q.execute(_db.pool.as_ref().unwrap()).await.unwrap();
-    let changed_id: i64;
-    if let Some(_id) = id {
-        changed_id = (*_id).into();
-    } else {
-        changed_id = res.last_insert_rowid();
-    }
-
-    let report = sqlx::query_as::<_, ZegeReport>("SELECT * FROM zg_reports where id = ?")
-        .bind(changed_id)
-        .fetch_one(_db.pool.as_ref().unwrap())
-        .await;
-
+    let report = q.fetch_one(_db.pool.as_ref().unwrap()).await;
     AppResponse::created(report.ok(), None)
 }

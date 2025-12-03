@@ -64,7 +64,7 @@ This API accepts an event payload in JSON format. Each field is optional unless 
     "origin": "/api/events",
     "status": 200,
     "client_ip": "192.168.0.1",
-    "user_agent": "Mozilla/5.0"
+    "user_agent": "Mozilla/5.0",
     "headers": { "Referer": "http://app.dev/" } 
   },
   "tags": ["backend", "critical"],

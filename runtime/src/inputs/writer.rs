@@ -1,7 +1,9 @@
 #![allow(dead_code, unused_imports, unused_variables)]
-use crate::{ctx::dbmanager::DbManager, dto::logevent::{LogEvent, LogEventChannelMessage}};
-use chrono::SecondsFormat;
-use tokio::runtime::{Handle, Runtime};
+use crate::{
+    ctx::dbmanager::{DbManager, DbManagerConnectOptions},
+    dto::logevent::{LogEvent, LogEventChannelMessage},
+};
+use chrono::{Local, SecondsFormat};
 use sqlx::{Error, QueryBuilder};
 use std::{
     ops::DerefMut,
@@ -11,20 +13,25 @@ use std::{
     },
     time::Duration,
 };
+use tokio::runtime::{Handle, Runtime};
 use tokio::{sync::Mutex, time::Instant};
 use uuid::Uuid;
 
-
-pub fn start_events_writer_thread(receiver: Receiver<LogEventChannelMessage>) -> std::thread::JoinHandle<()> {
+pub fn start_events_writer_thread(
+    receiver: Receiver<LogEventChannelMessage>,
+) -> std::thread::JoinHandle<()> {
     std::thread::spawn(|| {
         let rt = Runtime::new().unwrap();
         rt.block_on(async { event_write_worker(receiver).await });
     })
 }
 
-
 async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
-    let _db = DbManager::connect_to_event_db(false).await;
+    let _db = DbManager::connect(DbManagerConnectOptions {
+        migrate: false,
+        backup: false,
+    })
+    .await;
     if _db.is_err() {
         panic!(
             "Failed to open events db with error {:?}",
@@ -94,30 +101,20 @@ async fn write_events(
             e.message.clone().unwrap_or("".to_owned()).as_str()
         );
     */
-    let mut query = QueryBuilder::<sqlx::Sqlite>::new(
-        "INSERT INTO evt_events (
+    let _sql = "INSERT INTO evt_events (
     timestamp, severity, message,
-
     error_type, error_message, stack_trace,
-
     app_instance_id, build_commit, build_id, app_region,
-
     service_name, service_version, environment,
-
     hostname , host_ip , host_region , host_provider ,
-
     trace_id, span_id, transaction_id,
-
     user_id, user_name, user_email, session_id,
-
     http_method, http_path, http_status, client_ip, user_agent,
-
     request_id, referrer, protocol, response_size_bytes,
-
     tags,  labels, data, event_name, event_type,
     http_url, http_origin, http_headers, ui, _time
-    )",
-    );
+    )";
+    let mut query = QueryBuilder::<sqlx::Postgres>::new(_sql);
 
     query.push_values(events, |mut b, e| {
         b.push_bind(e.timestamp)
@@ -162,7 +159,7 @@ async fn write_events(
             .push_bind(e.http.as_ref().map(|v| &v.origin))
             .push_bind(e.http.as_ref().map(|v| serde_json::to_value(v.headers.clone()).ok()))
             .push_bind(e.ui.clone())
-            .push_bind(e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string());
+            .push_bind(Local::now());
     });
     let db = eventsdb.as_ref().lock().await;
     let res = query.build().execute(db.pool.as_ref().unwrap()).await?;

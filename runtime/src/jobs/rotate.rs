@@ -1,8 +1,7 @@
+use crate::ctx::dbmanager::{DbManager, DbManagerConnectOptions};
 use core::panic;
-use tokio::runtime::{Handle};
+use tokio::runtime::Handle;
 use tokio::time::{self, Instant};
-use crate::ctx::dbmanager::DbManager;
-
 
 pub async fn start_scheduler() {
     let mut interval = time::interval(time::Duration::from_secs(60 * 5));
@@ -27,21 +26,28 @@ pub async fn start_scheduler() {
 }
 
 async fn rotate_events() {
-    let backup_db_name = "data/backup.events.db";
+    let mut backup_db_name = String::new();
     {
-        let _bk_db = DbManager::connect_to_event_db_with_name(backup_db_name, true)
-            .await
-            .map_err(|err| {
-                panic!("Failed to open {backup_db_name} with error {err}");
-            })
-            .unwrap();
+        let _bk_db = DbManager::connect(DbManagerConnectOptions {
+            migrate: true,
+            backup: true,
+        })
+        .await
+        .map_err(|err| {
+            panic!("Failed to open {backup_db_name} with error {:?}", err);
+        })
+        .unwrap();
+        backup_db_name = _bk_db.clone().id;
         _bk_db.close_db().await;
     }
-    let rotation_db = DbManager::connect_to_event_db(true)
-        .await
-        .unwrap_or_else(|err| {
-            panic!("Failed to open events db with error {err}",);
-        });
+    let rotation_db = DbManager::connect(DbManagerConnectOptions {
+        migrate: true,
+        backup: false,
+    })
+    .await
+    .unwrap_or_else(|err| {
+        panic!("Failed to open events db with error {:?}",err);
+    });
     let mut conn = rotation_db
         .pool
         .as_ref()

@@ -18,7 +18,7 @@ pub async fn report_index_route(
     Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
 ) -> impl IntoResponse {
     let app = appcontext.lock().await;
-    let configdb = app.configdb.as_ref().unwrap();
+    let configdb = app.storage.as_ref().unwrap();
     let db = configdb.lock().await;
     let reports = sqlx::query_as::<_, ZegeReport>("SELECT * FROM zg_reports ORDER BY id DESC")
         .fetch_all(db.pool.as_ref().unwrap())

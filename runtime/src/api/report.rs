@@ -12,7 +12,7 @@ pub async fn report_view_route(
     Path(id): Path<i32>,
 ) -> impl IntoResponse {
     let app = appcontext.lock().await;
-    let configdb = app.configdb.as_ref().unwrap();
+    let configdb = app.storage.as_ref().unwrap();
     let db = configdb.lock().await;
     println!("{}", id);
     let reports = sqlx::query_as::<_, ZegeReport>("SELECT * FROM zg_reports where id = ?")

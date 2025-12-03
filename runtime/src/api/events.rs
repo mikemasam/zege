@@ -7,9 +7,10 @@ use crate::dto::logevent::{
 use crate::utils::http::AppResponse;
 use axum::response::IntoResponse;
 use axum::{Extension, extract::Query};
+use chrono::DateTime;
 use futures::StreamExt;
 use serde::Deserialize;
-use sqlx::{QueryBuilder, Row};
+use sqlx::{Any, QueryBuilder, Row};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -29,19 +30,21 @@ pub async fn list_events_route(
     Query(query): Query<Params>,
 ) -> impl IntoResponse {
     let app = appcontext.lock().await;
-    let eventsdb = app.eventsdb.as_ref().unwrap();
-    let _db = eventsdb.lock().await;
+    let storage = app.storage.as_ref().unwrap();
+    let _db = storage.lock().await;
 
-    let mut qb = QueryBuilder::new("SELECT * FROM evt_events WHERE 1=1 ");
+    let mut qb = QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM evt_events WHERE 1=1 ");
     if let Some(name) = query.event_name.filter(|s| !s.trim().is_empty()) {
         qb.push(" AND event_name LIKE ")
             .push_bind(format!("%{name}%"));
     }
     if let Some(hostname) = query.hostname.filter(|s| !s.trim().is_empty()) {
-        qb.push(" AND hostname LIKE ").push_bind(format!("%{hostname}%"));
+        qb.push(" AND hostname LIKE ")
+            .push_bind(format!("%{hostname}%"));
     }
     if let Some(path) = query.http_path.filter(|s| !s.trim().is_empty()) {
-        qb.push(" AND http_path LIKE ").push_bind(format!("%{path}%"));
+        qb.push(" AND http_path LIKE ")
+            .push_bind(format!("%{path}%"));
     }
     if query.severity.is_some() {
         //qb.push(" AND severity = ").push_bind(severity);
@@ -51,17 +54,22 @@ pub async fn list_events_route(
     }
 
     qb.push(" ORDER BY id DESC");
-    qb.push(" LIMIT ").push_bind(query.per_page.unwrap_or(15));
-    qb.push(" OFFSET ")
-        .push_bind(query.page.unwrap_or(0) * query.per_page.unwrap_or(15));
+    qb.push(" LIMIT ").push_bind(Into::<i64>::into(query.per_page.unwrap_or(15)));
+    qb.push(" OFFSET ").push_bind(Into::<i64>::into(query.page.unwrap_or(0) * query.per_page.unwrap_or(15)));
 
     let mut rows = qb.build().fetch(_db.pool.as_ref().unwrap());
 
     let mut results = Vec::new();
     while let Some(Ok(row)) = rows.next().await {
         let e = LogEvent {
-            timestamp: row.get("timestamp"),
-            _time: row.get("_time"),
+            timestamp: DateTime::parse_from_rfc3339(row.get("timestamp"))
+                .unwrap()
+                .into(),
+            _time: Some(
+                DateTime::parse_from_rfc3339(row.get("_time"))
+                    .unwrap()
+                    .into(),
+            ),
             event_name: row.get("event_name"),
             event_type: row.get("event_type"),
             ui: row.get("ui"),
@@ -108,7 +116,7 @@ pub async fn list_events_route(
                 status: row.get("http_status"),
                 client_ip: row.get("client_ip"),
                 user_agent: row.get("user_agent"),
-                headers: Some(serde_json::from_str(row.get("http_headers")).unwrap_or_default()) ,
+                headers: Some(serde_json::from_str(row.get("http_headers")).unwrap_or_default()),
             }),
             request: Some(RequestInfo {
                 request_id: row.get("request_id"),
