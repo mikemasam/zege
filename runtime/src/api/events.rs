@@ -1,21 +1,17 @@
 #![allow(dead_code)]
 use crate::ctx::appcontext::AppContext;
-use crate::dto::logevent::{
-    AppInfo, ErrorInfo, HostInfo, HttpInfo, LogEvent, RequestInfo, ServiceInfo, TracingInfo,
-    UserInfo,
-};
+use crate::ctx::dbmanager::DatabasePool;
+use crate::dto::logevent::ZegeEventRow;
 use crate::utils::http::AppResponse;
 use axum::response::IntoResponse;
 use axum::{Extension, extract::Query};
-use chrono::DateTime;
 use futures::StreamExt;
-use serde::Deserialize;
-use sqlx::{Any, QueryBuilder, Row};
+use serde::{Deserialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 #[derive(Deserialize)]
-pub struct Params {
+pub struct QueryParams {
     search: Option<String>,
     page: Option<u32>,
     per_page: Option<u32>,
@@ -25,15 +21,54 @@ pub struct Params {
     severity: Option<String>,
     http_url: Option<String>,
 }
+
 pub async fn list_events_route(
     Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
-    Query(query): Query<Params>,
+    Query(query_params): Query<QueryParams>,
 ) -> impl IntoResponse {
     let app = appcontext.lock().await;
     let storage = app.storage.as_ref().unwrap();
     let _db = storage.lock().await;
 
-    let mut qb = QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM evt_events WHERE 1=1 ");
+    /*
+        let filters: &[(&Option<String>, &str)] = &[
+            (&query.event_name, "event_name"),
+            (&query.hostname, "hostname"),
+            (&query.http_path, "http_path"),
+        ];
+    */
+
+    let mut results = Vec::new();
+    let mut rows = match _db.pool.as_ref().unwrap() {
+        DatabasePool::Postgres(pool) => {
+            let qb = sqlx::query_as::<_, ZegeEventRow>("SELECT * FROM evt_events WHERE 1=1 ");
+            //apply_where(&mut qb, query_params);
+            qb.fetch(pool)
+        }
+        DatabasePool::Sqlite(pool) => {
+            let qb = sqlx::query_as::<_, ZegeEventRow>("SELECT * FROM evt_events WHERE 1=1 ");
+            //apply_where(&mut qb, query_params);
+            qb.fetch(pool)
+        }
+    };
+    while let Some(Ok(row)) = rows.next().await {
+        results.push(row.to_event());
+    }
+
+    AppResponse {
+        status: 200,
+        message: "Ok".to_owned(),
+        data: Some(results),
+    }
+}
+
+fn apply_where<'c, DB>(qb: &mut sqlx::QueryBuilder<'c, DB>, query: QueryParams)
+where
+    DB: sqlx::Database,
+    i64: sqlx::Encode<'c, DB> + sqlx::Type<DB>,
+    std::string::String: sqlx::Encode<'c, DB>,
+    std::string::String: sqlx::Type<DB>,
+{
     if let Some(name) = query.event_name.filter(|s| !s.trim().is_empty()) {
         qb.push(" AND event_name LIKE ")
             .push_bind(format!("%{name}%"));
@@ -54,86 +89,9 @@ pub async fn list_events_route(
     }
 
     qb.push(" ORDER BY id DESC");
-    qb.push(" LIMIT ").push_bind(Into::<i64>::into(query.per_page.unwrap_or(15)));
-    qb.push(" OFFSET ").push_bind(Into::<i64>::into(query.page.unwrap_or(0) * query.per_page.unwrap_or(15)));
-
-    let mut rows = qb.build().fetch(_db.pool.as_ref().unwrap());
-
-    let mut results = Vec::new();
-    while let Some(Ok(row)) = rows.next().await {
-        let e = LogEvent {
-            timestamp: DateTime::parse_from_rfc3339(row.get("timestamp"))
-                .unwrap()
-                .into(),
-            _time: Some(
-                DateTime::parse_from_rfc3339(row.get("_time"))
-                    .unwrap()
-                    .into(),
-            ),
-            event_name: row.get("event_name"),
-            event_type: row.get("event_type"),
-            ui: row.get("ui"),
-            service_name: row.get("service_name"),
-            severity: row.get("severity"),
-            message: row.get("message"),
-            error: Some(ErrorInfo {
-                error_type: row.get("error_type"),
-                error_message: row.get("error_message"),
-                stack_trace: row.get("stack_trace"),
-            }),
-            app: Some(AppInfo {
-                instance_id: row.get("app_instance_id"),
-                build_commit: row.get("build_commit"),
-                build_id: row.get("build_id"),
-                region: row.get("app_region"),
-            }),
-            service: Some(ServiceInfo {
-                version: row.get("service_version"),
-                environment: row.get("environment"),
-            }),
-            host: Some(HostInfo {
-                hostname: row.get("hostname"),
-                host_ip: row.get("host_ip"),
-                region: row.get("host_region"),
-                provider: row.get("host_provider"),
-            }),
-            tracing: Some(TracingInfo {
-                trace_id: row.get("trace_id"),
-                span_id: row.get("span_id"),
-                transaction_id: row.get("transaction_id"),
-            }),
-            user: Some(UserInfo {
-                id: row.get("user_id"),
-                name: row.get("user_name"),
-                email: row.get("user_email"),
-                session_id: row.get("session_id"),
-            }),
-            http: Some(HttpInfo {
-                method: row.get("http_method"),
-                path: row.get("http_path"),
-                url: row.get("http_url"),
-                origin: row.get("http_origin"),
-                status: row.get("http_status"),
-                client_ip: row.get("client_ip"),
-                user_agent: row.get("user_agent"),
-                headers: Some(serde_json::from_str(row.get("http_headers")).unwrap_or_default()),
-            }),
-            request: Some(RequestInfo {
-                request_id: row.get("request_id"),
-                referrer: row.get("referrer"),
-                protocol: row.get("protocol"),
-                response_size_bytes: row.get("response_size_bytes"),
-            }),
-            tags: Some(serde_json::from_str(row.get("tags")).unwrap_or_default()),
-            labels: Some(serde_json::from_str(row.get("labels")).unwrap_or_default()),
-            data: Some(serde_json::from_str(row.get("data")).unwrap_or_default()),
-        };
-        results.push(e);
-    }
-
-    AppResponse {
-        status: 200,
-        message: "Ok".to_owned(),
-        data: Some(results),
-    }
+    qb.push(" LIMIT ")
+        .push_bind(Into::<i64>::into(query.per_page.unwrap_or(15)));
+    qb.push(" OFFSET ").push_bind(Into::<i64>::into(
+        query.page.unwrap_or(0) * query.per_page.unwrap_or(15),
+    ));
 }

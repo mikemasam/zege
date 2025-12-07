@@ -1,8 +1,8 @@
 -- Add up migration script here
 CREATE TABLE evt_events (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  timestamp TIMESTAMP NOT NULL,
-  _time TIMESTAMP NOT NULL,
+  timestamp TIMESTAMPTZ NOT NULL,
+  _time TIMESTAMPTZ NOT NULL,
   severity TEXT,
   ui TEXT,
   message TEXT,

@@ -1,10 +1,13 @@
 #![allow(dead_code, unused_imports, unused_variables)]
 use crate::{
-    ctx::dbmanager::{DbManager, DbManagerConnectOptions},
+    ctx::{
+        appcontext::AppEnv,
+        dbmanager::{DatabasePool, DbManager, DbManagerConnectOptions},
+    },
     dto::logevent::{LogEvent, LogEventChannelMessage},
 };
 use chrono::{Local, SecondsFormat};
-use sqlx::{Error, QueryBuilder};
+use sqlx::{Error, PgPool, QueryBuilder, SqlitePool};
 use std::{
     ops::DerefMut,
     sync::{
@@ -70,14 +73,14 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
 
 async fn time_write_events(eventsdb: Arc<Mutex<DbManager>>, events_batch: &mut Vec<LogEvent>) {
     if events_batch.is_empty() {
-        println!("# EventWrite size: empty, wrote: 0, time: 0");
+        AppEnv::log("# EventWrite size: empty, wrote: 0, time: 0".to_string());
         return;
     }
     let start_time = Instant::now();
     let written_events_count = match write_events(eventsdb, events_batch).await {
         Ok(t) => t,
         Err(err) => {
-            println!("##### WRITE ERROR: {err}");
+            AppEnv::error(format!("##### WRITE ERROR: {err}"));
             0
         }
     };
@@ -86,22 +89,30 @@ async fn time_write_events(eventsdb: Arc<Mutex<DbManager>>, events_batch: &mut V
     if written_events_count > 0 {
         events_batch.clear();
     }
-    println!("# EventWrite size: {size}, wrote: {written_events_count}, time: {elapsed_time:?}");
+    AppEnv::log(format!(
+        "# EventWrite size: {size}, wrote: {written_events_count}, time: {elapsed_time:?}"
+    ));
 }
 async fn write_events(
     eventsdb: Arc<Mutex<DbManager>>,
     events: &Vec<LogEvent>,
 ) -> Result<u64, Error> {
-    /*
-        println!(
+    for e in events {
+        AppEnv::debug(format!(
             "> {} - {}:{} - {}",
             e.timestamp,
             e.service_name,
             e.event_name,
             e.message.clone().unwrap_or("".to_owned()).as_str()
-        );
-    */
-    let _sql = "INSERT INTO evt_events (
+        ));
+    }
+    let db = eventsdb.as_ref().lock().await;
+    match db.pool.as_ref().unwrap() {
+        DatabasePool::Sqlite(pool) => sqlite_write_events(pool, events).await,
+        DatabasePool::Postgres(pool) => pgsql_write_events(pool, events).await,
+    }
+}
+static INSERT_SQL: &str = "INSERT INTO evt_events (
     timestamp, severity, message,
     error_type, error_message, stack_trace,
     app_instance_id, build_commit, build_id, app_region,
@@ -114,7 +125,8 @@ async fn write_events(
     tags,  labels, data, event_name, event_type,
     http_url, http_origin, http_headers, ui, _time
     )";
-    let mut query = QueryBuilder::<sqlx::Postgres>::new(_sql);
+async fn pgsql_write_events(pool: &PgPool, events: &Vec<LogEvent>) -> Result<u64, Error> {
+    let mut query = QueryBuilder::<sqlx::Postgres>::new(INSERT_SQL);
 
     query.push_values(events, |mut b, e| {
         b.push_bind(e.timestamp)
@@ -157,11 +169,69 @@ async fn write_events(
             .push_bind(e.event_type.clone())
             .push_bind(e.http.as_ref().map(|v| &v.url))
             .push_bind(e.http.as_ref().map(|v| &v.origin))
-            .push_bind(e.http.as_ref().map(|v| serde_json::to_value(v.headers.clone()).ok()))
+            .push_bind(
+                e.http
+                    .as_ref()
+                    .map(|v| serde_json::to_value(v.headers.clone()).ok()),
+            )
             .push_bind(e.ui.clone())
             .push_bind(Local::now());
     });
-    let db = eventsdb.as_ref().lock().await;
-    let res = query.build().execute(db.pool.as_ref().unwrap()).await?;
+    let res = query.build().execute(pool).await?;
+    Ok(res.rows_affected())
+}
+
+async fn sqlite_write_events(pool: &SqlitePool, events: &Vec<LogEvent>) -> Result<u64, Error> {
+    let mut query = QueryBuilder::<sqlx::Sqlite>::new(INSERT_SQL);
+    query.push_values(events, |mut b, e| {
+        b.push_bind(e.timestamp)
+            .push_bind(e.severity.clone())
+            .push_bind(e.message.clone())
+            .push_bind(e.error.as_ref().map(|v| &v.error_type))
+            .push_bind(e.error.as_ref().map(|v| &v.error_message))
+            .push_bind(e.error.as_ref().map(|v| &v.stack_trace))
+            .push_bind(e.app.as_ref().map(|v| &v.instance_id))
+            .push_bind(e.app.as_ref().map(|v| &v.build_commit))
+            .push_bind(e.app.as_ref().map(|v| &v.build_id))
+            .push_bind(e.app.as_ref().map(|v| &v.region))
+            .push_bind(e.service_name.clone())
+            .push_bind(e.service.as_ref().map(|v| &v.version))
+            .push_bind(e.service.as_ref().map(|v| &v.environment))
+            .push_bind(e.host.as_ref().map(|v| &v.hostname))
+            .push_bind(e.host.as_ref().map(|v| &v.host_ip))
+            .push_bind(e.host.as_ref().map(|v| &v.region))
+            .push_bind(e.host.as_ref().map(|v| &v.provider))
+            .push_bind(e.tracing.as_ref().map(|v| &v.trace_id))
+            .push_bind(e.tracing.as_ref().map(|v| &v.span_id))
+            .push_bind(e.tracing.as_ref().map(|v| &v.transaction_id))
+            .push_bind(e.user.as_ref().map(|v| &v.id))
+            .push_bind(e.user.as_ref().map(|v| &v.name))
+            .push_bind(e.user.as_ref().map(|v| &v.email))
+            .push_bind(e.user.as_ref().map(|v| &v.session_id))
+            .push_bind(e.http.as_ref().map(|v| &v.method))
+            .push_bind(e.http.as_ref().map(|v| &v.path))
+            .push_bind(e.http.as_ref().map(|v| &v.status))
+            .push_bind(e.http.as_ref().map(|v| &v.client_ip))
+            .push_bind(e.http.as_ref().map(|v| &v.user_agent))
+            .push_bind(e.request.as_ref().map(|v| &v.request_id))
+            .push_bind(e.request.as_ref().map(|v| &v.referrer))
+            .push_bind(e.request.as_ref().map(|v| &v.protocol))
+            .push_bind(e.request.as_ref().map(|v| &v.response_size_bytes))
+            .push_bind(e.tags.clone().map(|v| serde_json::to_value(v).ok()))
+            .push_bind(e.labels.clone().map(|v| serde_json::to_value(v).ok()))
+            .push_bind(e.data.clone().map(|v| serde_json::to_value(v).ok()))
+            .push_bind(e.event_name.clone())
+            .push_bind(e.event_type.clone())
+            .push_bind(e.http.as_ref().map(|v| &v.url))
+            .push_bind(e.http.as_ref().map(|v| &v.origin))
+            .push_bind(
+                e.http
+                    .as_ref()
+                    .map(|v| serde_json::to_value(v.headers.clone()).ok()),
+            )
+            .push_bind(e.ui.clone())
+            .push_bind(Local::now());
+    });
+    let res = query.build().execute(pool).await?;
     Ok(res.rows_affected())
 }

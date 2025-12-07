@@ -5,6 +5,7 @@ mod inputs;
 mod jobs;
 mod server;
 mod utils;
+use crate::ctx::appcontext::AppEnv;
 use crate::ctx::dbmanager::DbManagerConnectOptions;
 use crate::dto::logevent::LogEventChannelMessage;
 use crate::inputs::rediswrite::start_redis_reader;
@@ -26,7 +27,7 @@ async fn main() {
     dotenv().ok();
     install_default_drivers();
     //.layer(axum::middleware::from_fn(custom_middleware)); // apply custom middleware
-    println!("Starting Application #{:?}.", std::thread::current().id());
+    AppEnv::log(format!("Starting Application #{:?}.", std::thread::current().id()));
     let (events_writer, events_reader) = mpsc::channel::<LogEventChannelMessage>();
     let mut ctx = AppContext::new(events_writer.clone());
     {

@@ -4,7 +4,7 @@ use std::env;
 use tokio::time::{Duration, sleep};
 
 use crate::{
-    ctx::appcontext::AppContext,
+    ctx::appcontext::{AppContext, AppEnv},
     dto::logevent::{LogEvent, LogEventChannelMessage},
 };
 
@@ -19,7 +19,7 @@ pub async fn start_redis_reader(ctx: AppContext) {
 fn connect_to_server(ctx: AppContext, url: String) {
     tokio::task::spawn(async move {
         loop {
-            println!("> Redis URL: {url}");
+           AppEnv::log(format!("> Redis URL: {url}"));
             match connect_and_listen(ctx.clone(), url.as_str()).await {
                 Ok(_) => {}
                 Err(e) => {
@@ -31,12 +31,12 @@ fn connect_to_server(ctx: AppContext, url: String) {
     });
 }
 async fn connect_and_listen(ctx: AppContext, url: &str) -> redis::RedisResult<()> {
-    println!("> Connecting to Redis -> {}", url);
+    AppEnv::log(format!("> Connecting to Redis -> {}", url));
 
     let client = Client::open(url)?;
     let mut conn = client.get_multiplexed_async_connection().await?;
 
-    println!("> Redis connected -> {}", url);
+    AppEnv::log(format!("> Redis connected -> {}", url));
 
     loop {
         let result: redis::RedisResult<(String, String)> = redis::cmd("BLPOP")

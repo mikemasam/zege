@@ -1,4 +1,7 @@
-use crate::{ctx::appcontext::AppContext, utils::http::AppResponse};
+use crate::{
+    ctx::{appcontext::AppContext, dbmanager::DatabasePool},
+    utils::http::AppResponse,
+};
 use axum::{extract::Extension, response::IntoResponse};
 use serde::Serialize;
 use std::sync::Arc;
@@ -20,8 +23,10 @@ pub async fn report_index_route(
     let app = appcontext.lock().await;
     let configdb = app.storage.as_ref().unwrap();
     let db = configdb.lock().await;
-    let reports = sqlx::query_as::<_, ZegeReport>("SELECT * FROM zg_reports ORDER BY id DESC")
-        .fetch_all(db.pool.as_ref().unwrap())
-        .await;
+    let sql = "SELECT * FROM zg_reports ORDER BY id DESC";
+    let reports = match db.pool.as_ref().unwrap() {
+        DatabasePool::Sqlite(pool) => sqlx::query_as::<_, ZegeReport>(sql).fetch_all(pool).await,
+        DatabasePool::Postgres(pool) => sqlx::query_as::<_, ZegeReport>(sql).fetch_all(pool).await,
+    };
     AppResponse::ok(reports.ok(), None)
 }

@@ -10,10 +10,18 @@ use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 use sqlx::{AnyPool, ConnectOptions, Error, PgPool, SqlitePool};
 
+use crate::ctx::appcontext::AppEnv;
+
+#[derive(Debug, Clone)]
+pub enum DatabasePool {
+    Sqlite(SqlitePool),
+    Postgres(PgPool),
+}
+
 #[derive(Debug, Clone)]
 pub struct DbManager {
     pub id: String,
-    pub pool: Option<PgPool>,
+    pub pool: Option<DatabasePool>,
 }
 
 #[derive(Debug, Clone)]
@@ -39,6 +47,7 @@ impl DbManager {
     }
     pub async fn connect(opts: DbManagerConnectOptions) -> Result<Self, DbManagerError> {
         let db_driver = env::var("DB_DRIVER").unwrap_or("sqlite".to_string());
+        AppEnv::log(format!("> DB Connecting to {}", db_driver));
         if db_driver.eq_ignore_ascii_case("sqlite") {
             DbManager::connect_sqlite(opts).await
         } else if db_driver.eq_ignore_ascii_case("pgsql") {
@@ -68,12 +77,9 @@ impl DbManager {
             let migrator: Migrator = Migrator::new(Path::new(migration_path)).await.unwrap();
             migrator.run(&sqlite_pool).await?;
         }
-        sqlite_pool.close().await;
-        let url = options.to_url_lossy().to_string();
-        let pool = AnyPool::connect(&url).await.unwrap();
         Ok(DbManager {
             id: dbname.to_owned(),
-            pool: None,
+            pool: Some(DatabasePool::Sqlite(sqlite_pool)),
         })
     }
     async fn connect_pgsql(opts: DbManagerConnectOptions) -> Result<Self, DbManagerError> {
@@ -99,12 +105,16 @@ impl DbManager {
         }
         Ok(DbManager {
             id: dbname.to_owned(),
-            pool: Some(pool),
+            pool: Some(DatabasePool::Postgres(pool)),
         })
     }
     pub async fn close_db(self) {
         if self.pool.is_some() {
-            self.pool.unwrap().close().await;
+            if let DatabasePool::Sqlite(pool) = self.pool.as_ref().unwrap() {
+                pool.close().await;
+            } else if let DatabasePool::Postgres(pool) = self.pool.as_ref().unwrap() {
+                pool.close().await;
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+use crate::ctx::appcontext::AppEnv;
 use crate::ctx::dbmanager::{DbManager, DbManagerConnectOptions};
 use core::panic;
 use tokio::runtime::Handle;
@@ -5,26 +6,27 @@ use tokio::time::{self, Instant};
 
 pub async fn start_scheduler() {
     let mut interval = time::interval(time::Duration::from_secs(60 * 5));
-    println!(
+    AppEnv::log(format!(
         "Starting Background Job #{:?}.",
         std::thread::current().id()
-    );
+    ));
     loop {
         interval.tick().await;
         let start_time = Instant::now();
         let _ = tokio::task::spawn_blocking(|| {
             let rt = tokio::runtime::Handle::current();
             rt.block_on(async {
-                rotate_events().await;
+                //rotate_events().await;
             });
         })
         .await;
         let elapsed_time = start_time.elapsed();
         let workers_count = Handle::current().metrics().num_workers();
-        println!("# rotation time: {elapsed_time:?}, workers: {workers_count}");
+        AppEnv::log(format!("# rotation time: {elapsed_time:?}, workers: {workers_count}"));
     }
 }
 
+/*
 async fn rotate_events() {
     let mut backup_db_name = String::new();
     {
@@ -86,14 +88,14 @@ async fn rotate_events() {
     .execute(&mut *conn)
     .await
     .unwrap_or_else(|err| {
-        println!("> {} events were archived.", rows_affected.rows_affected());
+        AppEnv::log(format!("> {} events were archived.", rows_affected.rows_affected()));
         panic!("Failed to delete in events rotation with error {err}");
     });
-    println!(
+    AppEnv::log(format!(
         "> {} archived & {} cleared.",
         rows_affected.rows_affected(),
         rows_deleted.rows_affected()
-    );
+    ));
 
     let live_row: (i64,) = sqlx::query_as(
         r#"
@@ -115,6 +117,7 @@ async fn rotate_events() {
     .unwrap_or_else(|err| {
         panic!("Failed to read stats in events rotation with error {err}");
     });
-    println!("> Stats: {} live, {} archives .", live_row.0, archive_row.0);
+    AppEnv::log(format!("> Stats: {} live, {} archives .", live_row.0, archive_row.0));
     let _ = conn.close().await;
 }
+*/

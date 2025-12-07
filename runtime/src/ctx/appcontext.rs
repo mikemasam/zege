@@ -21,3 +21,17 @@ impl AppContext {
         }
     }
 }
+
+pub struct AppEnv {}
+
+impl AppEnv {
+    pub fn log(str: String) {
+        println!("LOG: {}", str);
+    }
+    pub fn debug(str: String) {
+        println!("DEBUG: {}", str);
+    }
+    pub fn error(str: String) {
+        println!("ERR: {}", str);
+    }
+}
