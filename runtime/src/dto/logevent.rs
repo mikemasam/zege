@@ -86,7 +86,7 @@ pub struct RequestInfo {
     pub request_id: Option<String>,
     pub referrer: Option<String>,
     pub protocol: Option<String>,
-    pub response_size_bytes: Option<f64>,
+    pub response_size_bytes: Option<i64>,
 }
 
 pub enum LogEventChannelMessage {
@@ -96,6 +96,7 @@ pub enum LogEventChannelMessage {
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct ZegeEventRow {
+    pub id: i64,
     pub timestamp: DateTime<FixedOffset>,
     pub _time: Option<DateTime<FixedOffset>>,
     pub event_name: String,
@@ -107,38 +108,38 @@ pub struct ZegeEventRow {
     pub error_type: Option<String>,
     pub error_message: Option<String>,
     pub stack_trace: Option<String>,
-    pub instance_id: Option<String>,
+    pub app_instance_id: Option<String>,
     pub build_commit: Option<String>,
     pub build_id: Option<String>,
     pub app_region: Option<String>,
     pub host_region: Option<String>,
-    pub version: Option<String>,
+    pub service_version: Option<String>,
     pub environment: Option<String>,
     pub hostname: Option<String>,
     pub host_ip: Option<String>,
-    pub provider: Option<String>,
+    pub host_provider: Option<String>,
     pub trace_id: Option<String>,
     pub span_id: Option<String>,
     pub transaction_id: Option<String>,
-    pub id: Option<String>,
-    pub name: Option<String>,
-    pub email: Option<String>,
+    pub user_id: Option<String>,
+    pub user_name: Option<String>,
+    pub user_email: Option<String>,
     pub session_id: Option<String>,
-    pub method: Option<String>,
-    pub path: Option<String>,
-    pub url: Option<String>,
-    pub origin: Option<String>,
-    pub status: Option<i32>,
+    pub http_method: Option<String>,
+    pub http_path: Option<String>,
+    pub http_url: Option<String>,
+    pub http_origin: Option<String>,
+    pub http_status: Option<i32>,
+    pub http_headers: Option<serde_json::Value>,
     pub client_ip: Option<String>,
     pub user_agent: Option<String>,
-    pub headers: Option<String>,
     pub request_id: Option<String>,
     pub referrer: Option<String>,
     pub protocol: Option<String>,
-    pub response_size_bytes: Option<f64>,
-    pub tags: Option<String>,
-    pub labels: Option<String>,
-    pub data: Option<String>,
+    pub response_size_bytes: Option<i64>,
+    pub tags: Option<serde_json::Value>,
+    pub labels: Option<serde_json::Value>,
+    pub data: Option<serde_json::Value>,
 }
 
 impl ZegeEventRow {
@@ -160,14 +161,14 @@ impl ZegeEventRow {
             }),
 
             app: Some(AppInfo {
-                instance_id: self.instance_id,
+                instance_id: self.app_instance_id,
                 build_commit: self.build_commit,
                 build_id: self.build_id,
                 region: self.app_region,
             }),
 
             service: Some(ServiceInfo {
-                version: self.version,
+                version: self.service_version,
                 environment: self.environment,
             }),
 
@@ -175,7 +176,7 @@ impl ZegeEventRow {
                 hostname: self.hostname,
                 host_ip: self.host_ip,
                 region: self.host_region, // ⚠️ you have no `host_region` field — using `region`
-                provider: self.provider,
+                provider: self.host_provider,
             }),
 
             tracing: Some(TracingInfo {
@@ -185,22 +186,22 @@ impl ZegeEventRow {
             }),
 
             user: Some(UserInfo {
-                id: self.id,
-                name: self.name,
-                email: self.email,
+                id: self.user_id,
+                name: self.user_name,
+                email: self.user_email,
                 session_id: self.session_id,
             }),
 
             http: Some(HttpInfo {
-                method: self.method,
-                path: self.path,
-                url: self.url,
-                origin: self.origin,
-                status: self.status,
+                method: self.http_method,
+                path: self.http_path,
+                url: self.http_url,
+                origin: self.http_origin,
+                status: self.http_status,
                 client_ip: self.client_ip,
                 user_agent: self.user_agent,
                 headers: Some(
-                    serde_json::from_str(&self.headers.as_ref().unwrap()).unwrap_or_default(),
+                    serde_json::from_value(self.http_headers.unwrap()).unwrap_or_default(),
                 ),
             }),
 
@@ -210,9 +211,9 @@ impl ZegeEventRow {
                 protocol: self.protocol,
                 response_size_bytes: self.response_size_bytes,
             }),
-            tags: Some(serde_json::from_str(&self.tags.as_ref().unwrap()).unwrap_or_default()),
-            labels: Some(serde_json::from_str(&self.labels.as_ref().unwrap()).unwrap_or_default()),
-            data: Some(serde_json::from_str(&self.data.as_ref().unwrap()).unwrap_or_default()),
+            tags: Some(serde_json::from_value(self.tags.unwrap()).unwrap_or_default()),
+            labels: Some(serde_json::from_value(self.labels.unwrap()).unwrap_or_default()),
+            data: Some(serde_json::from_value(self.data.unwrap()).unwrap_or_default()),
         }
     }
 }

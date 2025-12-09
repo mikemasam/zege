@@ -57,9 +57,15 @@ const renderValue = (
   const type = typeof value;
   switch (type) {
     case "string":
-      return <span className="text-gray-700 px-1 text-wrap whitespace-pre-wrap break-words">"{value}"</span>;
+      return (
+        <span className="text-gray-700 px-1 text-wrap whitespace-pre-wrap break-words">
+          "{value}"
+        </span>
+      );
     case "number":
-      return <span className="text-blue-500 text-wrap whitespace-pre">{value}</span>;
+      return (
+        <span className="text-blue-500 text-wrap whitespace-pre">{value}</span>
+      );
     case "boolean":
       return <span className="text-purple-500">{value.toString()}</span>;
     case "object":
@@ -87,7 +93,12 @@ const JsonObject = ({ itemKey, obj, indent }: any): any => {
     });
     return l;
   }, [obj]);
-  if (!entries.length) return null;
+  if (!entries.length)
+    return (
+      <span className="bg-gray-200 rounded px-1 hover:bg-gray-300 hover:cursor-pointer">
+        {"-"}
+      </span>
+    );
   if (!open) {
     return (
       <span
