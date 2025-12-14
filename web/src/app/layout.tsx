@@ -12,9 +12,9 @@ export default function AppLayout() {
 }
 
 const menu_items = [
-  { label: "Home", href: "/" },
-  { label: "Live Events", href: "/events/live" },
-  { label: "Reports", href: "/reports" },
+  { label: "Home", href: "/app" },
+  { label: "Live Events", href: "/app/events/live" },
+  { label: "Reports", href: "/app/reports" },
 ];
 function Menu() {
   return (

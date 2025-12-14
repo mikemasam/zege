@@ -1,21 +1,14 @@
 use crate::{
-    api::reports::ZegeReport,
-    ctx::{appcontext::AppContext, dbmanager::DatabasePool},
-    utils::http::AppResponse,
+    api::report::list::ZegeReport, api_ensure, ctx::{appcontext::AppContext, dbmanager::DatabasePool}, utils::http::{AppResponse, AppResult}
 };
-use axum::{
-    Json,
-    extract::{Extension, Path},
-    response::IntoResponse,
-};
+use axum::extract::{Extension, Path};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-fn sqlite() {}
 pub async fn report_view_route(
     Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
     Path(id): Path<i32>,
-) -> impl IntoResponse {
+) -> AppResult<ZegeReport> {
     let app = appcontext.lock().await;
     let configdb = app.storage.as_ref().unwrap();
     let db = configdb.lock().await;
@@ -31,19 +24,6 @@ pub async fn report_view_route(
             q.fetch_one(pool).await
         }
     };
-
-    if report.is_err() {
-        return Json(AppResponse {
-            status: 400,
-            message: "Report not found".to_string(),
-            data: None,
-        });
-    }
-    //println!("{:?}", report);
-    Json(AppResponse {
-        status: 200,
-        message: String::new(),
-        data: report.ok(),
-    })
+    api_ensure!(report.is_ok(), "Report not found");
+    AppResponse::ok(report.ok(), None)
 }
-

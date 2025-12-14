@@ -9,10 +9,10 @@ import ZegeReportView from "./reports/view";
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<AppLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/events/live" element={<EventsLive />} />
-        <Route path="/reports">
+      <Route path="/app" element={<AppLayout />}>
+        <Route index element={<Home />} />
+        <Route path="events/live" element={<EventsLive />} />
+        <Route path="reports">
           <Route index element={<ZegeReports />} />
           <Route path="new" element={<ZegeReportEditor />} />
           <Route path=":id/edit" element={<ZegeReportEditor />} />

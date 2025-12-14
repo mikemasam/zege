@@ -1,9 +1,9 @@
 #![allow(dead_code)]
+use crate::api::report::list::ZegeReport;
 use crate::ctx::dbmanager::DatabasePool;
-use crate::utils::http::AppResponse;
-use crate::{api::reports::ZegeReport, ctx::appcontext::AppContext};
+use crate::utils::http::{AppResponse, AppResult};
+use crate::{ctx::appcontext::AppContext};
 use axum::Extension;
-use axum::response::IntoResponse;
 use chrono::Local;
 use serde::Deserialize;
 use sqlx::{PgPool, SqlitePool};
@@ -21,16 +21,16 @@ pub struct ReportCreate {
 pub async fn report_create_route(
     Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
     axum::Json(item): axum::extract::Json<ReportCreate>,
-) -> impl IntoResponse {
+) -> AppResult<ZegeReport> {
     let app = appcontext.lock().await;
     let configdb = app.storage.as_ref().unwrap();
     let db = configdb.lock().await;
 
     let report = match db.pool.as_ref().unwrap() {
-        DatabasePool::Sqlite(pool) => sqlite_write(pool, item).await,
-        DatabasePool::Postgres(pool) => pgsql_write(pool, item).await,
+        DatabasePool::Sqlite(pool) => sqlite_write(pool, item).await?,
+        DatabasePool::Postgres(pool) => pgsql_write(pool, item).await?,
     };
-    AppResponse::created(report.ok(), None)
+    AppResponse::created(Some(report), None)
 }
 
 async fn sqlite_write(pool: &SqlitePool, item: ReportCreate) -> Result<ZegeReport, sqlx::Error> {
@@ -69,11 +69,11 @@ async fn pgsql_write(pool: &PgPool, item: ReportCreate) -> Result<ZegeReport, sq
         .bind(&item.report_name)
         .bind(item.report_type)
         .bind(item.report_sql)
-        .bind(Local::now().to_rfc3339());
+        .bind(Local::now());
     if id.is_some() {
         q = q.bind(item.id);
     } else {
-        q = q.bind(Local::now().to_rfc3339());
+        q = q.bind(Local::now());
     }
     q.fetch_one(pool).await
 }

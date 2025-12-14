@@ -9,7 +9,7 @@ export default function ZegeReports() {
   return (
     <Page title="Zege Reports">
       <div className="flex flex-row justify-end">
-        <Link to="/reports/new">
+        <Link to="/app/reports/new">
           <Button variant="default">+ New Report</Button>
         </Link>
       </div>

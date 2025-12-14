@@ -9,7 +9,6 @@ export default function UIInput({
   ...props
 }: React.ComponentProps<"input"> & { label: string; name: string }) {
   const methods = useController({ name });
-  console.log(name, methods)
   return (
     <div className="grid w-full items-center gap-2 py-2">
       <label
@@ -19,7 +18,7 @@ export default function UIInput({
         {label}
       </label>
       <Input
-        className="bg-white focus-visible:ring-[1px]"
+        className="not-dark:bg-white focus-visible:ring-[1px]"
         name={name}
         value={methods.field.value}
         onChange={methods.field.onChange}

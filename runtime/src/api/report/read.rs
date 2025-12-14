@@ -1,26 +1,24 @@
 use crate::{
-    api::reports::ZegeReport,
-    ctx::{appcontext::AppContext, dbmanager::DatabasePool},
-    utils::{dbutil::rows_to_json_vec, http::AppResponse},
+    api::report::list::ZegeReport, api_ensure, ctx::{appcontext::AppContext, dbmanager::DatabasePool}, utils::{
+        dbutil::rows_to_json_vec,
+        http::{AppResponse, AppResult},
+    }
 };
-use axum::{
-    extract::{Extension, Path},
-    response::IntoResponse,
-};
+use axum::extract::{Extension, Path};
 use serde::Serialize;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 #[derive(Debug, Serialize)]
-struct ReadOutput {
+pub struct ReadOutput {
     data: Option<Vec<Value>>,
     report: ZegeReport,
 }
 pub async fn report_read_route(
     Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
     Path(id): Path<i32>,
-) -> impl IntoResponse {
+) -> AppResult<ReadOutput> {
     let app = appcontext.lock().await;
     let db = app.storage.as_ref().unwrap().lock().await;
 
@@ -39,9 +37,8 @@ pub async fn report_read_route(
                 .await
         }
     };
-    if report.is_err() {
-        return AppResponse::error("Report not found", None);
-    }
+
+    api_ensure!(report.is_ok(), "Report not found");
     let rows = match db.pool.as_ref().unwrap() {
         DatabasePool::Sqlite(pool) => {
             let out = sqlx::query(report.as_ref().unwrap().report_sql.as_str()).fetch(pool);

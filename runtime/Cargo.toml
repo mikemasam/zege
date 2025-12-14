@@ -16,4 +16,7 @@ dotenv = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.0", features = ["v7", "fast-rng"] }
 redis = { version = "0.24", features = ["aio", "tokio-comp"] }
+anyhow = "1.0.100"
+bcrypt = "0.17.1"
+jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
 

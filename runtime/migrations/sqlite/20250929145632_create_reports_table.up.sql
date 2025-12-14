@@ -1,5 +1,5 @@
 -- Add up migration script here
-CREATE TABLE zg_reports (
+CREATE TABLE IF NOT EXISTS zg_reports (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,

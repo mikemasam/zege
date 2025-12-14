@@ -1,1 +1,1 @@
-sqlx migrate add -r --source migrations/sqlite create_events_table
+sqlx migrate add -r --source migrations/pgsqli create_teams_table

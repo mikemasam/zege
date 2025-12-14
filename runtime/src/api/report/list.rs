@@ -1,8 +1,8 @@
 use crate::{
     ctx::{appcontext::AppContext, dbmanager::DatabasePool},
-    utils::http::AppResponse,
+    utils::http::{AppResponse, AppResult},
 };
-use axum::{extract::Extension, response::IntoResponse};
+use axum::extract::Extension;
 use serde::Serialize;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -19,7 +19,7 @@ pub struct ZegeReport {
 
 pub async fn report_index_route(
     Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
-) -> impl IntoResponse {
+) -> AppResult<Vec<ZegeReport>> {
     let app = appcontext.lock().await;
     let configdb = app.storage.as_ref().unwrap();
     let db = configdb.lock().await;

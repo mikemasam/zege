@@ -1,5 +1,5 @@
 -- Add up migration script here
-CREATE TABLE evt_events (
+CREATE TABLE IF NOT EXISTS evt_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   timestamp TEXT NOT NULL,
   _time TEXT NOT NULL,

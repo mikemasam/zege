@@ -2,8 +2,7 @@
 use crate::ctx::appcontext::AppContext;
 use crate::ctx::dbmanager::DatabasePool;
 use crate::dto::logevent::{LogEvent, ZegeEventRow};
-use crate::utils::http::AppResponse;
-use axum::response::IntoResponse;
+use crate::utils::http::{AppResponse, AppResult};
 use axum::{Extension, extract::Query};
 use futures::StreamExt;
 use serde::Deserialize;
@@ -26,7 +25,7 @@ pub struct QueryParams {
 pub async fn list_events_route(
     Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
     Query(query_params): Query<QueryParams>,
-) -> impl IntoResponse {
+) -> AppResult<Vec<LogEvent>> {
     let app = appcontext.lock().await;
     let storage = app.storage.as_ref().unwrap();
     let _db = storage.lock().await;
@@ -34,12 +33,7 @@ pub async fn list_events_route(
         DatabasePool::Postgres(pool) => fetch_postgres(pool, query_params).await,
         DatabasePool::Sqlite(pool) => fetch_sqlite(pool, query_params).await,
     };
-
-    AppResponse {
-        status: 200,
-        message: "Ok".to_owned(),
-        data: Some(rows),
-    }
+    AppResponse::ok(Some(rows), None)
 }
 
 async fn fetch_postgres(pool: &Pool<Postgres>, query_params: QueryParams) -> Vec<LogEvent> {

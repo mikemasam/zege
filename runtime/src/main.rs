@@ -1,4 +1,5 @@
 mod api;
+mod auth;
 mod ctx;
 mod dto;
 mod inputs;
