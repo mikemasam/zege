@@ -20,9 +20,10 @@ pub async fn auth_signup(
     Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
     axum::Json(item): axum::extract::Json<NewUser>,
 ) -> AppResult<LoginResult> {
-    let user = auth_create_user(appcontext.clone(), item).await?;
+    let app = appcontext.lock().await;
+    let user = auth_create_user(app.clone(), item).await?;
     let team = auth_create_team(
-        appcontext.clone(),
+        app.clone(),
         NewTeam {
             name: "Default Team".to_string(),
             user_id: user.id,
@@ -39,7 +40,7 @@ pub async fn auth_signup(
     )
     .await?;
     let res = auth_login_session(&user)?;
-    let msg = format!("Welcome {}", user.name);
+    let msg = format!("Welcome {}", user.name.unwrap_or_default());
     AppResponse::created(Some(res), Some(msg.as_str()))
 }
 
@@ -49,6 +50,6 @@ pub async fn auth_login(
 ) -> AppResult<LoginResult> {
     let user = auth_login_user(appcontext, item).await?;
     let res = auth_login_session(&user)?;
-    let msg = format!("Welcome {}", user.name);
+    let msg = format!("Welcome {}", user.name.unwrap_or_default());
     AppResponse::created(Some(res), Some(msg.as_str()))
 }

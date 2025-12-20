@@ -1,10 +1,7 @@
-#![allow(dead_code, unused_imports, unused_variables)]
 use crate::{
-    ctx::{
-        appcontext::AppEnv,
-        dbmanager::{DatabasePool, DbManager, DbManagerConnectOptions},
-    },
+    ctx::dbmanager::{DatabasePool, DbManager, DbManagerConnectOptions},
     dto::logevent::{LogEvent, LogEventChannelMessage},
+    utils::appenv::AppLogger,
 };
 use chrono::{Local, SecondsFormat};
 use sqlx::{Error, PgPool, QueryBuilder, SqlitePool};
@@ -73,14 +70,14 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
 
 async fn time_write_events(eventsdb: Arc<Mutex<DbManager>>, events_batch: &mut Vec<LogEvent>) {
     if events_batch.is_empty() {
-        AppEnv::log("# EventWrite size: empty, wrote: 0, time: 0".to_string());
+        AppLogger::log("# EventWrite size: empty, wrote: 0, time: 0".to_string());
         return;
     }
     let start_time = Instant::now();
     let written_events_count = match write_events(eventsdb, events_batch).await {
         Ok(t) => t,
         Err(err) => {
-            AppEnv::error(format!("##### WRITE ERROR: {err}"));
+            AppLogger::error(format!("##### WRITE ERROR: {err}"));
             0
         }
     };
@@ -89,7 +86,7 @@ async fn time_write_events(eventsdb: Arc<Mutex<DbManager>>, events_batch: &mut V
     if written_events_count > 0 {
         events_batch.clear();
     }
-    AppEnv::log(format!(
+    AppLogger::log(format!(
         "# EventWrite size: {size}, wrote: {written_events_count}, time: {elapsed_time:?}"
     ));
 }
@@ -98,7 +95,7 @@ async fn write_events(
     events: &Vec<LogEvent>,
 ) -> Result<u64, Error> {
     for e in events {
-        AppEnv::debug(format!(
+        AppLogger::debug(format!(
             "> {} - {}:{} - {}",
             e.timestamp,
             e.service_name,

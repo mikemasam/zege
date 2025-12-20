@@ -19,4 +19,5 @@ redis = { version = "0.24", features = ["aio", "tokio-comp"] }
 anyhow = "1.0.100"
 bcrypt = "0.17.1"
 jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
+clap = { version = "4", features = ["derive"] }
 

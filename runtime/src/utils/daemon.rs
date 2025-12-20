@@ -1,15 +1,18 @@
-use std::process;
+use crate::dto::logevent::LogEventChannelMessage;
+use std::fs::File;
+use std::process::{self, Command, exit};
 use std::sync::mpsc::Sender;
 use std::thread::JoinHandle;
 use std::time::Duration;
+use std::{env, fs};
 use tokio::time::sleep;
-use crate::dto::logevent::LogEventChannelMessage;
 
 pub async fn wait_for_signal_impl(
     events_writer: Sender<LogEventChannelMessage>,
     writer_thread: JoinHandle<()>,
 ) {
     use tokio::signal::unix;
+    use tokio::signal::unix::Signal;
     let mut signal_terminate = unix::signal(unix::SignalKind::terminate()).unwrap();
     let mut signal_quit = unix::signal(unix::SignalKind::quit()).unwrap();
     let mut signal_interrupt = unix::signal(unix::SignalKind::interrupt()).unwrap();
