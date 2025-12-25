@@ -48,6 +48,13 @@ impl<T> AppResponse<T> {
             data,
         })
     }
+    pub fn unauthorized(message: &str) -> Result<Self, AppError> {
+        Ok(AppResponse {
+            status: 401,
+            message: message.to_string(),
+            data: None,
+        })
+    }
 }
 
 #[derive(Debug)]
@@ -58,6 +65,7 @@ impl From<anyhow::Error> for AppError {
         AppError(e)
     }
 }
+
 impl From<SqlxError> for AppError {
     fn from(e: SqlxError) -> Self {
         // wrap the sqlx error into anyhow first

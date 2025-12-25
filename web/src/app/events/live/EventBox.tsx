@@ -1,77 +1,77 @@
-import { useState } from "react";
-import JsonViewer from "./JsonViewer";
+import { useMemo } from "react";
+import { EventDetail } from "./EventDetail";
 
-const severityColors: Record<string, string> = {
+type Severity = "INFO" | "WARN" | "ERROR" | "UNKNOWN";
+
+type Event = {
+  timestamp: string | number;
+  severity?: Severity;
+  event_name: string;
+  message: string;
+};
+
+const severityColors: Record<Severity, string> = {
   INFO: "bg-blue-100 text-blue-800",
   WARN: "bg-yellow-100 text-yellow-800",
   ERROR: "bg-red-100 text-red-800",
+  UNKNOWN: "bg-gray-200 text-gray-700",
 };
 
-function KeyValueGrid({ data }: { data: Record<string, any> }) {
-  return (
-    <div className="grid grid-cols-3 gap-1 text-xs">
-      {Object.entries(data)
-        .filter(([_, v]) => v !== null && v !== undefined && v !== "")
-        .map(([k, v]) => (
-          <div
-            key={k}
-            className="flex flex-col border rounded p-1 gap-2 tile-content"
-          >
-            <span className="font-semibold text-gray-500">{k}</span>
-            <span className="font-mono break-all">
-              {typeof v === "object" ? JSON.stringify(v) : String(v)}
-            </span>
-          </div>
-        ))}
-    </div>
-  );
-}
+export function EventBox({
+  event,
+  isSelected,
+  onSelect,
+}: {
+  event: Event;
+  isSelected: boolean;
+  onSelect: Function;
+}) {
+  const severity: Severity = event.severity ?? "UNKNOWN";
 
-export function EventBox({ event }: { event: any }) {
+  const formattedTime = useMemo(
+    () => new Date(event.timestamp).toLocaleString(),
+    [event.timestamp],
+  );
+
   return (
-    <div className="flex flex-col gap-2 border rounded p-3 bg-gray-200 transition">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-4">
+      <div
+        role="button"
+        tabIndex={0}
+        className={`flex items-center gap-6 rounded p-2
+                 hover:bg-blue-200 hover:shadow-sm
+                 focus:outline-none focus:ring-2 focus:ring-blue-400
+                 transition cursor-pointer ${isSelected ? "bg-blue-100" : "bg-gray-50"}`}
+        onClick={() => onSelect(event)}
+      >
+        <span className="font-mono text-xs text-gray-700 whitespace-nowrap">
+          {formattedTime}
+        </span>
+
+        {/* Severity */}
         <span
-          className={`px-2 py-0.5 text-xs font-semibold rounded-md ${
-            severityColors[event.severity] || "bg-gray-100 text-gray-800"
-          }`}
+          className={`px-2 py-0.5 text-xs font-semibold rounded-md ${severityColors[severity]}`}
         >
-          {event.severity || "UNKNOWN"}
+          {severity}
         </span>
-        <div className="font-semibold text-sm flex-1 text-gray-600">
-          {event.event_name}
-        </div>
-        <span className="font-mono text-xs text-gray-800">
-          {new Date(event.timestamp).toLocaleString()}
-        </span>
-      </div>
 
-      {event.message && 
-      <div className="text-sm text-gray-700 tile-content text-wrap  overflow-x-hidden break-all">{event.message}</div>}
+        {/* Event content */}
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="text-sm font-semibold text-gray-600 whitespace-nowrap">
+            {event.event_name}
+          </span>
 
-      <div className="flex flex-row gap-2">
-        <div className="flex flex-wrap gap-1 flex-1">
-          {(event.tags || []).map((t: string) => (
-            <span
-              key={t}
-              className="text-xs px-2 py-0.5 bg-gray-200 rounded-full text-gray-700"
-            >
-              {t}
-            </span>
-          ))}
-          {event.labels &&
-            Object.entries(event.labels).map(([k, v]: any) => (
-              <span
-                key={k}
-                className="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-gray-600"
-              >
-                {k}: {v}
-              </span>
-            ))}
+          <span className="text-gray-400">~</span>
+
+          <span
+            title={event.message}
+            className="text-sm truncate text-gray-600"
+          >
+            {event.message}
+          </span>
         </div>
       </div>
-      <JsonViewer data={event} />
+      {isSelected && <EventDetail event={event as any} />}
     </div>
   );
 }
-

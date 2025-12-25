@@ -1,15 +1,64 @@
+mod auth;
 mod events;
 mod report;
-mod auth;
-use axum::{Router, routing};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
-use crate::api::{auth::auth_routes, events::list_events_route, report::report_routes};
+use axum::{Router, http::Request, middleware, response::IntoResponse, routing};
+use serde_json::Value;
 
+use crate::{
+    api::{
+        auth::{auth_private_routes, auth_public_routes},
+        events::{events_routes, old_event_input_routes},
+        report::report_routes,
+    },
+    api_ensure,
+    auth::user::papers::auth_login_verify_user_token,
+    ctx::appcontext::{self, AppContext},
+    utils::http::AppResponse,
+};
 
 pub fn api_routes() -> Router {
-    Router::new()
-        .route("/events", routing::get(list_events_route))
+    let _private = Router::new()
+        .nest("/events", events_routes())
         .nest("/reports", report_routes())
-        .nest("/auth", auth_routes())
+        .nest("/auth", auth_private_routes())
+        .layer(middleware::from_fn(auth_middleware));
+    Router::new()
+        .merge(old_event_input_routes())
+        .merge(auth_public_routes())
+        .merge(_private)
+}
 
+async fn auth_middleware<B>(
+    mut req: Request<B>,
+    next: middleware::Next<B>,
+) -> impl axum::response::IntoResponse {
+    let appcontext = match req.extensions().get::<Arc<AppContext>>() {
+        Some(ctx) => ctx.clone(),
+        None => {
+            println!("Unauthorized {} {}", req.method(), req.uri().path());
+            return AppResponse::<Value>::unauthorized("App context missing").into_response();
+        }
+    };
+    let token = match req
+        .headers()
+        .get("authorization")
+        .and_then(|v| v.to_str().ok())
+    {
+        Some(t) => t,
+        None => {
+            println!("Unauthorized {} {}", req.method(), req.uri().path());
+            return AppResponse::<Value>::unauthorized("Unauthorized").into_response();
+        }
+    };
+    let papers_result = auth_login_verify_user_token(appcontext, token).await;
+    if (papers_result.is_err()) {
+        println!("Unauthorized {} {}", req.method(), req.uri().path());
+        return AppResponse::<Value>::unauthorized("Unauthorized").into_response();
+    }
+    req.extensions_mut().insert(papers_result.unwrap());
+    println!("Authorized {} {}", req.method(), req.uri().path());
+    next.run(req).await
 }

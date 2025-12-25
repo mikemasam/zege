@@ -2,8 +2,9 @@ import axios, { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 
 const api = axios.create({
-  baseURL: import.meta.env.API_URL || "http://localhost:3432/api/v1",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3432/api/v1",
   timeout: 10000,
+  validateStatus: () => true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -12,25 +13,36 @@ const api = axios.create({
 // Request interceptor: attach auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authorization");
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => ({
+    status: 0,
+    message: error?.message ?? "request failed",
+    data: null,
+  }),
 );
 
 // Response interceptor: handle errors / auto logout on 401
 api.interceptors.response.use(
-  (response) => response.data,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // optional: remove token and redirect to login
-      localStorage.removeItem("token");
-      window.location.href = "/login";
-    }
-    return Promise.reject(error);
+  (response) => {
+    if (response.data) return response.data;
+
+    return {
+      status: response.status,
+      message: response.statusText ?? "Request failed",
+      data: null,
+    };
+  },
+  (err: AxiosError) => {
+    return {
+      status: err?.status ?? 0,
+      message: err?.message ?? "Request failed",
+      data: null,
+    };
   },
 );
 

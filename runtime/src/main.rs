@@ -55,10 +55,6 @@ async fn main() {
     if !ctx.appargv.started_as_deamon {
         return;
     }
-    AppLogger::log(format!(
-        "Starting Application #{:?}.",
-        std::thread::current().id()
-    ));
     let _events_writer_thread = start_events_writer_thread(events_reader);
     //tokio::task::spawn(start_scheduler());
     tokio::task::spawn(start_http(ctx.clone()));

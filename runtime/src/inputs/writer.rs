@@ -40,7 +40,7 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
     };
 
     let mut events_batch = vec![];
-    let db = Arc::new(Mutex::new(_db.unwrap()));
+    let db = Arc::new(_db.unwrap());
     loop {
         match receiver.recv_timeout(Duration::from_secs(1)) {
             Ok(LogEventChannelMessage::Data(mut event)) => {
@@ -68,9 +68,9 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
     }
 }
 
-async fn time_write_events(eventsdb: Arc<Mutex<DbManager>>, events_batch: &mut Vec<LogEvent>) {
+async fn time_write_events(eventsdb: Arc<DbManager>, events_batch: &mut Vec<LogEvent>) {
     if events_batch.is_empty() {
-        AppLogger::log("# EventWrite size: empty, wrote: 0, time: 0".to_string());
+        AppLogger::log("# write size: empty, wrote: 0, time: 0".to_string());
         return;
     }
     let start_time = Instant::now();
@@ -87,11 +87,11 @@ async fn time_write_events(eventsdb: Arc<Mutex<DbManager>>, events_batch: &mut V
         events_batch.clear();
     }
     AppLogger::log(format!(
-        "# EventWrite size: {size}, wrote: {written_events_count}, time: {elapsed_time:?}"
+        "# write size: {size}, wrote: {written_events_count}, time: {elapsed_time:?}"
     ));
 }
 async fn write_events(
-    eventsdb: Arc<Mutex<DbManager>>,
+    eventsdb: Arc<DbManager>,
     events: &Vec<LogEvent>,
 ) -> Result<u64, Error> {
     for e in events {
@@ -103,8 +103,7 @@ async fn write_events(
             e.message.clone().unwrap_or("".to_owned()).as_str()
         ));
     }
-    let db = eventsdb.as_ref().lock().await;
-    match db.pool.as_ref().unwrap() {
+    match eventsdb.pool.as_ref().unwrap() {
         DatabasePool::Sqlite(pool) => sqlite_write_events(pool, events).await,
         DatabasePool::Postgres(pool) => pgsql_write_events(pool, events).await,
     }

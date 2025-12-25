@@ -1,6 +1,13 @@
-import { Link, Outlet } from "react-router";
+import { useAuth } from "@/auth/use.auth";
+import Loading from "@/components/loading";
+import { Link, Navigate, Outlet } from "react-router";
 
 export default function AppLayout() {
+  const auth = useAuth();
+  if (auth.loading) return <Loading />;
+  if (!auth.valid) {
+    return <Navigate to="/login" replace />;
+  }
   return (
     <div className="flex gap-2">
       <Header />
@@ -13,7 +20,10 @@ export default function AppLayout() {
 
 const menu_items = [
   { label: "Home", href: "/app" },
-  { label: "Live Events", href: "/app/events/live" },
+  { label: "Live", href: "/app/events/live" },
+  { label: "Teams", href: "/app/teams" },
+  { label: "Users", href: "/app/users" },
+  { label: "Services", href: "/app/services" },
   { label: "Reports", href: "/app/reports" },
 ];
 function Menu() {
@@ -21,7 +31,7 @@ function Menu() {
     <div className="p-2 flex flex-col gap-2">
       {menu_items.map((m) => (
         <Link to={m.href}>
-          <div className="p-2 border-b border-b-gray-200 hover:shadow-md rounded-md cursor-pointer">
+          <div className="p-2 border-b border-b-gray-200 hover:shadow rounded cursor-pointer">
             {m.label}
           </div>
         </Link>
@@ -30,24 +40,35 @@ function Menu() {
   );
 }
 function Header() {
+  const auth = useAuth();
+  if (!auth.valid) return null;
+
   return (
-    <div className="shadow-md w-50 min-h-screen ">
-      <div className="mx-auto flex items-center justify-between px-4 py-4">
-        {/* Logo + Title */}
-        <div className="flex items-center space-x-3">
-          {/* Logo Circle with Z */}
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
-            <span className="text-xl font-extrabold text-white">Z</span>
+    <aside className="w-56 min-h-screen border-r bg-white">
+      {/* Top section */}
+      <div className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          {/* Logo */}
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+            <span className="text-sm font-bold text-white">Z</span>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-wide drop-shadow">
-              Zege
+
+          {/* Brand */}
+          <div className="leading-tight">
+            <h1 className="text-sm font-semibold text-gray-900">
+              {auth.user?.name}
             </h1>
-            <p className="text-sm text-gray-500">Event Logger</p>
+            <p className="text-xs text-gray-500 truncate max-w-[140px]">
+              {auth.user?.email}
+            </p>
           </div>
         </div>
       </div>
-      <Menu />
-    </div>
+
+      {/* Menu */}
+      <nav className="py-2">
+        <Menu />
+      </nav>
+    </aside>
   );
 }

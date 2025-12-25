@@ -1,21 +1,35 @@
+import { authorize_by_token, useAuth } from "@/auth/use.auth";
+import Loading from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import UIForm from "@/components/ui/ui-form";
 import UIInput from "@/components/ui/ui-input";
 import api from "@/lib/api";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 const DEFAULT_VALUE = {
   email: "",
   password: "",
 };
 export default function LoginPage() {
+  const auth = useAuth();
   let navigate = useNavigate();
+  useEffect(() => {
+    if (auth.valid) navigate("/app");
+  }, [auth.valid]);
   const onSubmit = async (form: any) => {
-    console.log(form);
-    const res = await api.post("/auth/login", form);
-    console.log(res);
-    //navigate("/app");
+    const res: any = await api.post("/login", form);
+    if (res.status != 201) {
+      toast(res.message);
+      return;
+    }
+    if (!authorize_by_token(res.data.token)) {
+      return;
+    }
+    navigate("/app");
   };
+  if (auth.loading) return <Loading />;
   return (
     <div className="min-h-screen flex flex-col gap-4 items-center justify-center bg-slate-900">
       <div className="w-full max-w-md p-8 bg-slate-800 rounded-2xl shadow-lg border border-slate-700">

@@ -5,6 +5,7 @@ import EventsLive from "./events/live";
 import ZegeReports from "./reports";
 import ZegeReportEditor from "./reports/create";
 import ZegeReportView from "./reports/view";
+import TeamCreate from "./teams/create";
 
 export default function AppRoutes() {
   return (
@@ -17,6 +18,10 @@ export default function AppRoutes() {
           <Route path="new" element={<ZegeReportEditor />} />
           <Route path=":id/edit" element={<ZegeReportEditor />} />
           <Route path=":id" element={<ZegeReportView />} />
+        </Route>
+        <Route path="teams">
+          <Route index element={<TeamCreate />} />
+          <Route path="create" element={<TeamCreate />} />
         </Route>
       </Route>
     </Routes>

@@ -1,8 +1,10 @@
+import { authorize_by_token } from "@/auth/use.auth";
 import { Button } from "@/components/ui/button";
 import UIForm from "@/components/ui/ui-form";
 import UIInput from "@/components/ui/ui-input";
 import api from "@/lib/api";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 const DEFAULT_VALUE = {
   email: "",
@@ -11,10 +13,15 @@ const DEFAULT_VALUE = {
 export default function SignupPage() {
   let navigate = useNavigate();
   const onSubmit = async (form: any) => {
-    console.log(form);
-    const res = await api.post("/auth/signup", form);
-    console.log(res);
-    //navigate("/app");
+    const res: any = await api.post("/signup", form);
+    if (res.status != 201) {
+      toast(res.message);
+      return;
+    }
+    if (!authorize_by_token(res.data.token)) {
+      return;
+    }
+    navigate("/app");
   };
   return (
     <div className="min-h-screen flex flex-col gap-4 items-center justify-center bg-slate-900">

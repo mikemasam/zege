@@ -21,7 +21,7 @@ const JsonArray = ({
         onClick={() => setOpen((v) => !v)}
         className="bg-gray-200 rounded px-1 hover:bg-gray-300 hover:cursor-pointer"
       >
-        <span>
+        <span className="text-gray-400">
           {"▶"} {"[]"}
         </span>
       </span>
@@ -31,7 +31,7 @@ const JsonArray = ({
     <span className="overflow-x-hidden">
       <span
         onClick={() => setOpen((v) => !v)}
-        className="bg-gray-200 rounded px-1 hover:bg-gray-300 hover:cursor-pointer"
+        className="text-gray-400 bg-gray-200 rounded px-1 hover:bg-gray-300 hover:cursor-pointer"
       >
         {"▼"}
       </span>
@@ -82,7 +82,7 @@ const renderValue = (
   }
 };
 const JsonObject = ({ itemKey, obj, indent }: any): any => {
-  const [open, setOpen] = useState<boolean>(itemKey == "data");
+  const [open, setOpen] = useState<boolean>(true);
   const entries = useMemo(() => {
     let l = Object.entries(obj);
     l = l.filter(([_, value]) => value);
@@ -105,7 +105,7 @@ const JsonObject = ({ itemKey, obj, indent }: any): any => {
         onClick={() => setOpen((v) => !v)}
         className="bg-gray-200 rounded px-1 hover:bg-gray-300 hover:cursor-pointer"
       >
-        <span>
+        <span className="text-gray-400">
           {"▶"} {"{}"}
         </span>
       </span>
@@ -115,7 +115,7 @@ const JsonObject = ({ itemKey, obj, indent }: any): any => {
     <span>
       <span
         onClick={() => setOpen((v) => !v)}
-        className="bg-gray-200 rounded px-1 hover:bg-gray-300 hover:cursor-pointer"
+        className="text-gray-400 bg-gray-200 rounded px-1 hover:bg-gray-300 hover:cursor-pointer"
       >
         {"▼"}
       </span>
@@ -136,7 +136,7 @@ const JsonObject = ({ itemKey, obj, indent }: any): any => {
 };
 const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
   return (
-    <pre className="bg-gray-100 p-2 rounded border border-gray-200 overflow-x-hidden text-xs">
+    <pre className="bg-white p-2 rounded border border-gray-200 overflow-x-hidden text-xs">
       {renderValue(null, data)}
     </pre>
   );

@@ -8,7 +8,7 @@ use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-pub async fn event_route(
+pub async fn event_write_route(
     Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
     body: axum::body::Bytes, // take raw body
 ) -> impl IntoResponse {
