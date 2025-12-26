@@ -1,1 +1,1 @@
-sqlx migrate add -r --source migrations/pgsql create_teams_table
+sqlx migrate add -r --source migrations/pgsql create_organization_table
