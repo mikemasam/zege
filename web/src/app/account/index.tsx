@@ -3,12 +3,13 @@ import Loading from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import Page from "@/components/ui/ui-page";
 import { UITable } from "@/components/ui/ui-table";
+import TextLabel from "@/components/ui/ui-textlabel";
 import api, { useApi } from "@/lib/api";
 import { Link } from "react-router";
 
 export default function AccountPage() {
   const auth = useAuth();
-  const { data, result, loading, error } = useApi(() =>
+  const { data } = useApi(() =>
     api.get("/organizations"),
   );
   if (auth.loading) return <Loading />;
@@ -54,13 +55,3 @@ export default function AccountPage() {
   );
 }
 
-function TextLabel({ label, desc }: { label?: string; desc?: string }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <label className="text-sm text-gray-500 tracking-snug">{label}</label>
-      <span className="text-sm text-gray-600 leading-wide font-bold">
-        {desc}
-      </span>
-    </div>
-  );
-}
