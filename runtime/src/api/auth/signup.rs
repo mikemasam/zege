@@ -5,17 +5,20 @@ use tokio::sync::Mutex;
 use axum::Extension;
 
 use crate::{
-    auth::{
-        role::{NewRole, auth_create_role},
-        team::{NewTeam, auth_create_team},
-        user::{
-            create::{NewUser, auth_create_user},
-            papers::{
-                LoginCredentials, LoginResult, auth_login_make_paper, auth_login_verify_user_creds,
+    ctx::appcontext::AppContext,
+    lib::{
+        auth::{
+            role::{NewRole, Role},
+            user::{
+                papers::{LoginCredentials, LoginResult, UserPaper},
+                user::{NewUser, User},
             },
         },
+        organization::{
+            NewOrganization, NewOrganizationMembership, Organization, OrganizationMembership,
+            SwitchOrganizationMembership,
+        },
     },
-    ctx::appcontext::AppContext,
     utils::http::{AppResponse, AppResult},
 };
 
@@ -23,25 +26,43 @@ pub async fn auth_signup(
     Extension(ctx): Extension<Arc<AppContext>>,
     axum::Json(item): axum::extract::Json<NewUser>,
 ) -> AppResult<LoginResult> {
-    let user = auth_create_user(ctx.storage.clone(), item).await?;
-    let team = auth_create_team(
+    //TODO: handle db rollback
+    let user = User::create(ctx.storage.clone(), item).await?;
+    let organization = Organization::create(
         ctx.storage.clone(),
-        NewTeam {
-            name: "Default Team".to_string(),
+        NewOrganization {
+            name: "Default Organization".to_string(),
             user_id: user.id,
         },
     )
     .await?;
-    let _ = auth_create_role(
+    let role = Role::create(
         ctx.storage.clone(),
         NewRole {
             name: "Administrator".to_string(),
             description: "Administrator".to_string(),
-            team_id: team.id,
+            organization_id: organization.id,
         },
     )
     .await?;
-    let res = auth_login_make_paper(&user)?;
+    OrganizationMembership::create(
+        ctx.storage.clone(),
+        NewOrganizationMembership {
+            organization_id: organization.id,
+            user_id: user.id,
+            role_id: role.id,
+        },
+    )
+    .await?;
+    Organization::switch(
+        ctx.storage.clone(),
+        SwitchOrganizationMembership {
+            organization_id: organization.id,
+            user_id: user.id,
+        },
+    )
+    .await?;
+    let res = UserPaper::login_paper(ctx.storage.clone(), &user).await?;
     let msg = format!("Welcome {}", user.name.unwrap_or_default());
     AppResponse::created(Some(res), Some(msg.as_str()))
 }

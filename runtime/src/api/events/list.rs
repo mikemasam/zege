@@ -34,7 +34,7 @@ pub async fn list_events_route(
 }
 
 async fn fetch_postgres(pool: &Pool<Postgres>, query_params: QueryParams) -> Vec<LogEvent> {
-    let mut qb = QueryBuilder::<Postgres>::new("SELECT * FROM evt_events WHERE 1=1");
+    let mut qb = QueryBuilder::<Postgres>::new("SELECT * FROM zege_events WHERE 1=1");
 
     if let Some(name) = query_params.event_name.filter(|s| !s.trim().is_empty()) {
         qb.push(" AND event_name LIKE ")

@@ -1,5 +1,5 @@
 use crate::{
-    lib::service::{Service, auth_services_list},
+    lib::services::{Service, auth_services_list},
     ctx::{appcontext::AppContext, dbmanager::DatabasePool},
     utils::http::{AppResponse, AppResult},
 };

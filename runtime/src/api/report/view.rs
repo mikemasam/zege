@@ -12,7 +12,7 @@ pub async fn report_view_route(
     //let configdb = app.storage.as_ref().unwrap();
     //let db = configdb.lock().await;
     println!("{}", id);
-    let sql = "SELECT * FROM zg_reports WHERE id = ?";
+    let sql = "SELECT * FROM reports WHERE id = ?";
     let report = match app.storage.pool.as_ref().unwrap() {
         DatabasePool::Sqlite(pool) => {
             let q = sqlx::query_as::<_, ZegeReport>(sql).bind(id);

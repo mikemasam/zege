@@ -1,10 +1,22 @@
 import { create } from "zustand";
 import api from "@/lib/api";
 
+type Org = {
+  id: number;
+  name: string;
+};
+
+type Role = {
+  id: number;
+  name: string;
+};
+
 export type UserPapers = {
   id: number;
   name: string;
   email: string;
+  organization: Org;
+  role: Role;
 };
 
 type AuthState = {

@@ -16,7 +16,14 @@ export default function ListServices() {
           <Button variant="default">+ New Service</Button>
         </Link>
       </div>
-      <UITable columns={[{ key: "name", label: "Name" }]} data={data} />
+      <UITable
+        columns={[
+          { key: "name", label: "Name" },
+          { key: "label", label: "Label" },
+          { key: "created_at", label: "Create At" },
+        ]}
+        data={data}
+      />
     </Page>
   );
 }

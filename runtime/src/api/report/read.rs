@@ -20,7 +20,7 @@ pub async fn report_read_route(
     Path(id): Path<i32>,
 ) -> AppResult<ReadOutput> {
 
-    let sql = "SELECT * FROM zg_reports where id = ?";
+    let sql = "SELECT * FROM reports where id = ?";
     let report = match ctx.storage.pool.as_ref().unwrap() {
         DatabasePool::Sqlite(pool) => {
             sqlx::query_as::<_, ZegeReport>(sql)

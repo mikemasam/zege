@@ -36,10 +36,10 @@ async fn pgsql_write(pool: &PgPool, item: ReportCreate) -> Result<ZegeReport, sq
     let id = item.id.as_ref();
     let sql = match id {
         Some(_) => {
-            " update zg_reports set report_name = ?, report_type = ?, report_sql = ?, updated_at = ? where id = ?  RETURNING *"
+            " update reports set report_name = ?, report_type = ?, report_sql = ?, updated_at = ? where id = ?  RETURNING *"
         }
         None => {
-            " insert into zg_reports (report_name, report_type, report_sql, created_at, updated_at) VALUES (?, ?, ?, ?, ?) RETURNING *"
+            " insert into reports (report_name, report_type, report_sql, created_at, updated_at) VALUES (?, ?, ?, ?, ?) RETURNING *"
         }
     };
     let mut q = sqlx::query_as::<_, ZegeReport>(sql)

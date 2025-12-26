@@ -4,11 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{env, sync::Arc};
 
 use crate::{
-    auth::{
-        team::{TeamCommands, auth_team_commands},
-        user::{UserCommands, auth_user_commands},
-    },
-    ctx::appcontext::AppContext,
+    ctx::appcontext::AppContext, lib::{auth::user::{auth_user_commands, UserCommands}, organization::{auth_organization_commands, OrganizationCommands}}
 };
 
 #[derive(Debug, Parser, Deserialize, Serialize, Clone)]
@@ -32,9 +28,9 @@ pub enum Commands {
         #[command(subcommand)]
         command: UserCommands,
     },
-    Teams {
+    Organizations {
         #[command(subcommand)]
-        command: TeamCommands,
+        command: OrganizationCommands,
     },
 }
 
@@ -47,15 +43,15 @@ impl AppArgv {
             Some(Commands::Users { command }) => {
                 auth_user_commands(ctx.clone(), command.clone()).await
             }
-            Some(Commands::Teams { command }) => {
-                auth_team_commands(ctx.clone(), command.clone()).await
+            Some(Commands::Organizations { command }) => {
+                auth_organization_commands(ctx.clone(), command.clone()).await
             }
             None => todo!("Command not found"),
             /*
-                        Commands::Teams { command } => match command {
-                            TeamCommands::Create { name } => create_team(name),
-                            TeamCommands::Delete { name } => delete_team(name),
-                            TeamCommands::List => list_teams(),
+                        Commands::Organizations { command } => match command {
+                            OrganizationCommands::Create { name } => create_organization(name),
+                            OrganizationCommands::Delete { name } => delete_organization(name),
+                            OrganizationCommands::List => list_organizations(),
                         },
                         Commands::Products { command } => match command {
                             ProductCommands::Add { name } => add_product(name),

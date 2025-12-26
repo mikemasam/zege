@@ -17,6 +17,16 @@ export default function ServiceCreate() {
       <UICard className="flex flex-col gap-2">
         <UIForm onSubmit={onSubmit} defaultValues={{}}>
           <UIInput label="Name" name="name" placeholder="Enter name"></UIInput>
+          <UIInput
+            label="Display Label"
+            name="label"
+            placeholder="Service key"
+          ></UIInput>
+          <UIInput
+            label="Description"
+            name="description"
+            placeholder="Service Description"
+          ></UIInput>
           <div className="flex flex-row justify-end gap-2">
             <Button type="submit">Save</Button>
           </div>

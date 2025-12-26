@@ -1,5 +1,5 @@
 use crate::{
-    auth::role::{auth_roles_list, Role},
+    lib::auth::role::{auth_roles_list, Role},
     ctx::{appcontext::AppContext, dbmanager::DatabasePool},
     utils::http::{AppResponse, AppResult},
 };

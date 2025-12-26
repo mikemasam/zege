@@ -7,7 +7,7 @@ export default function ListUsers() {
   const { data, loading } = useApi(() => api.get("/users"));
   if (loading) return <Loading />;
   return (
-    <Page title="Teams">
+    <Page title="Users">
       <UITable
         columns={[
           { key: "name", label: "Name" },

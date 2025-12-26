@@ -9,9 +9,9 @@ export default function AppLayout() {
     return <Navigate to="/login" replace />;
   }
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-0">
       <Header />
-      <div className="flex-1 flex flex-col p-2 overflow-y-scroll">
+      <div className="flex-1 flex flex-col overflow-y-scroll">
         <Outlet />
       </div>
     </div>
@@ -21,7 +21,6 @@ export default function AppLayout() {
 const menu_items = [
   { label: "Home", href: "/app" },
   { label: "Live", href: "/app/events/live" },
-  { label: "Teams", href: "/app/teams" },
   { label: "Users", href: "/app/users" },
   { label: "Roles", href: "/app/roles" },
   { label: "Services", href: "/app/services" },
@@ -46,27 +45,43 @@ function Header() {
 
   return (
     <aside className="w-56 min-h-screen border-r bg-white">
-      {/* Top section */}
-      <div className="px-4 py-3">
+      <div className="flex flex-col gap-4 px-2 py-3">
         <div className="flex items-center gap-3">
-          {/* Logo */}
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
-            <span className="text-sm font-bold text-white">Z</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-900">
+            <span className="text-xs font-medium text-white">
+              {auth.user?.name?.[0] ?? "U"}
+            </span>
           </div>
 
-          {/* Brand */}
-          <div className="leading-tight">
-            <h1 className="text-sm font-semibold text-gray-900">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-gray-900 truncate">
               {auth.user?.name}
-            </h1>
-            <p className="text-xs text-gray-500 truncate max-w-[140px]">
+            </div>
+            <div className="text-xs text-gray-400 truncate">
               {auth.user?.email}
-            </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Menu */}
+        <Link to="/app/account">
+          <div
+            title={auth.user?.organization?.name}
+            className="flex flex-row items-center gap-1.5 text-sm font-semibold text-gray-700 bg-gray-100 border border-gray-200 rounded px-2 py-1 cursor-pointer hover:bg-gray-200 hover:shadow-sm active:scale-[0.98] transition"
+          >
+            <span className="material-icons text-base text-gray-500">
+              business
+            </span>
+
+            <span className="truncate">
+              {auth.user?.organization?.name ?? "Select organization"}
+            </span>
+
+            <span className="material-icons text-base text-gray-400">
+              swap_vert
+            </span>
+          </div>
+        </Link>
+      </div>
       <nav className="py-2">
         <Menu />
       </nav>

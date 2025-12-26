@@ -46,24 +46,28 @@ api.interceptors.response.use(
   },
 );
 
-export function useApi(
-  callback: any,
-  opts?: { prefrech?: boolean },
-  params?: any,
-) {
-  const [result, setResult] = useState({
-    status: 0,
-    data: null,
-    message: "",
-  } as {
-    status: number;
-    data: any;
-    message: string;
-  });
+const initial: {
+  status: number;
+  data: any;
+  message: string;
+} = {
+  status: 0,
+  data: null,
+  message: "",
+};
+
+export function useApi(callback: Function, opts?: { prefrech?: boolean }) {
+  const [params, setParams] = useState<any>({});
+  const [result, setResult] = useState(initial);
   const [loading, setLoading] = useState(false);
-  const load = async (params?: any) => {
+  const load = async (_params?: any) => {
+    const __params = {
+      ...params,
+      ..._params,
+    };
+    setParams((p: any) => ({ ...p, ..._params }));
     setLoading(true);
-    return Promise.resolve(callback(params))
+    return Promise.resolve(callback(__params))
       .then((res) => {
         console.log("loaded", res);
         setResult(res);
@@ -81,13 +85,11 @@ export function useApi(
         setLoading(false);
       });
   };
-  useEffect(
-    () => {
-      if (opts?.prefrech !== false) load();
-    },
-    Array.isArray(params) ? params : [],
-  );
+  useEffect(() => {
+    if (opts?.prefrech !== false) load();
+  }, []);
   return {
+    params,
     result,
     data: result.data,
     error: result.status == 0 ? result.message : null,

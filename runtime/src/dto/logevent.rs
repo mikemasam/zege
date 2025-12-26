@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LogEvent {
     pub timestamp: DateTime<FixedOffset>,
-    pub _time: Option<DateTime<FixedOffset>>,
+    pub created_at: Option<DateTime<FixedOffset>>,
     pub event_name: String,
-    pub event_type: String,
     pub service_name: String,
+    pub event_type: Option<String>,
     pub ui: Option<String>,
     pub severity: Option<String>,
     pub message: Option<String>,
@@ -98,9 +98,9 @@ pub enum LogEventChannelMessage {
 pub struct ZegeEventRow {
     pub id: i64,
     pub timestamp: DateTime<FixedOffset>,
-    pub _time: Option<DateTime<FixedOffset>>,
+    pub created_at: Option<DateTime<FixedOffset>>,
     pub event_name: String,
-    pub event_type: String,
+    pub event_type: Option<String>,
     pub ui: Option<String>,
     pub service_name: String,
     pub severity: Option<String>,
@@ -146,7 +146,7 @@ impl ZegeEventRow {
     pub fn to_event(self) -> LogEvent {
         LogEvent {
             timestamp: self.timestamp,
-            _time: self._time,
+            created_at: self.created_at,
             event_name: self.event_name,
             event_type: self.event_type,
             ui: self.ui,

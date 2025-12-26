@@ -20,7 +20,7 @@ pub struct ZegeReport {
 pub async fn report_index_route(
     Extension(ctx): Extension<Arc<AppContext>>,
 ) -> AppResult<Vec<ZegeReport>> {
-    let sql = "SELECT * FROM zg_reports ORDER BY id DESC";
+    let sql = "SELECT * FROM reports ORDER BY id DESC";
     let reports = match ctx.storage.pool.as_ref().unwrap() {
         DatabasePool::Sqlite(pool) => sqlx::query_as::<_, ZegeReport>(sql).fetch_all(pool).await,
         DatabasePool::Postgres(pool) => sqlx::query_as::<_, ZegeReport>(sql).fetch_all(pool).await,

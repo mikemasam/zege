@@ -1,10 +1,10 @@
 mod auth;
 mod events;
+mod organizations;
 mod report;
 mod roles;
-mod teams;
-mod users;
 mod services;
+mod users;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -15,22 +15,20 @@ use crate::{
     api::{
         auth::{auth_private_routes, auth_public_routes},
         events::{events_routes, old_event_input_routes},
+        organizations::organizations_routes,
         report::report_routes,
         roles::roles_routes,
-        teams::teams_routes,
+        services::services_routes,
         users::users_routes,
-    },
-    api_ensure,
-    auth::user::papers::auth_login_verify_user_token,
-    ctx::appcontext::{self, AppContext},
-    utils::{appenv::AppLogger, http::AppResponse},
+    }, api_ensure, ctx::appcontext::{self, AppContext}, lib::auth::user::papers::UserPaper, utils::{appenv::AppLogger, http::AppResponse}
 };
 
 pub fn api_routes() -> Router {
     let _private = Router::new()
+        .nest("/services", services_routes())
         .nest("/roles", roles_routes())
         .nest("/users", users_routes())
-        .nest("/teams", teams_routes())
+        .nest("/organizations", organizations_routes())
         .nest("/events", events_routes())
         .nest("/reports", report_routes())
         .nest("/auth", auth_private_routes())
@@ -71,7 +69,7 @@ async fn auth_middleware<B>(
             return AppResponse::<Value>::unauthorized("Unauthorized").into_response();
         }
     };
-    let papers_result = auth_login_verify_user_token(appcontext.clone(), token).await;
+    let papers_result = UserPaper::verify_token(appcontext.storage.clone(), token).await;
     if (papers_result.is_err()) {
         AppLogger::debug(format!(
             "Unauthorized {} {}",

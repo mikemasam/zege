@@ -8,12 +8,14 @@ interface Column<T> {
 }
 
 interface TableProps<T> {
+  title?: string;
   data: T[]; // Array of row data
   columns: Column<T>[]; // Column definitions
   className?: string; // Optional Tailwind classes for wrapper
 }
 
 export function UITable<T extends Record<string, unknown>>({
+  title,
   data,
   columns,
   className = "",
@@ -26,6 +28,13 @@ export function UITable<T extends Record<string, unknown>>({
 
   return (
     <div className={`overflow-x-auto ${className} border-l-2 border-blue-300`}>
+      {!!title && (
+        <div className="border-b border-gray-200 px-6 py-4">
+          <h2 className="text-sm font-medium text-gray-700 uppercase tracking-wide">
+            {title}
+          </h2>
+        </div>
+      )}
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>

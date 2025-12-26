@@ -65,13 +65,13 @@ async fn rotate_events() {
         });
     let rows_affected = sqlx::query(
         "
-            INSERT INTO db2.evt_events
+            INSERT INTO db2.zege_events
             SELECT a.*
-            FROM main.evt_events AS a
-            LEFT JOIN db2.evt_events AS b
+            FROM main.zege_events AS a
+            LEFT JOIN db2.zege_events AS b
             ON a.ui = b.ui
             WHERE b.ui IS NULL
-            AND a._time < datetime('now', '-2 minute');
+            AND a.created_at < datetime('now', '-2 minute');
         ",
     )
     .execute(&mut *conn)
@@ -81,8 +81,8 @@ async fn rotate_events() {
     });
     let rows_deleted = sqlx::query(
         "
-            DELETE FROM main.evt_events as a 
-            WHERE EXISTS (SELECT b.ui from db2.evt_events as b where b.ui = a.ui);
+            DELETE FROM main.zege_events as a 
+            WHERE EXISTS (SELECT b.ui from db2.zege_events as b where b.ui = a.ui);
         ",
     )
     .execute(&mut *conn)
@@ -99,7 +99,7 @@ async fn rotate_events() {
 
     let live_row: (i64,) = sqlx::query_as(
         r#"
-            SELECT COUNT(a.ui) FROM main.evt_events as a 
+            SELECT COUNT(a.ui) FROM main.zege_events as a 
         "#,
     )
     .fetch_one(&mut *conn)
@@ -109,7 +109,7 @@ async fn rotate_events() {
     });
     let archive_row: (i64,) = sqlx::query_as(
         r#"
-            SELECT COUNT(b.ui) FROM db2.evt_events as b 
+            SELECT COUNT(b.ui) FROM db2.zege_events as b 
         "#,
     )
     .fetch_one(&mut *conn)
