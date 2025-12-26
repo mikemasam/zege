@@ -1,10 +1,13 @@
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
-use std::env;
+use std::{env, sync::Arc};
 
 use crate::{
-    auth::{team::{auth_team_commands, TeamCommands}, user::{auth_user_commands, UserCommands}},
+    auth::{
+        team::{TeamCommands, auth_team_commands},
+        user::{UserCommands, auth_user_commands},
+    },
     ctx::appcontext::AppContext,
 };
 
@@ -36,7 +39,7 @@ pub enum Commands {
 }
 
 impl AppArgv {
-    pub async fn match_commands(&self, ctx: AppContext) -> Result<()> {
+    pub async fn match_commands(&self, ctx: Arc<AppContext>) -> Result<()> {
         if (self.command.is_none()) {
             return Ok(());
         }

@@ -1,6 +1,6 @@
-mod resetpassword;
-pub mod papers;
 pub mod create;
+pub mod papers;
+mod resetpassword;
 use std::sync::Arc;
 
 use anyhow::{Result, ensure};
@@ -13,29 +13,25 @@ use sqlx::{Pool, Postgres, Sqlite, prelude::FromRow};
 use std::{default, env};
 use tokio::sync::Mutex;
 
-use crate::auth::user::create::{auth_create_user, NewUser};
-use crate::auth::user::papers::{auth_find_user_by_email, User};
+use crate::auth::user::create::{NewUser, auth_create_user};
+use crate::auth::user::papers::{User, auth_find_user_by_email};
 use crate::auth::user::resetpassword::{ResetPasswordUserDto, auth_reset_user_password};
-use crate::ctx::dbmanager::DbManager;
+use crate::ctx::appcontext::DbStorage;
+use crate::ctx::dbmanager::DbPoolManager;
 use crate::ctx::{appcontext::AppContext, dbmanager::DatabasePool};
 use crate::utils::appenv::AppLogger;
 use crate::utils::security::Security;
 
-
-async fn auth_search_users(db: DbManager, pattern: Option<String>) -> Result<Vec<User>> {
-    match db.pool.as_ref().unwrap() {
+pub async fn auth_users_list(db: DbStorage) -> Result<Vec<User>> {
+    let pool = db.pool.clone();
+    match pool.as_ref().unwrap() {
         DatabasePool::Postgres(pool) => {
-            let pattern = format!("%{}%", pattern.unwrap_or_default());
-            let users = sqlx::query_as::<_, User>(
-                "select * from users where email ilike $1 or name ilike $2",
-            )
-            .bind(&pattern)
-            .bind(&pattern)
-            .fetch_all(pool)
-            .await;
-            Ok(users.unwrap())
+            let users = sqlx::query_as::<_, User>("select * from users order by id desc")
+                .fetch_all(pool)
+                .await?;
+            Ok(users)
         }
-        DatabasePool::Sqlite(pool) => todo!("auth_search_users on sqlite"),
+        _ => todo!("auth_users_list on sqlite"),
     }
 }
 
@@ -62,19 +58,30 @@ pub enum UserCommands {
     },
 }
 
-async fn listUsers(app: AppContext, pattern: Option<String>) -> Result<()> {
-    let configdb = app.storage.as_ref().unwrap();
-    let db = configdb.lock().await;
-    let users = auth_search_users(db.clone(), pattern).await?;
+async fn listUsers(storage: DbStorage, pattern: Option<String>) -> Result<()> {
+    let users = match storage.pool.as_ref().unwrap() {
+        DatabasePool::Postgres(pool) => {
+            let pattern = format!("%{}%", pattern.unwrap_or_default());
+            let users = sqlx::query_as::<_, User>(
+                "select * from users where email ilike $1 or name ilike $2",
+            )
+            .bind(&pattern)
+            .bind(&pattern)
+            .fetch_all(pool)
+            .await;
+            users.unwrap()
+        }
+        DatabasePool::Sqlite(pool) => todo!("auth_search_users on sqlite"),
+    };
     println!("{}", serde_json::to_string_pretty(&users)?);
     Ok(())
 }
 
-pub async fn auth_user_commands(ctx: AppContext, command: UserCommands) -> Result<()> {
+pub async fn auth_user_commands(ctx: Arc<AppContext>, command: UserCommands) -> Result<()> {
     match command {
         UserCommands::Add { name, email } => {
             auth_create_user(
-                ctx,
+                ctx.storage.clone(),
                 NewUser {
                     name,
                     email,
@@ -84,12 +91,12 @@ pub async fn auth_user_commands(ctx: AppContext, command: UserCommands) -> Resul
             .await?;
         }
         UserCommands::Search { pattern } => {
-            listUsers(ctx, pattern).await?;
+            listUsers(ctx.storage.clone(), pattern).await?;
         }
         UserCommands::Disable { email } => todo!("user disable not implemented"),
         UserCommands::ResetPassword { email } => {
             auth_reset_user_password(
-                ctx,
+                ctx.storage.clone(),
                 ResetPasswordUserDto {
                     email,
                     current_password: None,

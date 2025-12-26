@@ -82,7 +82,7 @@ const renderValue = (
   }
 };
 const JsonObject = ({ itemKey, obj, indent }: any): any => {
-  const [open, setOpen] = useState<boolean>(true);
+  const [open, setOpen] = useState<boolean>(itemKey === null || itemKey == 'data');
   const entries = useMemo(() => {
     let l = Object.entries(obj);
     l = l.filter(([_, value]) => value);

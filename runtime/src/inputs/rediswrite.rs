@@ -1,6 +1,6 @@
 use redis::{AsyncCommands, Client};
 use serde_json::Value;
-use std::env;
+use std::{env, sync::Arc};
 use tokio::time::{Duration, sleep};
 
 use crate::{
@@ -8,7 +8,7 @@ use crate::{
     dto::logevent::{LogEvent, LogEventChannelMessage}, utils::appenv::AppLogger,
 };
 
-pub async fn start_redis_reader(ctx: AppContext) {
+pub async fn start_redis_reader(ctx: Arc<AppContext>) {
     let conns = env::var("REDIS_SERVERS").unwrap();
     let conns_list: Vec<String> = conns.split(',').map(|s| s.to_string()).collect();
 
@@ -16,7 +16,7 @@ pub async fn start_redis_reader(ctx: AppContext) {
         connect_to_server(ctx.clone(), url);
     }
 }
-fn connect_to_server(ctx: AppContext, url: String) {
+fn connect_to_server(ctx: Arc<AppContext>, url: String) {
     tokio::task::spawn(async move {
         loop {
            AppLogger::log(format!("Redis URL: {url}"));
@@ -30,7 +30,7 @@ fn connect_to_server(ctx: AppContext, url: String) {
         }
     });
 }
-async fn connect_and_listen(ctx: AppContext, url: &str) -> redis::RedisResult<()> {
+async fn connect_and_listen(ctx: Arc<AppContext>, url: &str) -> redis::RedisResult<()> {
     AppLogger::log(format!("Connecting to Redis -> {}", url));
 
     let client = Client::open(url)?;
@@ -63,7 +63,7 @@ async fn connect_and_listen(ctx: AppContext, url: &str) -> redis::RedisResult<()
 }
 
 /// Stub replacement for event$writer
-async fn event_writer(ctx: AppContext, event: serde_json::Value) -> Result<(), String> {
+async fn event_writer(ctx: Arc<AppContext>, event: serde_json::Value) -> Result<(), String> {
     //println!("{}", serde_json::to_string_pretty(&event).unwrap());
     let parser: Result<LogEvent, serde_json::Error> = serde_json::from_value(event);
     if parser.is_err() {

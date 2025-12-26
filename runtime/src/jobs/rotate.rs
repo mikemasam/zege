@@ -1,4 +1,4 @@
-use crate::ctx::dbmanager::{DbManager, DbManagerConnectOptions};
+use crate::ctx::dbmanager::{DbPoolManager, DbManagerConnectOptions};
 use crate::utils::appenv::AppLogger;
 use core::panic;
 use tokio::runtime::Handle;

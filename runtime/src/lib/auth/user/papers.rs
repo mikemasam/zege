@@ -10,8 +10,8 @@ use tokio::sync::Mutex;
 
 use crate::{
     ctx::{
-        appcontext::AppContext,
-        dbmanager::{DatabasePool, DbManager},
+        appcontext::{AppContext, DbStorage},
+        dbmanager::{DatabasePool, DbPoolManager},
     },
     utils::security::Security,
 };
@@ -28,9 +28,9 @@ pub struct User {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserPaper {
-    id: i64,
-    name: Option<String>,
-    email: Option<String>,
+    pub id: i64,
+    pub name: Option<String>,
+    pub email: Option<String>,
 }
 
 impl UserPaper {
@@ -49,8 +49,9 @@ pub struct LoginResult {
     user: UserPaper,
 }
 
-pub async fn auth_find_user_by_email(db: DbManager, email: String) -> Result<User> {
-    match db.pool.as_ref().unwrap() {
+pub async fn auth_find_user_by_email(storage: DbStorage, email: String) -> Result<User> {
+    let pool = storage.pool.clone();
+    match pool.as_ref().unwrap() {
         DatabasePool::Postgres(pool) => {
             let user = sqlx::query_as::<_, User>("select * from users where email = $1")
                 .bind(&email)
@@ -63,8 +64,9 @@ pub async fn auth_find_user_by_email(db: DbManager, email: String) -> Result<Use
     }
 }
 
-pub async fn auth_find_user_by_id(db: DbManager, id: i64) -> Result<User> {
-    match db.pool.as_ref().unwrap() {
+pub async fn auth_find_user_by_id(db: DbStorage, id: i64) -> Result<User> {
+    let pool = db.pool.clone();
+    match pool.as_ref().unwrap() {
         DatabasePool::Postgres(pool) => {
             let user = sqlx::query_as::<_, User>("select * from users where id = $1")
                 .bind(id)
@@ -122,13 +124,10 @@ pub struct LoginCredentials {
 }
 
 pub async fn auth_login_verify_user_creds(
-    appcontext: Arc<Mutex<AppContext>>,
+    storage: DbStorage,
     creds: LoginCredentials,
 ) -> Result<User> {
-    let app = appcontext.lock().await;
-    let configdb = app.storage.as_ref().unwrap();
-    let db = configdb.lock().await;
-    let rs_user = auth_find_user_by_email(db.clone(), creds.email).await;
+    let rs_user = auth_find_user_by_email(storage.clone(), creds.email).await;
     ensure!(rs_user.is_ok(), "Invalid username or password");
     let user = rs_user.unwrap();
     let valid = Security::verify_password(&creds.password, &user.password_hash);
@@ -136,15 +135,9 @@ pub async fn auth_login_verify_user_creds(
     Ok(user)
 }
 
-
-pub async fn auth_login_verify_user_token(
-    app: Arc<AppContext>,
-    token: &str,
-) -> Result<UserPaper> {
-    let configdb = app.storage.as_ref().unwrap();
-    let db = configdb.lock().await;
+pub async fn auth_login_verify_user_token(ctx: Arc<AppContext>, token: &str) -> Result<UserPaper> {
     let claims = verify_jwt(token.replace("Bearer ", "").as_str())?;
-    let rs_user = auth_find_user_by_id(db.clone(), claims.sub).await;
+    let rs_user = auth_find_user_by_id(ctx.storage.clone(), claims.sub).await;
     ensure!(rs_user.is_ok(), "unauthorized");
     let user = rs_user.unwrap();
     Ok(UserPaper::fromUser(&user))

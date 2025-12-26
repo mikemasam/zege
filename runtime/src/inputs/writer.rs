@@ -1,5 +1,5 @@
 use crate::{
-    ctx::dbmanager::{DatabasePool, DbManager, DbManagerConnectOptions},
+    ctx::dbmanager::{DatabasePool, DbPoolManager, DbManagerConnectOptions},
     dto::logevent::{LogEvent, LogEventChannelMessage},
     utils::appenv::AppLogger,
 };
@@ -27,7 +27,7 @@ pub fn start_events_writer_thread(
 }
 
 async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
-    let _db = DbManager::connect(DbManagerConnectOptions {
+    let _db = DbPoolManager::connect(DbManagerConnectOptions {
         migrate: false,
         backup: false,
     })
@@ -68,7 +68,7 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
     }
 }
 
-async fn time_write_events(eventsdb: Arc<DbManager>, events_batch: &mut Vec<LogEvent>) {
+async fn time_write_events(eventsdb: Arc<DbPoolManager>, events_batch: &mut Vec<LogEvent>) {
     if events_batch.is_empty() {
         AppLogger::log("# write size: empty, wrote: 0, time: 0".to_string());
         return;
@@ -91,7 +91,7 @@ async fn time_write_events(eventsdb: Arc<DbManager>, events_batch: &mut Vec<LogE
     ));
 }
 async fn write_events(
-    eventsdb: Arc<DbManager>,
+    eventsdb: Arc<DbPoolManager>,
     events: &Vec<LogEvent>,
 ) -> Result<u64, Error> {
     for e in events {

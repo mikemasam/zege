@@ -23,6 +23,7 @@ const menu_items = [
   { label: "Live", href: "/app/events/live" },
   { label: "Teams", href: "/app/teams" },
   { label: "Users", href: "/app/users" },
+  { label: "Roles", href: "/app/roles" },
   { label: "Services", href: "/app/services" },
   { label: "Reports", href: "/app/reports" },
 ];

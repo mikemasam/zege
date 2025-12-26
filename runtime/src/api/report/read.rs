@@ -16,14 +16,12 @@ pub struct ReadOutput {
     report: ZegeReport,
 }
 pub async fn report_read_route(
-    Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
+    Extension(ctx): Extension<Arc<AppContext>>,
     Path(id): Path<i32>,
 ) -> AppResult<ReadOutput> {
-    let app = appcontext.lock().await;
-    let db = app.storage.as_ref().unwrap().lock().await;
 
     let sql = "SELECT * FROM zg_reports where id = ?";
-    let report = match db.pool.as_ref().unwrap() {
+    let report = match ctx.storage.pool.as_ref().unwrap() {
         DatabasePool::Sqlite(pool) => {
             sqlx::query_as::<_, ZegeReport>(sql)
                 .bind(id)
@@ -39,7 +37,7 @@ pub async fn report_read_route(
     };
 
     api_ensure!(report.is_ok(), "Report not found");
-    let rows = match db.pool.as_ref().unwrap() {
+    let rows = match ctx.storage.pool.as_ref().unwrap() {
         DatabasePool::Sqlite(pool) => {
             let out = sqlx::query(report.as_ref().unwrap().report_sql.as_str()).fetch(pool);
             rows_to_json_vec(out).await

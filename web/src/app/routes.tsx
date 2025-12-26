@@ -6,6 +6,10 @@ import ZegeReports from "./reports";
 import ZegeReportEditor from "./reports/create";
 import ZegeReportView from "./reports/view";
 import TeamCreate from "./teams/create";
+import ListTeams from "./teams";
+import ListUsers from "./users";
+import ListRoles from "./roles";
+import ListServices from "./services";
 
 export default function AppRoutes() {
   return (
@@ -20,8 +24,17 @@ export default function AppRoutes() {
           <Route path=":id" element={<ZegeReportView />} />
         </Route>
         <Route path="teams">
-          <Route index element={<TeamCreate />} />
+          <Route index element={<ListTeams />} />
           <Route path="create" element={<TeamCreate />} />
+        </Route>
+        <Route path="users">
+          <Route index element={<ListUsers />} />
+        </Route>
+        <Route path="roles">
+          <Route index element={<ListRoles />} />
+        </Route>
+        <Route path="services">
+          <Route index element={<ListServices />} />
         </Route>
       </Route>
     </Routes>

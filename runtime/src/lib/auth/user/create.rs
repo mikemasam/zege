@@ -1,19 +1,24 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use chrono::Local;
 use serde::{Deserialize, Serialize};
 
-use crate::{auth::user::papers::User, ctx::{appcontext::AppContext, dbmanager::DatabasePool}, utils::{appenv::AppLogger, security::Security}};
-
+use crate::{
+    auth::user::papers::User,
+    ctx::{
+        appcontext::{AppContext, DbStorage},
+        dbmanager::{DatabasePool, DbPoolManager},
+    },
+    utils::{appenv::AppLogger, security::Security},
+};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct NewUser {
-   pub name: String,
-   pub email: String,
-   pub password: String,
+    pub name: String,
+    pub email: String,
+    pub password: String,
 }
-pub async fn auth_create_user(app: AppContext, item: NewUser) -> Result<User> {
-    let configdb = app.storage.as_ref().unwrap();
-    let db = configdb.lock().await;
+pub async fn auth_create_user(db: DbStorage, item: NewUser) -> Result<User> {
+    let pool = db.pool.clone();
     ensure!(!item.name.is_empty(), "Name is required");
     ensure!(!item.email.is_empty(), "Email is required");
     ensure!(item.email.contains('@'), "invalid email");
@@ -22,7 +27,7 @@ pub async fn auth_create_user(app: AppContext, item: NewUser) -> Result<User> {
         item.password.len() >= 4,
         "Password length minimum is 4 characters"
     );
-    let res = match db.pool.as_ref().unwrap() {
+    let res = match pool.as_ref().unwrap() {
         DatabasePool::Postgres(pool) => {
             let dup = sqlx::query_as::<_, User>("select * from users where email = $1")
                 .bind(&item.email)

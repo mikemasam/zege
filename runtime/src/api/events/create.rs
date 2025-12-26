@@ -9,7 +9,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 pub async fn event_write_route(
-    Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
+    Extension(ctx): Extension<Arc<AppContext>>,
     body: axum::body::Bytes, // take raw body
 ) -> impl IntoResponse {
     //println!("{:?}", body);
@@ -27,9 +27,8 @@ pub async fn event_write_route(
     };
 
     //println!("{}", serde_json::to_string_pretty(&payload).unwrap());
-    let app = appcontext.lock().await;
     for event in payload {
-        if let Err(err) = app
+        if let Err(err) = ctx
             .event_writer
             .send(LogEventChannelMessage::Data(Box::new(event)))
         {

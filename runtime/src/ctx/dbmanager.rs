@@ -17,8 +17,8 @@ pub enum DatabasePool {
     Postgres(PgPool),
 }
 
-#[derive(Debug, Clone)]
-pub struct DbManager {
+#[derive(Debug)]
+pub struct DbPoolManager {
     pub id: String,
     pub pool: Option<DatabasePool>,
 }
@@ -40,7 +40,7 @@ impl From<sqlx::migrate::MigrateError> for DbManagerError {
         DbManagerError::Migrate(e)
     }
 }
-impl DbManager {
+impl DbPoolManager {
     pub fn is_connected(&self) -> bool {
         self.pool.is_some()
     }
@@ -48,9 +48,9 @@ impl DbManager {
         let db_driver = env::var("DB_DRIVER").unwrap_or("sqlite".to_string());
         AppLogger::log(format!("DB Connecting to {}", db_driver));
         if db_driver.eq_ignore_ascii_case("sqlite") {
-            DbManager::connect_sqlite(opts).await
+            DbPoolManager::connect_sqlite(opts).await
         } else if db_driver.eq_ignore_ascii_case("pgsql") {
-            DbManager::connect_pgsql(opts).await
+            DbPoolManager::connect_pgsql(opts).await
         } else {
             Err(DbManagerError::UnsupportedDriver(db_driver.to_owned()))
         }
@@ -76,7 +76,7 @@ impl DbManager {
             let migrator: Migrator = Migrator::new(Path::new(migration_path)).await.unwrap();
             migrator.run(&sqlite_pool).await?;
         }
-        Ok(DbManager {
+        Ok(DbPoolManager {
             id: dbname.to_owned(),
             pool: Some(DatabasePool::Sqlite(sqlite_pool)),
         })
@@ -102,7 +102,7 @@ impl DbManager {
             let migrator: Migrator = Migrator::new(Path::new(migration_path)).await.unwrap();
             migrator.run(&pool).await?;
         }
-        Ok(DbManager {
+        Ok(DbPoolManager {
             id: dbname.to_owned(),
             pool: Some(DatabasePool::Postgres(pool)),
         })

@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     auth::user::User,
-    ctx::{appcontext::AppContext, dbmanager::DatabasePool},
+    ctx::{
+        appcontext::{AppContext, DbStorage},
+        dbmanager::DatabasePool,
+    },
     utils::{appenv::AppLogger, security::Security},
 };
 
@@ -15,11 +18,9 @@ pub struct ResetPasswordUserDto {
     pub new_password: Option<String>,
 }
 pub async fn auth_reset_user_password(
-    app: AppContext,
+    storage: DbStorage,
     mut item: ResetPasswordUserDto,
 ) -> Result<()> {
-    let configdb = app.storage.as_ref().unwrap();
-    let db = configdb.lock().await;
     ensure!(!item.email.is_empty(), "Email is required");
     ensure!(item.email.contains('@'), "invalid email");
     if (item.current_password.is_some()) {
@@ -44,7 +45,9 @@ pub async fn auth_reset_user_password(
     } else {
         item.new_password = Some("zegeadmin".to_string());
     }
-    let res = match db.pool.as_ref().unwrap() {
+
+    let pool = storage.pool.clone();
+    let res = match pool.as_ref().unwrap() {
         DatabasePool::Postgres(pool) => {
             let dup = sqlx::query_as::<_, User>("select * from users where email = $1")
                 .bind(&item.email)
@@ -68,7 +71,8 @@ pub async fn auth_reset_user_password(
     if res.as_ref().is_ok() {
         AppLogger::log(format!(
             "user with email {} has changed there password to {:?}",
-            item.email, item.new_password.unwrap()
+            item.email,
+            item.new_password.unwrap()
         ));
     }
     if res.as_ref().is_err() {

@@ -1,6 +1,6 @@
 #![allow(warnings)]
 mod api;
-mod auth;
+mod lib;
 mod ctx;
 mod dto;
 mod inputs;
@@ -14,9 +14,10 @@ use crate::server::start_http;
 use crate::utils::appenv::AppLogger;
 use crate::utils::daemon::wait_for_signal_impl;
 use crate::{
-    ctx::{appcontext::AppContext, dbmanager::DbManager},
+    ctx::{appcontext::AppContext, dbmanager::DbPoolManager},
     inputs::writer::start_events_writer_thread,
 };
+use anyhow::Result;
 use clap::Parser;
 use dotenv::dotenv;
 use sqlx::any::install_default_drivers;
@@ -32,24 +33,18 @@ async fn main() {
     install_default_drivers();
     //.layer(axum::middleware::from_fn(custom_middleware)); // apply custom middleware
     let (events_writer, events_reader) = mpsc::channel::<LogEventChannelMessage>();
-    let mut ctx = AppContext::new(events_writer.clone());
+    let _db = DbPoolManager::connect(DbManagerConnectOptions {
+        backup: false,
+        migrate: true,
+    })
+    .await;
+    let mut ctx = Arc::new(AppContext::new(
+        Arc::new(_db.unwrap()),
+        events_writer.clone(),
+    ));
     if !ctx.appargv.started_as_deamon && ctx.appargv.command.is_none() {
         AppLogger::log(format!("To start an a daemon, use -d",));
         return;
-    }
-    {
-        let _db = DbManager::connect(DbManagerConnectOptions {
-            backup: false,
-            migrate: true,
-        })
-        .await;
-        if _db.is_err() {
-            panic!(
-                "Failed to open events db with error {:?}",
-                _db.err().unwrap()
-            );
-        };
-        ctx.storage = Some(Arc::new(Mutex::new(_db.unwrap())));
     }
     ctx.appargv.match_commands(ctx.clone()).await.unwrap();
     if !ctx.appargv.started_as_deamon {

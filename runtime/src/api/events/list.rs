@@ -23,13 +23,10 @@ pub struct QueryParams {
 }
 
 pub async fn list_events_route(
-    Extension(appcontext): Extension<Arc<Mutex<AppContext>>>,
+    Extension(ctx): Extension<Arc<AppContext>>,
     Query(query_params): Query<QueryParams>,
 ) -> AppResult<Vec<LogEvent>> {
-    let app = appcontext.lock().await;
-    let storage = app.storage.as_ref().unwrap();
-    let _db = storage.lock().await;
-    let rows = match _db.pool.as_ref().unwrap() {
+    let rows = match ctx.storage.pool.as_ref().unwrap() {
         DatabasePool::Postgres(pool) => fetch_postgres(pool, query_params).await,
         DatabasePool::Sqlite(pool) => fetch_sqlite(pool, query_params).await,
     };
@@ -83,46 +80,5 @@ async fn fetch_postgres(pool: &Pool<Postgres>, query_params: QueryParams) -> Vec
 }
 
 async fn fetch_sqlite(pool: &Pool<Sqlite>, query_params: QueryParams) -> Vec<LogEvent> {
-    let mut qb = QueryBuilder::<Sqlite>::new("SELECT * FROM evt_events WHERE 1=1");
-
-    if let Some(name) = query_params.event_name.filter(|s| !s.trim().is_empty()) {
-        qb.push(" AND event_name LIKE ")
-            .push_bind(format!("%{name}%"));
-    }
-    if let Some(hostname) = query_params.hostname.filter(|s| !s.trim().is_empty()) {
-        qb.push(" AND hostname LIKE ")
-            .push_bind(format!("%{hostname}%"));
-    }
-    if let Some(path) = query_params.http_path.filter(|s| !s.trim().is_empty()) {
-        qb.push(" AND http_path LIKE ")
-            .push_bind(format!("%{path}%"));
-    }
-
-    qb.push(" ORDER BY id DESC");
-    qb.push(" LIMIT ")
-        .push_bind(Into::<i64>::into(query_params.per_page.unwrap_or(15)));
-    qb.push(" OFFSET ").push_bind(Into::<i64>::into(
-        query_params.page.unwrap_or(0) * query_params.per_page.unwrap_or(15),
-    ));
-
-    // Build a typed query
-    let query = qb.build_query_as::<ZegeEventRow>();
-
-    // Execute
-    let mut rows = query.fetch(pool);
-    let mut results = Vec::new();
-
-    while let Some(row) = rows.next().await {
-        match row {
-            Ok(r) => {
-                results.push(r.to_event());
-            }
-            Err(e) => {
-                eprintln!("error fetching row: {:?}", e);
-                break;
-            }
-        }
-    }
-
-    results
+    todo!("events_list_fetch_sqlite")
 }

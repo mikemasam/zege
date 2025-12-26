@@ -1,8 +1,8 @@
 use axum::{Router, routing};
 
-use crate::api::events::{httpwrite::event_write_route, list::list_events_route};
+use crate::api::events::{create::event_write_route, list::list_events_route};
 
-mod httpwrite;
+mod create;
 mod list;
 
 pub fn old_event_input_routes() -> Router {

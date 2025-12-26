@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres, Sqlite, prelude::FromRow};
 
 use crate::ctx::{
-    appcontext::AppContext,
-    dbmanager::{DatabasePool, DbManager},
+    appcontext::{AppContext, DbStorage},
+    dbmanager::{DatabasePool, DbPoolManager},
 };
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -25,12 +25,11 @@ pub struct NewTeam {
     pub name: String,
     pub user_id: i64,
 }
-pub async fn auth_create_team(app: AppContext, item: NewTeam) -> Result<Team> {
-    let configdb = app.storage.as_ref().unwrap();
-    let db = configdb.lock().await;
+pub async fn auth_create_team(db: DbStorage, item: NewTeam) -> Result<Team> {
+    let pool = db.pool.clone();
     ensure!(!item.name.is_empty(), "Name is required");
     ensure!(item.user_id > 0, "User id is required");
-    match db.pool.as_ref().unwrap() {
+    match pool.as_ref().unwrap() {
         DatabasePool::Sqlite(pool) => todo!("auth_create_team on sqlite"),
         DatabasePool::Postgres(pool) => {
             let dup =
@@ -54,21 +53,14 @@ pub async fn auth_create_team(app: AppContext, item: NewTeam) -> Result<Team> {
     }
 }
 
-async fn auth_search_teams(db: DbManager, pattern: Option<String>) -> Result<Vec<Team>> {
-    match db.pool.as_ref().unwrap() {
-        DatabasePool::Postgres(pool) => {
-            let pattern = format!("%{}%", pattern.unwrap_or_default());
-            let teams = sqlx::query_as::<_, Team>(
-                "select * from teams where name ilike $2",
-            )
-            .bind(&pattern)
-            .bind(&pattern)
-            .fetch_all(pool)
-            .await;
-            Ok(teams.unwrap())
-        }
-        DatabasePool::Sqlite(pool) => todo!("auth_search_teams on sqlite"),
-    }
+pub async fn auth_teams_list(db: DbStorage) -> Result<Vec<Team>> {
+    let pool = db.pool.clone();
+    let sql = "SELECT * FROM teams ORDER BY id DESC";
+    let reports = match pool.as_ref().unwrap() {
+        DatabasePool::Postgres(pool) => sqlx::query_as::<_, Team>(sql).fetch_all(pool).await?,
+        DatabasePool::Sqlite(pool) => todo!("auth_teams_list"),
+    };
+    Ok(reports)
 }
 
 #[derive(Debug, Subcommand, Clone, Serialize, Deserialize)]
@@ -87,20 +79,29 @@ pub enum TeamCommands {
     },
 }
 
-async fn listTeams(app: AppContext, pattern: Option<String>) -> Result<()> {
-    let configdb = app.storage.as_ref().unwrap();
-    let db = configdb.lock().await;
-    let teams = auth_search_teams(db.clone(), pattern).await?;
+async fn listTeams(db: DbStorage, pattern: Option<String>) -> Result<()> {
+    let pool = db.pool.clone();
+    let teams = match pool.as_ref().unwrap() {
+        DatabasePool::Postgres(pool) => {
+            let pattern = format!("%{}%", pattern.unwrap_or_default());
+            let teams = sqlx::query_as::<_, Team>("select * from teams where name ilike $1")
+                .bind(&pattern)
+                .fetch_all(pool)
+                .await;
+            teams.unwrap()
+        }
+        DatabasePool::Sqlite(pool) => todo!("listTeams on sqlite"),
+    };
     println!("{}", serde_json::to_string_pretty(&teams)?);
     Ok(())
 }
-pub async fn auth_team_commands(ctx: AppContext, command: TeamCommands) -> Result<()> {
+pub async fn auth_team_commands(ctx: Arc<AppContext>, command: TeamCommands) -> Result<()> {
     match command {
         TeamCommands::Add { name } => {
-            auth_create_team(ctx, NewTeam { user_id: 0, name }).await?;
+            auth_create_team(ctx.storage.clone(), NewTeam { user_id: 0, name }).await?;
         }
         TeamCommands::Search { pattern } => {
-            listTeams(ctx, pattern).await;
+            listTeams(ctx.storage.clone(), pattern).await;
         }
         TeamCommands::Disable { id } => todo!("team disable not implemented"),
     };
