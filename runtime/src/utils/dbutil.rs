@@ -1,12 +1,16 @@
+use chrono::{DateTime, FixedOffset, NaiveDate, NaiveDateTime};
 use futures::{Stream, StreamExt};
 use serde_json::{Map, Value, json};
-use sqlx::sqlite::SqliteRow;
-use sqlx::{Column, Error as SqlxError, Row, TypeInfo, ValueRef, postgres::PgRow};
+use sqlx::{Column, Error as SqlxError, Row, postgres::PgRow};
+use uuid::Uuid;
 
-pub trait JsonRow: Row
-where
-    usize: sqlx::ColumnIndex<Self>,
-{
+pub trait JsonRow {
+    fn col_count(&self) -> usize;
+    fn col_name(&self, idx: usize) -> &str;
+    fn get_json_value(&self, idx: usize) -> Value;
+}
+
+impl JsonRow for PgRow {
     fn col_count(&self) -> usize {
         self.columns().len()
     }
@@ -15,9 +19,6 @@ where
         self.column(idx).name()
     }
 
-    fn get_json_value(&self, idx: usize) -> Value;
-}
-impl JsonRow for PgRow {
     fn get_json_value(&self, idx: usize) -> Value {
         macro_rules! try_get {
             ($t:ty) => {
@@ -26,67 +27,50 @@ impl JsonRow for PgRow {
                 }
             };
         }
-
         try_get!(i64);
         try_get!(f64);
         try_get!(bool);
         try_get!(String);
-        try_get!(&str);
         try_get!(Option<i64>);
         try_get!(Option<f64>);
         try_get!(Option<String>);
-        try_get!(Option<&str>);
-
+        try_get!(Option<DateTime<FixedOffset>>);
+        try_get!(Option<serde_json::Value>);
         Value::Null
     }
 }
 
-impl JsonRow for SqliteRow {
-    fn get_json_value(&self, idx: usize) -> Value {
-        macro_rules! try_get {
-            ($t:ty) => {
-                if let Ok(v) = self.try_get::<$t, _>(idx) {
-                    return json!(v);
-                }
-            };
-        }
-
-        try_get!(i64);
-        try_get!(f64);
-        try_get!(bool);
-        try_get!(String);
-        try_get!(&str);
-        try_get!(Option<i64>);
-        try_get!(Option<f64>);
-        try_get!(Option<String>);
-        try_get!(Option<&str>);
-
-        Value::Null
-    }
+pub trait StreamJsonExt {
+    fn json(self, i: i32) -> impl std::future::Future<Output = Result<Vec<Value>, SqlxError>>;
 }
 
-pub async fn rows_to_json_vec<R>(
-    mut stream: impl Stream<Item = Result<R, SqlxError>> + Unpin,
-) -> Result<Vec<Value>, SqlxError>
+impl<S> StreamJsonExt for S
 where
-    R: JsonRow,
-    usize: sqlx::ColumnIndex<R>,
+    S: Stream<Item = Result<PgRow, SqlxError>> + Unpin,
 {
-    let mut results = Vec::new();
+    fn json(
+        mut self,
+        safe_limit: i32,
+    ) -> impl std::future::Future<Output = Result<Vec<Value>, SqlxError>> {
+        async move {
+            let mut results = Vec::new();
+            let mut i = 0;
+            while let Some(row) = self.next().await {
+                if (i >= safe_limit) {
+                    break;
+                }
+                i = i + 1;
+                let row = row?;
+                let mut map = Map::new();
 
-    while let Some(row) = stream.next().await {
-        let row = row?;
+                for i in 0..row.col_count() {
+                    map.insert(row.col_name(i).to_string(), row.get_json_value(i));
+                }
 
-        let mut map = Map::new();
+                results.push(Value::Object(map));
+            }
 
-        for i in 0..row.col_count() {
-            let key = row.col_name(i).to_string();
-            let val = row.get_json_value(i);
-            map.insert(key, val);
+            Ok(results)
         }
-
-        results.push(Value::Object(map));
     }
-
-    Ok(results)
 }

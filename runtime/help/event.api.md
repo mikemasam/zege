@@ -16,7 +16,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
   "timestamp": "2025-09-12T10:00:00Z",
   "severity": "ERROR",
   "message": "Something went wrong",
-  "service_name": "user-service",
   "error": {
     "error_type": "RuntimeError",
     "error_message": "Division by zero",

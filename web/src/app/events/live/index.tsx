@@ -12,18 +12,22 @@ export default function EventsLive() {
   const onSelect = (item: any) => {
     setOpts((o) => ({
       ...o,
-      selected: item?.ui == o.selected?.ui ? null : item,
+      selected: item?.event_ui == o.selected?.event_ui ? null : item,
     }));
   };
   return (
-    <Page title="Live Events" loading={query.loading}>
+    <Page
+      title="Live Events"
+      desc="Live incoming events"
+      loading={query.loading}
+    >
       <QueryFilter onFilterChange={query.params} />
       <div className="grid grid-cols-8 gap-2">
         <div className="col-span-8 flex flex-col gap-2">
           {query.data?.map((event: any) => (
             <EventBox
-              key={event.id}
-              isSelected={opts.selected?.ui == event.ui}
+              key={event.event_ui}
+              isSelected={opts.selected?.event_ui == event.event_ui}
               event={event}
               onSelect={onSelect}
             />

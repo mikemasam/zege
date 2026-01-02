@@ -2,15 +2,12 @@ import Page from "@/components/ui/ui-page";
 import { Button } from "@/components/ui/button";
 import api, { useApi } from "@/lib/api";
 import { Link } from "react-router";
-import Loading from "@/components/loading";
 import { UITable } from "@/components/ui/ui-table";
 
 export default function ListServices() {
-  const { data, result, loading, error } = useApi(() => api.get("/services"));
-  console.log(data, result);
-  if (loading) return <Loading />;
+  const query = useApi(() => api.get("/services"));
   return (
-    <Page title="Services">
+    <Page title="Services" loading={query.loading}>
       <div className="flex flex-row justify-end">
         <Link to="/app/services/create">
           <Button variant="default">+ New Service</Button>
@@ -20,9 +17,10 @@ export default function ListServices() {
         columns={[
           { key: "name", label: "Name" },
           { key: "label", label: "Label" },
-          { key: "created_at", label: "Create At" },
+          { key: "created_at", label: "Create At", type: "date" },
+          { key: "apikey_value", label: "Api Key" },
         ]}
-        data={data}
+        data={query.data}
       />
     </Page>
   );

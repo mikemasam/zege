@@ -1,10 +1,13 @@
 -- Add up migration script here
 CREATE TABLE IF NOT EXISTS zege_events (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  event_ui VARCHAR(100),
+  event_organization_id BIGINT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  event_service_id BIGINT NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+  event_service_name VARCHAR(250),
+  event_created_at TIMESTAMPTZ NOT NULL,
   timestamp TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL,
   severity TEXT,
-  ui TEXT,
   message TEXT,
   event_name TEXT,
   event_type TEXT,
@@ -21,7 +24,6 @@ CREATE TABLE IF NOT EXISTS zege_events (
   app_region TEXT,
 
   -- Service info
-  service_name TEXT,
   service_version TEXT,
   environment TEXT,
 
@@ -62,3 +64,6 @@ CREATE TABLE IF NOT EXISTS zege_events (
   labels JSONB,
   data JSONB  
 );
+
+ALTER TABLE zege_events FORCE ROW LEVEL SECURITY;
+

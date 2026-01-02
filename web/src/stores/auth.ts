@@ -29,12 +29,12 @@ type AuthState = {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  loading: false,
+  loading: true,
   _booted: false,
   load: async () => {
-    if (get()._booted) return;
     set({ loading: true });
-    set({ user: await loadAuth(), loading: false, _booted: true });
+    const user = await loadAuth();
+    set({ user, loading: false, _booted: true });
   },
   logout: () => {
     localStorage.removeItem("authorization");

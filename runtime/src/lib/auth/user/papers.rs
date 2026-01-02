@@ -9,7 +9,7 @@ use sqlx::prelude::FromRow;
 use tokio::sync::Mutex;
 
 use crate::lib::auth::role::Role;
-use crate::lib::auth::user::user::User;
+use crate::lib::auth::user::user::UserAccount;
 use crate::lib::organization::Organization;
 use crate::{
     ctx::{
@@ -79,13 +79,13 @@ pub struct LoginCredentials {
     password: String,
 }
 impl UserPaper {
-    pub async fn login_paper(storage: DbStorage, user: &User) -> Result<LoginResult> {
+    pub async fn login_paper(storage: DbStorage, user: &UserAccount) -> Result<LoginResult> {
         Ok(LoginResult {
             token: UserPaper::generate_jwt(user)?,
             user: UserPaper::new(storage, user).await?,
         })
     }
-    pub async fn new(storage: DbStorage, user: &User) -> Result<UserPaper> {
+    pub async fn new(storage: DbStorage, user: &UserAccount) -> Result<UserPaper> {
         let mut paper = UserPaper {
             id: user.id,
             name: user.name.clone(),
@@ -102,7 +102,7 @@ impl UserPaper {
         }
         Ok(paper)
     }
-    pub fn generate_jwt(user: &User) -> Result<String> {
+    pub fn generate_jwt(user: &UserAccount) -> Result<String> {
         let secret = env::var("JWT_SECRET")?;
         let exp = Local::now()
             .checked_add_signed(Duration::hours(24))
@@ -128,8 +128,9 @@ impl UserPaper {
         )?;
         Ok(token_data.claims)
     }
-    pub async fn verify_creds(storage: DbStorage, creds: LoginCredentials) -> Result<User> {
-        let rs_user = User::find_by_email(storage.clone(), creds.email).await;
+    pub async fn verify_creds(storage: DbStorage, creds: LoginCredentials) -> Result<UserAccount> {
+        let email = creds.email;
+        let rs_user = UserAccount::find_by_email(storage.clone(), email.clone()).await;
         ensure!(rs_user.is_ok(), "Invalid username or password");
         let user = rs_user.unwrap();
         let valid = Security::verify_password(&creds.password, &user.password_hash);
@@ -139,7 +140,7 @@ impl UserPaper {
 
     pub async fn verify_token(storage: DbStorage, token: &str) -> Result<UserPaper> {
         let claims = UserPaper::verify_jwt(token.replace("Bearer ", "").as_str())?;
-        let rs_user = User::find_by_id(storage.clone(), claims.sub).await;
+        let rs_user = UserAccount::find_by_id(storage.clone(), claims.sub).await;
         ensure!(rs_user.is_ok(), "unauthorized");
         let user = rs_user.unwrap();
         UserPaper::new(storage.clone(), &user).await

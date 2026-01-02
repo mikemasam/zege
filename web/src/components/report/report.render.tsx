@@ -10,7 +10,6 @@ export default function ReportRender({ report_id }: { report_id: number }) {
   const { data: output } = useApi(
     () => api.get(`/reports/${report_id}/read`),
     {},
-    [report_id],
   );
   const [report, data] = useMemo(() => {
     if (!output) return [null, null];

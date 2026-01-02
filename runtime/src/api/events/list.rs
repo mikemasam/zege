@@ -2,6 +2,7 @@
 use crate::ctx::appcontext::AppContext;
 use crate::ctx::dbmanager::DatabasePool;
 use crate::dto::logevent::{LogEvent, ZegeEventRow};
+use crate::lib::auth::user::papers::UserPaper;
 use crate::utils::http::{AppResponse, AppResult};
 use axum::{Extension, extract::Query};
 use futures::StreamExt;
@@ -24,18 +25,30 @@ pub struct QueryParams {
 
 pub async fn list_events_route(
     Extension(ctx): Extension<Arc<AppContext>>,
+    Extension(paper): Extension<UserPaper>,
     Query(query_params): Query<QueryParams>,
 ) -> AppResult<Vec<LogEvent>> {
     let rows = match ctx.storage.pool.as_ref().unwrap() {
-        DatabasePool::Postgres(pool) => fetch_postgres(pool, query_params).await,
-        DatabasePool::Sqlite(pool) => fetch_sqlite(pool, query_params).await,
+        DatabasePool::Postgres(pool) => {
+            fetch_postgres(
+                pool,
+                paper.organization.map(|o| o.id).unwrap(),
+                query_params,
+            )
+            .await
+        }
+        _ => todo!("list_events_route"),
     };
     AppResponse::ok(Some(rows), None)
 }
 
-async fn fetch_postgres(pool: &Pool<Postgres>, query_params: QueryParams) -> Vec<LogEvent> {
-    let mut qb = QueryBuilder::<Postgres>::new("SELECT * FROM zege_events WHERE 1=1");
-
+async fn fetch_postgres(
+    pool: &Pool<Postgres>,
+    organization_id: i64,
+    query_params: QueryParams,
+) -> Vec<LogEvent> {
+    let mut qb = QueryBuilder::<Postgres>::new("SELECT * FROM zege_events WHERE ");
+    qb.push("event_organization_id = ").push_bind(organization_id);
     if let Some(name) = query_params.event_name.filter(|s| !s.trim().is_empty()) {
         qb.push(" AND event_name LIKE ")
             .push_bind(format!("%{name}%"));
@@ -48,8 +61,6 @@ async fn fetch_postgres(pool: &Pool<Postgres>, query_params: QueryParams) -> Vec
         qb.push(" AND http_path LIKE ")
             .push_bind(format!("%{path}%"));
     }
-    //qb.push(" AND ui = '019b03b0a51670a0b6ae75ed7a612440'");
-
     qb.push(" ORDER BY id DESC");
     qb.push(" LIMIT ")
         .push_bind(Into::<i64>::into(query_params.per_page.unwrap_or(15)));

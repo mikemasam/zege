@@ -6,7 +6,7 @@ use crate::{
     ctx::{
         appcontext::{AppContext, DbStorage},
         dbmanager::DatabasePool,
-    }, lib::auth::user::user::User, utils::{appenv::AppLogger, security::Security}
+    }, lib::auth::user::user::UserAccount, utils::{appenv::AppLogger, security::Security}
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -15,7 +15,7 @@ pub struct ResetPasswordUserDto {
     pub current_password: Option<String>,
     pub new_password: Option<String>,
 }
-impl User {
+impl UserAccount {
     pub async fn reset_password(storage: DbStorage, mut item: ResetPasswordUserDto) -> Result<()> {
         ensure!(!item.email.is_empty(), "Email is required");
         ensure!(item.email.contains('@'), "invalid email");
@@ -45,7 +45,7 @@ impl User {
         let pool = storage.pool.clone();
         let res = match pool.as_ref().unwrap() {
             DatabasePool::Postgres(pool) => {
-                let dup = sqlx::query_as::<_, User>("select * from users where email = $1")
+                let dup = sqlx::query_as::<_, UserAccount>("select * from users where email = $1")
                     .bind(&item.email)
                     .fetch_optional(pool)
                     .await?;

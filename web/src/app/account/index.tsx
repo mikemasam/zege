@@ -9,23 +9,19 @@ import { Link } from "react-router";
 
 export default function AccountPage() {
   const auth = useAuth();
-  const { data } = useApi(() =>
-    api.get("/organizations"),
-  );
+  const query = useApi(() => api.get("/organizations"));
+  const switchOrg = async (org: any) => {
+    const res = await api.post("/auth/switch-organization", {
+      org_id: org.id,
+    });
+    query.load();
+    auth.load();
+  };
   if (auth.loading) return <Loading />;
   return (
-    <Page>
+    <Page title="Account" desc="Manage your account and organization details">
       <div className="space-y-6">
-        <div className="flex items-center justify-between p-5">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Account</h1>
-            <p className="text-sm text-gray-500">
-              Manage your account and organization details
-            </p>
-          </div>
-        </div>
-
-        <div className="rounded border-x-2 border-blue-300 bg-white p-6">
+        <div className="box p-6">
           <div className="flex flex-col gap-4">
             <TextLabel label="Name" desc={auth.user?.name} />
             <TextLabel label="Email" desc={auth.user?.email} />
@@ -38,20 +34,47 @@ export default function AccountPage() {
         <UITable
           title="Organizations"
           columns={[
-            { key: "name", label: "Name" },
-            { key: "created_at", label: "Created At" },
+            {
+              key: "name",
+              label: "Name",
+              render: (v, row) => {
+                return (
+                  <>
+                    {row.is_current && (
+                      <span className="material-icons !text-lg pr-2 text-green-800">
+                        check_circle
+                      </span>
+                    )}
+                    {!row.is_current && (
+                      <span className="material-icons !text-lg pr-2 text-gray-200">
+                        do_not_disturb_on
+                      </span>
+                    )}
+                    {v}
+                  </>
+                );
+              },
+            },
+            { key: "created_at", label: "Created At", type: "datetime" },
           ]}
-          data={data}
-        />
-        <div className="flex flex-row justify-end">
-          <Link to="/app/organizations/create">
-            <Button variant="default" className="px-4">
-              + New Organization
-            </Button>
-          </Link>
-        </div>
+          actions={[
+            {
+              label: "Switch to this organization",
+              icon: "compare_arrows",
+              action: (a) => {
+                switchOrg(a);
+              },
+            },
+          ]}
+          data={query.data}
+        >
+          <div className="flex flex-row justify-end flex-1">
+            <Link to="/app/organizations/create">
+              <Button variant="default">+</Button>
+            </Link>
+          </div>
+        </UITable>
       </div>
     </Page>
   );
 }
-

@@ -1,11 +1,11 @@
 import Page from "@/components/ui/ui-page";
 import { Button } from "@/components/ui/button";
-import api, { useApi } from "@/lib/api";
 import { Link } from "react-router";
+import api, { useApi } from "@/lib/api";
 
 export default function ZegeReports() {
   const { data, result, loading, error } = useApi(() => api.get("/reports"));
-  console.log(data, result)
+  console.log(data, result);
   return (
     <Page title="Zege Reports">
       <div className="flex flex-row justify-end">
@@ -47,12 +47,12 @@ function Item({ item }: { item: any }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <Link to={`/reports/${item.id}/edit`}>
+        <Link to={`/app/reports/${item.id}/edit`}>
           <Button variant="outline" size="sm">
-            Edit 
+            Edit
           </Button>
         </Link>
-        <Link to={`/reports/${item.id}`}>
+        <Link to={`/app/reports/${item.id}`}>
           <Button variant="outline" size="sm">
             View
           </Button>

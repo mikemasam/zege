@@ -11,7 +11,7 @@ use crate::{
             role::{NewRole, Role},
             user::{
                 papers::{LoginCredentials, LoginResult, UserPaper},
-                user::{NewUser, User},
+                user::{NewUser, UserAccount},
             },
         },
         organization::{
@@ -27,37 +27,11 @@ pub async fn auth_signup(
     axum::Json(item): axum::extract::Json<NewUser>,
 ) -> AppResult<LoginResult> {
     //TODO: handle db rollback
-    let user = User::create(ctx.storage.clone(), item).await?;
+    let user = UserAccount::create(ctx.storage.clone(), item).await?;
     let organization = Organization::create(
         ctx.storage.clone(),
         NewOrganization {
             name: "Default Organization".to_string(),
-            user_id: user.id,
-        },
-    )
-    .await?;
-    let role = Role::create(
-        ctx.storage.clone(),
-        NewRole {
-            name: "Administrator".to_string(),
-            description: "Administrator".to_string(),
-            organization_id: organization.id,
-        },
-    )
-    .await?;
-    OrganizationMembership::create(
-        ctx.storage.clone(),
-        NewOrganizationMembership {
-            organization_id: organization.id,
-            user_id: user.id,
-            role_id: role.id,
-        },
-    )
-    .await?;
-    Organization::switch(
-        ctx.storage.clone(),
-        SwitchOrganizationMembership {
-            organization_id: organization.id,
             user_id: user.id,
         },
     )

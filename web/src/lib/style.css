@@ -23,7 +23,9 @@ body {
     }
   }
 }
-
+.box {
+  @apply border-l-4 border-blue-300 border-blue-300 bg-white;
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -140,5 +142,3 @@ body {
     @apply bg-background text-foreground;
   }
 }
-
-

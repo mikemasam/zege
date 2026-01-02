@@ -3,14 +3,41 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::lib::services::Service;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LogEvent {
-    pub timestamp: DateTime<FixedOffset>,
-    pub created_at: Option<DateTime<FixedOffset>>,
+    pub event_ui: Option<String>,
+    pub event_organization_id: i64,
+    pub event_created_at: DateTime<FixedOffset>,
     pub event_name: String,
-    pub service_name: String,
+    pub event_service_name: String,
+    pub timestamp: DateTime<FixedOffset>,
     pub event_type: Option<String>,
-    pub ui: Option<String>,
+    pub severity: Option<String>,
+    pub message: Option<String>,
+    pub error: Option<ErrorInfo>,
+    pub app: Option<AppInfo>,
+    pub service: Option<ServiceInfo>,
+    pub host: Option<HostInfo>,
+    pub tracing: Option<TracingInfo>,
+    pub user: Option<UserInfo>,
+    pub http: Option<HttpInfo>,
+    pub request: Option<RequestInfo>,
+    pub tags: Option<Vec<String>>,
+    pub labels: Option<HashMap<String, String>>,
+    pub data: Option<HashMap<String, serde_json::Value>>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct LogEventInput {
+    pub apikey_value: Option<String>,
+    pub event_service_name: Option<String>,
+    pub event_organization_id: Option<i64>,
+    pub event_service_id: Option<i64>,
+    pub timestamp: DateTime<FixedOffset>,
+    pub event_name: String,
+    pub event_type: Option<String>,
     pub severity: Option<String>,
     pub message: Option<String>,
     pub error: Option<ErrorInfo>,
@@ -90,19 +117,20 @@ pub struct RequestInfo {
 }
 
 pub enum LogEventChannelMessage {
-    Data(Box<LogEvent>),
+    Data(Box<LogEventInput>),
     Shutdown,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct ZegeEventRow {
     pub id: i64,
+    pub event_ui: Option<String>,
+    pub event_organization_id: i64,
+    pub event_service_name: String,
+    pub event_created_at: DateTime<FixedOffset>,
     pub timestamp: DateTime<FixedOffset>,
-    pub created_at: Option<DateTime<FixedOffset>>,
     pub event_name: String,
     pub event_type: Option<String>,
-    pub ui: Option<String>,
-    pub service_name: String,
     pub severity: Option<String>,
     pub message: Option<String>,
     pub error_type: Option<String>,
@@ -145,12 +173,13 @@ pub struct ZegeEventRow {
 impl ZegeEventRow {
     pub fn to_event(self) -> LogEvent {
         LogEvent {
+            event_ui: self.event_ui,
+            event_organization_id: self.event_organization_id,
             timestamp: self.timestamp,
-            created_at: self.created_at,
+            event_created_at: self.event_created_at,
             event_name: self.event_name,
             event_type: self.event_type,
-            ui: self.ui,
-            service_name: self.service_name,
+            event_service_name: self.event_service_name,
             severity: self.severity,
             message: self.message,
 

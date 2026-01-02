@@ -2,7 +2,7 @@
 use crate::ctx::appcontext::AppContext;
 use crate::ctx::dbmanager::DatabasePool;
 use crate::lib::auth::user::papers::UserPaper;
-use crate::lib::services::{Service, auth_create_service};
+use crate::lib::services::Service;
 use crate::utils::http::{AppResponse, AppResult};
 use axum::Extension;
 use chrono::Local;
@@ -20,17 +20,17 @@ pub struct ServiceCreate {
 
 pub async fn services_create_route(
     Extension(ctx): Extension<Arc<AppContext>>,
-    Extension(user): Extension<UserPaper>,
+    Extension(paper): Extension<UserPaper>,
     axum::Json(item): axum::extract::Json<ServiceCreate>,
 ) -> AppResult<Service> {
-    let service = auth_create_service(
+    let service = Service::create(
         ctx.storage.clone(),
         crate::lib::services::NewService {
             name: item.name,
             label: item.label,
             description: item.description,
-            user_id: user.id,
-            organization_id: 1,
+            user_id: paper.id,
+            organization_id: paper.organization.map(|o| o.id).unwrap(),
         },
     )
     .await?;

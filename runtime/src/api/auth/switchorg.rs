@@ -9,7 +9,7 @@ use crate::{
     ctx::appcontext::AppContext,
     lib::{
         auth::user::papers::UserPaper,
-        organization::{Organization, SwitchOrganizationMembership},
+        organization::{Organization, OrganizationMembership, SwitchOrganizationMembership},
     },
     utils::http::{AppResponse, AppResult},
 };
@@ -23,7 +23,7 @@ pub async fn switch_organization(
     Extension(paper): Extension<UserPaper>,
     axum::Json(item): axum::extract::Json<SwitchForm>,
 ) -> AppResult<UserPaper> {
-    Organization::switch(
+    OrganizationMembership::switch(
         ctx.storage.clone(),
         SwitchOrganizationMembership {
             organization_id: item.org_id,

@@ -1,6 +1,10 @@
 use crate::{
-    ctx::dbmanager::{DatabasePool, DbManagerConnectOptions, DbPoolManager},
-    dto::logevent::{LogEvent, LogEventChannelMessage},
+    ctx::{
+        appcontext::DbStorage,
+        dbmanager::{DatabasePool, DbManagerConnectOptions, DbPoolManager},
+    },
+    dto::logevent::{LogEvent, LogEventChannelMessage, LogEventInput},
+    lib::services::Service,
     utils::appenv::AppLogger,
 };
 use chrono::{Local, SecondsFormat};
@@ -44,8 +48,23 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
     loop {
         match receiver.recv_timeout(Duration::from_secs(1)) {
             Ok(LogEventChannelMessage::Data(mut event)) => {
-                event.ui = Some(Uuid::now_v7().simple().to_string());
-                events_batch.push(*event);
+                let service = Service::find_by_apikey(
+                    db.clone(),
+                    event.as_ref().apikey_value.as_ref().unwrap().to_string(),
+                )
+                .await;
+                if let Ok(s) = service {
+                    event.event_service_name = Some(s.name);
+                    event.event_service_id = Some(s.id);
+                    event.event_organization_id = Some(s.organization_id);
+                    events_batch.push(*event);
+                } else {
+                    AppLogger::error(format!(
+                        "event api key not found {} for event {}",
+                        event.apikey_value.unwrap_or_default(),
+                        event.event_name
+                    ));
+                }
                 if events_batch.len() >= 100 {
                     time_write_events(db.clone(), &mut events_batch).await;
                 }
@@ -68,7 +87,7 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
     }
 }
 
-async fn time_write_events(eventsdb: Arc<DbPoolManager>, events_batch: &mut Vec<LogEvent>) {
+async fn time_write_events(eventsdb: Arc<DbPoolManager>, events_batch: &mut Vec<LogEventInput>) {
     if events_batch.is_empty() {
         AppLogger::log("# write size: empty, wrote: 0, time: 0".to_string());
         return;
@@ -90,12 +109,15 @@ async fn time_write_events(eventsdb: Arc<DbPoolManager>, events_batch: &mut Vec<
         "# write size: {size}, wrote: {written_events_count}, time: {elapsed_time:?}"
     ));
 }
-async fn write_events(eventsdb: Arc<DbPoolManager>, events: &Vec<LogEvent>) -> Result<u64, Error> {
+async fn write_events(
+    eventsdb: Arc<DbPoolManager>,
+    events: &Vec<LogEventInput>,
+) -> Result<u64, Error> {
     for e in events {
         AppLogger::debug(format!(
-            "> {} - {}:{} - {}",
+            "> {} - {:?}:{} - {}",
             e.timestamp,
-            e.service_name,
+            e.event_service_name,
             e.event_name,
             e.message.clone().unwrap_or("".to_owned()).as_str()
         ));
@@ -105,19 +127,20 @@ async fn write_events(eventsdb: Arc<DbPoolManager>, events: &Vec<LogEvent>) -> R
         _ => todo!("db driver not implementated"),
     }
 }
-async fn pgsql_write_events(pool: &PgPool, events: &Vec<LogEvent>) -> Result<u64, Error> {
+async fn pgsql_write_events(pool: &PgPool, events: &Vec<LogEventInput>) -> Result<u64, Error> {
     let INSERT_SQL: &str = "INSERT INTO zege_events (
     timestamp, severity, message,
     error_type, error_message, stack_trace,
     app_instance_id, build_commit, build_id, app_region,
-    service_name, service_version, environment,
+    service_version, environment,
     hostname , host_ip , host_region , host_provider ,
     trace_id, span_id, transaction_id,
     user_id, user_name, user_email, session_id,
     http_method, http_path, http_status, client_ip, user_agent,
     request_id, referrer, protocol, response_size_bytes,
     tags,  labels, data, event_name, event_type,
-    http_url, http_origin, http_headers, ui, created_at 
+    http_url, http_origin, http_headers, 
+    event_service_name, event_service_id, event_organization_id, event_ui, event_created_at
     )";
     let mut query = QueryBuilder::<sqlx::Postgres>::new(INSERT_SQL);
 
@@ -132,7 +155,6 @@ async fn pgsql_write_events(pool: &PgPool, events: &Vec<LogEvent>) -> Result<u64
             .push_bind(e.app.as_ref().map(|v| &v.build_commit))
             .push_bind(e.app.as_ref().map(|v| &v.build_id))
             .push_bind(e.app.as_ref().map(|v| &v.region))
-            .push_bind(e.service_name.clone())
             .push_bind(e.service.as_ref().map(|v| &v.version))
             .push_bind(e.service.as_ref().map(|v| &v.environment))
             .push_bind(e.host.as_ref().map(|v| &v.hostname))
@@ -167,7 +189,10 @@ async fn pgsql_write_events(pool: &PgPool, events: &Vec<LogEvent>) -> Result<u64
                     .as_ref()
                     .map(|v| serde_json::to_value(v.headers.clone()).ok()),
             )
-            .push_bind(e.ui.clone())
+            .push_bind(e.event_service_name.clone())
+            .push_bind(e.event_service_id)
+            .push_bind(e.event_organization_id)
+            .push_bind(Uuid::now_v7().simple().to_string())
             .push_bind(Local::now());
     });
     let res = query.build().execute(pool).await?;

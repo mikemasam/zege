@@ -5,7 +5,7 @@ use tokio::time::{Duration, sleep};
 
 use crate::{
     ctx::appcontext::AppContext,
-    dto::logevent::{LogEvent, LogEventChannelMessage}, utils::appenv::AppLogger,
+    dto::logevent::{LogEvent, LogEventChannelMessage, LogEventInput}, utils::appenv::AppLogger,
 };
 
 pub async fn start_redis_reader(ctx: Arc<AppContext>) {
@@ -65,7 +65,7 @@ async fn connect_and_listen(ctx: Arc<AppContext>, url: &str) -> redis::RedisResu
 /// Stub replacement for event$writer
 async fn event_writer(ctx: Arc<AppContext>, event: serde_json::Value) -> Result<(), String> {
     //println!("{}", serde_json::to_string_pretty(&event).unwrap());
-    let parser: Result<LogEvent, serde_json::Error> = serde_json::from_value(event);
+    let parser: Result<LogEventInput, serde_json::Error> = serde_json::from_value(event);
     if parser.is_err() {
         eprintln!("> Redis: Failed to process event {:?}", parser.err());
         return Ok(());

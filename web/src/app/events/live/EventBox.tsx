@@ -7,6 +7,7 @@ type Event = {
   timestamp: string | number;
   severity?: Severity;
   event_name: string;
+  event_service_name: string;
   message: string;
 };
 
@@ -57,6 +58,9 @@ export function EventBox({
 
         {/* Event content */}
         <div className="flex min-w-0 items-center gap-2">
+          <span className="text-sm font-extralight text-gray-600 whitespace-nowrap">
+            [{event.event_service_name}]
+          </span>
           <span className="text-sm font-semibold text-gray-600 whitespace-nowrap">
             {event.event_name}
           </span>

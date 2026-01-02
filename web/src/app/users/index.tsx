@@ -1,4 +1,6 @@
 import Page from "@/components/ui/ui-page";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router";
 import api, { useApi } from "@/lib/api";
 import Loading from "@/components/loading";
 import { UITable } from "@/components/ui/ui-table";
@@ -8,6 +10,11 @@ export default function ListUsers() {
   if (loading) return <Loading />;
   return (
     <Page title="Users">
+      <div className="flex flex-row justify-end">
+        <Link to="/app/users/create">
+          <Button variant="default">+ Add User</Button>
+        </Link>
+      </div>
       <UITable
         columns={[
           { key: "name", label: "Name" },

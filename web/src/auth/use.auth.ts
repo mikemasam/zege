@@ -1,16 +1,16 @@
-import { useEffect } from "react";
 import { useAuthStore } from "@/stores/auth";
+import { useEffect } from "react";
 
 export function useAuth() {
-  const { user, loading, load } = useAuthStore();
+  const auth = useAuthStore();
   useEffect(() => {
-    load();
-  }, [load]);
-
+    if (!auth._booted) {
+      auth.load();
+    }
+  }, [auth._booted]);
   return {
-    user,
-    valid: !!user,
-    loading,
+    ...auth,
+    valid: !!auth.user,
   };
 }
 

@@ -1,10 +1,11 @@
 import { useAuth } from "@/auth/use.auth";
 import Loading from "@/components/loading";
+import { useEffect } from "react";
 import { Link, Navigate, Outlet } from "react-router";
 
 export default function AppLayout() {
   const auth = useAuth();
-  if (auth.loading) return <Loading />;
+  if (auth.loading) return <Loading message="authentication" />;
   if (!auth.valid) {
     return <Navigate to="/login" replace />;
   }
@@ -19,20 +20,23 @@ export default function AppLayout() {
 }
 
 const menu_items = [
-  { label: "Home", href: "/app" },
-  { label: "Live", href: "/app/events/live" },
-  { label: "Users", href: "/app/users" },
+  { label: "Home", href: "/app", icon: "home" },
+  { label: "Live", href: "/app/events/live", icon: "live_tv" },
+  { label: "Users", href: "/app/users", icon: "group" },
   { label: "Roles", href: "/app/roles" },
   { label: "Services", href: "/app/services" },
-  { label: "Reports", href: "/app/reports" },
+  { label: "Reports", href: "/app/reports", icon: "analytics" },
 ];
 function Menu() {
   return (
     <div className="p-2 flex flex-col gap-2">
       {menu_items.map((m) => (
         <Link to={m.href}>
-          <div className="p-2 border-b border-b-gray-200 hover:shadow rounded cursor-pointer">
-            {m.label}
+          <div className="p-2 border-b border-b-gray-200 hover:shadow rounded cursor-pointer flex flex-row items-center gap-2">
+            <span className="material-icons !text-base text-gray-500">
+              {m.icon ?? "business"}
+            </span>
+            <span>{m.label}</span>
           </div>
         </Link>
       ))}
@@ -44,9 +48,11 @@ function Header() {
   if (!auth.valid) return null;
 
   return (
-    <aside className="w-56 min-h-screen border-r bg-white">
-      <div className="flex flex-col gap-4 px-2 py-3">
-        <div className="flex items-center gap-3">
+    <aside className="w-56 min-h-screen border-r bg-white flex flex-col gap-2">
+      <OrganizationMenu auth={auth} />
+
+      <Link to="/app/account">
+        <div className="flex items-center gap-3 px-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-900">
             <span className="text-xs font-medium text-white">
               {auth.user?.name?.[0] ?? "U"}
@@ -62,29 +68,31 @@ function Header() {
             </div>
           </div>
         </div>
-
-        <Link to="/app/account">
-          <div
-            title={auth.user?.organization?.name}
-            className="flex flex-row items-center gap-1.5 text-sm font-semibold text-gray-700 bg-gray-100 border border-gray-200 rounded px-2 py-1 cursor-pointer hover:bg-gray-200 hover:shadow-sm active:scale-[0.98] transition"
-          >
-            <span className="material-icons text-base text-gray-500">
-              business
-            </span>
-
-            <span className="truncate">
-              {auth.user?.organization?.name ?? "Select organization"}
-            </span>
-
-            <span className="material-icons text-base text-gray-400">
-              swap_vert
-            </span>
-          </div>
-        </Link>
-      </div>
-      <nav className="py-2">
-        <Menu />
-      </nav>
+      </Link>
+      <Menu />
     </aside>
+  );
+}
+
+function OrganizationMenu({ auth }: any) {
+  return (
+    <Link to="/app/account">
+      <div
+        title={auth.user?.organization?.name}
+        className="flex flex-row items-center gap-1.5 text-sm font-semibold text-gray-700 bg-blue-50 border-b border-blue-300 px-2 py-1 cursor-pointer hover:bg-gray-200 hover:shadow-sm active:scale-[0.98] transition"
+      >
+        <span className="material-icons !text-base text-gray-500">
+          business
+        </span>
+
+        <span className="truncate flex-1">
+          {auth.user?.organization?.name ?? "Select organization"}
+        </span>
+
+        <span className="material-icons !text-base text-gray-400">
+          swap_vert
+        </span>
+      </div>
+    </Link>
   );
 }

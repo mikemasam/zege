@@ -1,6 +1,6 @@
 pub mod papers;
-pub mod user;
 mod resetpassword;
+pub mod user;
 use std::sync::Arc;
 
 use anyhow::{Result, ensure};
@@ -13,10 +13,10 @@ use sqlx::{Pool, Postgres, Sqlite, prelude::FromRow};
 use std::{default, env};
 use tokio::sync::Mutex;
 
-use crate::lib::auth::user::resetpassword::{ResetPasswordUserDto};
 use crate::ctx::appcontext::DbStorage;
 use crate::ctx::{appcontext::AppContext, dbmanager::DatabasePool};
-use crate::lib::auth::user::user::{NewUser, User};
+use crate::lib::auth::user::resetpassword::ResetPasswordUserDto;
+use crate::lib::auth::user::user::{NewUser, UserAccount, UserPublicInfo};
 
 #[derive(Debug, Subcommand, Clone, Serialize, Deserialize)]
 pub enum UserCommands {
@@ -45,7 +45,7 @@ async fn listUsers(storage: DbStorage, pattern: Option<String>) -> Result<()> {
     let users = match storage.pool.as_ref().unwrap() {
         DatabasePool::Postgres(pool) => {
             let pattern = format!("%{}%", pattern.unwrap_or_default());
-            let users = sqlx::query_as::<_, User>(
+            let users = sqlx::query_as::<_, UserPublicInfo>(
                 "select * from users where email ilike $1 or name ilike $2",
             )
             .bind(&pattern)
@@ -63,7 +63,7 @@ async fn listUsers(storage: DbStorage, pattern: Option<String>) -> Result<()> {
 pub async fn auth_user_commands(ctx: Arc<AppContext>, command: UserCommands) -> Result<()> {
     match command {
         UserCommands::Add { name, email } => {
-            User::create(
+            UserAccount::create(
                 ctx.storage.clone(),
                 NewUser {
                     name,
@@ -78,7 +78,7 @@ pub async fn auth_user_commands(ctx: Arc<AppContext>, command: UserCommands) -> 
         }
         UserCommands::Disable { email } => todo!("user disable not implemented"),
         UserCommands::ResetPassword { email } => {
-            User::reset_password(
+            UserAccount::reset_password(
                 ctx.storage.clone(),
                 ResetPasswordUserDto {
                     email,

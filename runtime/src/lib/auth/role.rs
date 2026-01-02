@@ -5,9 +5,12 @@ use sqlx::{Pool, Postgres, Sqlite, prelude::FromRow};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::ctx::{
-    appcontext::{AppContext, DbStorage},
-    dbmanager::DatabasePool,
+use crate::{
+    ctx::{
+        appcontext::{AppContext, DbStorage},
+        dbmanager::DatabasePool,
+    },
+    lib::organization,
 };
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -58,11 +61,13 @@ impl Role {
     }
 }
 
-pub async fn auth_roles_list(db: DbStorage) -> Result<Vec<Role>> {
+pub async fn auth_roles_list(db: DbStorage, organization_id: i64) -> Result<Vec<Role>> {
     let pool = db.pool.clone();
     match pool.as_ref().unwrap() {
         DatabasePool::Postgres(pool) => {
-            let roles = sqlx::query_as::<_, Role>("select * from roles order by id desc")
+            let sql = "SELECT * FROM roles WHERE organization_id = $1 ORDER BY id DESC";
+            let roles = sqlx::query_as::<_, Role>(sql)
+                .bind(organization_id)
                 .fetch_all(pool)
                 .await?;
             Ok(roles)

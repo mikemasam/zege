@@ -11,6 +11,7 @@ import ListRoles from "./roles";
 import ListServices from "./services";
 import ServiceCreate from "./services/create";
 import AccountPage from "./account";
+import UserCreate from "./users/create";
 
 export default function AppRoutes() {
   return (
@@ -30,6 +31,7 @@ export default function AppRoutes() {
         </Route>
         <Route path="users">
           <Route index element={<ListUsers />} />
+          <Route path="create" element={<UserCreate />} />
         </Route>
         <Route path="roles">
           <Route index element={<ListRoles />} />

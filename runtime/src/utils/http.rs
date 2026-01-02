@@ -6,6 +6,8 @@ use anyhow::Error as AnyhowError;
 use serde::{Deserialize, Serialize};
 use sqlx::Error as SqlxError;
 
+use crate::utils::appenv::AppLogger;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AppResponse<T> {
     pub status: i32,
@@ -75,6 +77,7 @@ impl From<SqlxError> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
+        AppLogger::error(format!("error occured {:?}", self));
         AppResponse::<()>::error(self.0.to_string().as_str(), None).into_response()
     }
 }

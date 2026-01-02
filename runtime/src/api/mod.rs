@@ -79,6 +79,6 @@ async fn auth_middleware<B>(
         return AppResponse::<Value>::unauthorized("Unauthorized").into_response();
     }
     req.extensions_mut().insert(papers_result.unwrap());
-    AppLogger::debug(format!("Authorized {} {}", req.method(), req.uri().path()));
+    //AppLogger::debug(format!("Authorized {} {}", req.method(), req.uri().path()));
     next.run(req).await
 }
