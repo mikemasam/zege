@@ -8,8 +8,8 @@ import ZegeReportView from "./reports/view";
 import OrganizationCreate from "./organizations/create";
 import ListUsers from "./users";
 import ListRoles from "./roles";
-import ListServices from "./services";
-import ServiceCreate from "./services/create";
+import ListBuckets from "./buckets";
+import BucketCreate from "./buckets/create";
 import AccountPage from "./account";
 import UserCreate from "./users/create";
 
@@ -36,9 +36,9 @@ export default function AppRoutes() {
         <Route path="roles">
           <Route index element={<ListRoles />} />
         </Route>
-        <Route path="services">
-          <Route index element={<ListServices />} />
-          <Route path="create" element={<ServiceCreate />} />
+        <Route path="buckets">
+          <Route index element={<ListBuckets />} />
+          <Route path="create" element={<BucketCreate />} />
         </Route>
       </Route>
     </Routes>

@@ -38,7 +38,7 @@ export function UITable<T extends Record<string, unknown>>({
   }, [data]);
 
   return (
-    <div className={`overflow-x-auto ${className} border-l-2 border-blue-300`}>
+    <div className={`overflow-x-auto ${className} box`}>
       {!!title && (
         <div className="border-b border-gray-200 px-6 py-4 flex flex-row items-center">
           <h2 className="text-sm font-medium text-gray-700 uppercase tracking-wide">
@@ -58,9 +58,11 @@ export function UITable<T extends Record<string, unknown>>({
                 {column.label}
               </th>
             ))}
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              *
-            </th>
+            {actions && actions.length > 0 && (
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                *
+              </th>
+            )}
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">

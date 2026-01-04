@@ -3,9 +3,10 @@ CREATE TABLE IF NOT EXISTS zege_events (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   event_ui VARCHAR(100),
   event_organization_id BIGINT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  event_service_id BIGINT NOT NULL REFERENCES services(id) ON DELETE CASCADE,
-  event_service_name VARCHAR(250),
+  event_bucket_id BIGINT NOT NULL REFERENCES buckets(id) ON DELETE CASCADE,
   event_created_at TIMESTAMPTZ NOT NULL,
+
+
   timestamp TIMESTAMPTZ NOT NULL,
   severity TEXT,
   message TEXT,
@@ -14,29 +15,27 @@ CREATE TABLE IF NOT EXISTS zege_events (
 
   -- Error info
   error_type TEXT,
-  error_message TEXT,
   stack_trace TEXT,
 
   -- Application / deployment info
   app_instance_id TEXT,
   build_commit TEXT,
   build_id TEXT,
-  app_region TEXT,
 
   -- Service info
+  service_name VARCHAR(250),
   service_version TEXT,
-  environment TEXT,
+  service_environment TEXT,
 
   -- Host info
   hostname TEXT,
   host_ip TEXT,
-  host_region TEXT,
-  host_provider TEXT,
 
   -- Tracing
   trace_id TEXT,
   span_id TEXT,
   transaction_id TEXT,
+  request_id TEXT,
 
   -- User info
   user_id TEXT,
@@ -48,22 +47,21 @@ CREATE TABLE IF NOT EXISTS zege_events (
   http_method TEXT,
   http_path TEXT,
   http_url TEXT,
-  http_origin TEXT,
   http_status INT,
-  http_headers JSONB,
   client_ip TEXT,
-  user_agent TEXT,
 
-  -- Request info
-  request_id TEXT,
-  referrer TEXT,
-  protocol TEXT,
-  response_size_bytes BIGINT,
 
   tags JSONB, 
   labels JSONB,
   data JSONB  
 );
-
+ALTER TABLE zege_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE zege_events FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY zege_events_organization_isolation ON zege_events
+FOR ALL USING (event_organization_id = NULLIF(current_setting('app.organization_id', true), '0')::BIGINT);
+
+CREATE ROLE zege_events_read_user NOLOGIN NOBYPASSRLS;
+GRANT USAGE ON SCHEMA public TO zege_events_read_user;
+GRANT SELECT ON public.zege_events TO zege_events_read_user;
 

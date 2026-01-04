@@ -3,7 +3,7 @@ mod events;
 mod organizations;
 mod report;
 mod roles;
-mod services;
+mod buckets;
 mod users;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -18,14 +18,14 @@ use crate::{
         organizations::organizations_routes,
         report::report_routes,
         roles::roles_routes,
-        services::services_routes,
+        buckets::buckets_routes,
         users::users_routes,
     }, api_ensure, ctx::appcontext::{self, AppContext}, lib::auth::user::papers::UserPaper, utils::{appenv::AppLogger, http::AppResponse}
 };
 
 pub fn api_routes() -> Router {
     let _private = Router::new()
-        .nest("/services", services_routes())
+        .nest("/buckets", buckets_routes())
         .nest("/roles", roles_routes())
         .nest("/users", users_routes())
         .nest("/organizations", organizations_routes())

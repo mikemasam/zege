@@ -1,4 +1,10 @@
-export default function Loading({ message }: any) {
+import { useNotifyStore } from "@/stores/notify";
+
+export default function UILoading() {
+  const notify = useNotifyStore();
+  console.log(notify);
+  if (!notify.loading) return null;
+  const message = notify.queue[0]?.message;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/5 backdrop-blur-sm animate-fade-in">
       <div className="relative flex flex-row gap-10 items-center">

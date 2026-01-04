@@ -1,5 +1,4 @@
 import { useAuth } from "@/auth/use.auth";
-import Loading from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import Page from "@/components/ui/ui-page";
 import { UITable } from "@/components/ui/ui-table";
@@ -17,7 +16,6 @@ export default function AccountPage() {
     query.load();
     auth.load();
   };
-  if (auth.loading) return <Loading />;
   return (
     <Page title="Account" desc="Manage your account and organization details">
       <div className="space-y-6">

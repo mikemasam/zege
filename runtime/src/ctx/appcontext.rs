@@ -8,7 +8,8 @@ use std::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 
 use crate::ctx::dbmanager::DbPoolManager;
-use crate::dto::logevent::{LogEvent, LogEventChannelMessage};
+use crate::dto::logevent::LogEvent;
+use crate::lib::events::input::LogEventChannelMessage;
 use crate::utils::appargv::AppArgv;
 
 pub type DbStorage = Arc<DbPoolManager>;

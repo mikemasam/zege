@@ -85,7 +85,7 @@ const JsonObject = ({ itemKey, obj, indent }: any): any => {
   const [open, setOpen] = useState<boolean>(itemKey === null || itemKey == 'data');
   const entries = useMemo(() => {
     let l = Object.entries(obj);
-    l = l.filter(([_, value]) => value);
+    //l = l.filter(([_, value]) => value);
     l = l.sort((a, b) => {
       if (a[0] === "data") return -1;
       if (b[0] === "data") return 1;
@@ -136,7 +136,7 @@ const JsonObject = ({ itemKey, obj, indent }: any): any => {
 };
 const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
   return (
-    <pre className="bg-white p-2 rounded border border-gray-200 overflow-x-hidden text-xs">
+    <pre className="bg-gray-100 p-2 rounded border border-gray-200 overflow-x-hidden text-xs">
       {renderValue(null, data)}
     </pre>
   );

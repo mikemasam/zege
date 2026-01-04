@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import api, { useApi } from "@/lib/api";
 
 export default function ZegeReports() {
-  const { data, result, loading, error } = useApi(() => api.get("/reports"));
+  const { data, result, error } = useApi(() => api.get("/reports"));
   console.log(data, result);
   return (
     <Page title="Zege Reports">
@@ -16,7 +16,6 @@ export default function ZegeReports() {
 
       {/* Reports List */}
       <div className="space-y-2">
-        {loading && <p className="text-gray-500 text-sm">Loading reports...</p>}
         {error && (
           <p className="text-red-500 text-sm">Failed to load reports.</p>
         )}
@@ -28,7 +27,7 @@ export default function ZegeReports() {
             ))}
           </ul>
         ) : (
-          !loading && <p className="text-gray-500 text-sm">No reports found.</p>
+          <p className="text-gray-500 text-sm">No reports found.</p>
         )}
       </div>
     </Page>
@@ -37,7 +36,7 @@ export default function ZegeReports() {
 
 function Item({ item }: { item: any }) {
   return (
-    <li className="flex items-center justify-between p-4 hover:bg-gray-50 transition">
+    <li className="flex items-center justify-between p-4 hover:bg-gray-50 transition box">
       <div className="flex flex-col">
         <span className="font-medium text-gray-900">{item.report_name}</span>
         <span className="text-sm text-gray-500">

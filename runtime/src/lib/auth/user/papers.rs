@@ -7,6 +7,7 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode}
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
 use crate::lib::auth::role::Role;
 use crate::lib::auth::user::user::UserAccount;
@@ -69,8 +70,11 @@ pub struct LoginResult {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthClaims {
-    pub sub: i64,
+    pub sub: String,
+    pub user_id: i64,
     pub exp: usize,
+    pub email: String,
+    pub name: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -109,7 +113,13 @@ impl UserPaper {
             .expect("valid timestamp")
             .timestamp() as usize;
 
-        let claims = AuthClaims { sub: user.id, exp };
+        let claims = AuthClaims {
+            sub: Uuid::now_v7().simple().to_string(),
+            user_id: user.id,
+            email: user.email.as_ref().unwrap().to_string(),
+            name: user.name.as_ref().unwrap().to_string(),
+            exp,
+        };
         let token = encode(
             &Header::default(),
             &claims,
@@ -140,7 +150,7 @@ impl UserPaper {
 
     pub async fn verify_token(storage: DbStorage, token: &str) -> Result<UserPaper> {
         let claims = UserPaper::verify_jwt(token.replace("Bearer ", "").as_str())?;
-        let rs_user = UserAccount::find_by_id(storage.clone(), claims.sub).await;
+        let rs_user = UserAccount::find_by_id(storage.clone(), claims.user_id).await;
         ensure!(rs_user.is_ok(), "unauthorized");
         let user = rs_user.unwrap();
         UserPaper::new(storage.clone(), &user).await

@@ -32,13 +32,19 @@ export default function QueryFilter({
   };
 
   const handleReset = () => {
-    const cleared = { event_name: "", url: "", http_path: "", hostname: "", severity: "" };
+    const cleared = {
+      event_name: "",
+      url: "",
+      http_path: "",
+      hostname: "",
+      severity: "",
+    };
     setFilters(cleared);
     onFilterChange?.(cleared);
   };
 
   return (
-    <div className="flex flex-col rounded border border-gray-200 bg-white">
+    <div className="flex flex-col box">
       {/* Header */}
       <div
         className="flex justify-between items-center px-3 py-2 border-b cursor-pointer hover:bg-gray-50"

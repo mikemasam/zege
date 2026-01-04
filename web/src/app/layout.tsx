@@ -1,16 +1,16 @@
 import { useAuth } from "@/auth/use.auth";
-import Loading from "@/components/loading";
-import { useEffect } from "react";
 import { Link, Navigate, Outlet } from "react-router";
 
 export default function AppLayout() {
   const auth = useAuth();
-  if (auth.loading) return <Loading message="authentication" />;
+  if (auth.loading) {
+    return null;
+  }
   if (!auth.valid) {
     return <Navigate to="/login" replace />;
   }
   return (
-    <div className="flex gap-0">
+    <div className="flex gap-0 bg-[#f7f5f5]">
       <Header />
       <div className="flex-1 flex flex-col overflow-y-scroll">
         <Outlet />
@@ -21,10 +21,10 @@ export default function AppLayout() {
 
 const menu_items = [
   { label: "Home", href: "/app", icon: "home" },
-  { label: "Live", href: "/app/events/live", icon: "live_tv" },
+  { label: "Events", href: "/app/events/live", icon: "hive" },
   { label: "Users", href: "/app/users", icon: "group" },
   { label: "Roles", href: "/app/roles" },
-  { label: "Services", href: "/app/services" },
+  { label: "Buckets", href: "/app/buckets" },
   { label: "Reports", href: "/app/reports", icon: "analytics" },
 ];
 function Menu() {
@@ -32,7 +32,7 @@ function Menu() {
     <div className="p-2 flex flex-col gap-2">
       {menu_items.map((m) => (
         <Link to={m.href}>
-          <div className="p-2 border-b border-b-gray-200 hover:shadow rounded cursor-pointer flex flex-row items-center gap-2">
+          <div className="p-2 border-b border-b-gray-200 hover:shadow cursor-pointer flex flex-row items-center gap-2 bg-white rounded-xl">
             <span className="material-icons !text-base text-gray-500">
               {m.icon ?? "business"}
             </span>
@@ -48,11 +48,11 @@ function Header() {
   if (!auth.valid) return null;
 
   return (
-    <aside className="w-56 min-h-screen border-r bg-white flex flex-col gap-2">
+    <aside className="w-56 min-h-screen border-r flex flex-col gap-2">
       <OrganizationMenu auth={auth} />
 
       <Link to="/app/account">
-        <div className="flex items-center gap-3 px-2">
+        <div className="flex items-center gap-3 px-2 bg-white py-2 mx-2 rounded-lg shadow">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-900">
             <span className="text-xs font-medium text-white">
               {auth.user?.name?.[0] ?? "U"}

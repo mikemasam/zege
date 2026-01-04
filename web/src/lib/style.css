@@ -24,7 +24,10 @@ body {
   }
 }
 .box {
-  @apply border-l-4 border-blue-300 border-blue-300 bg-white;
+  @apply border-l-4 border-blue-300 bg-white shadow;
+}
+.box-selectable {
+  @apply border-l-4 border-blue-300 bg-white shadow hover:!bg-blue-100 hover:shadow-sm focus:outline-none transition cursor-pointer;
 }
 
 @theme inline {

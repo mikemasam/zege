@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 use crate::api_ensure;
 use crate::ctx::appcontext::AppContext;
-use crate::dto::logevent::{LogEvent, LogEventChannelMessage, LogEventInput};
+use crate::dto::logevent::LogEvent;
+use crate::lib::events::input::{LogEventChannelMessage, LogEventInput};
 use crate::utils::http::{AppResponse, AppResult};
 use axum::Extension;
 use axum::extract::Query;
@@ -16,24 +17,24 @@ pub async fn event_write_route(
     Query(params): Query<HashMap<String, String>>,
     body: axum::body::Bytes, // take raw body
 ) -> AppResult<Value> {
-    let service_apikey = params.get("apikey");
+    let bucket_key = params.get("bucket_key");
     api_ensure!(
-        service_apikey.is_some(),
-        "Failed to write event, api Key is required"
+        bucket_key.is_some(),
+        "Failed to write event, bucket_key is required"
     );
     //println!("{:?}", body);
     let parser: Result<Vec<LogEventInput>, serde_json::Error> = serde_json::from_slice(&body);
     let payload = match parser {
         Ok(p) => p,
         Err(err) => {
-            eprintln!("failed to parse events body {err}");
+            eprintln!("failed to parse events body {err} {:?}", body);
             return AppResponse::error(format!("JSON parse error: {err}").as_str(), None);
         }
     };
 
     //println!("{}", serde_json::to_string_pretty(&payload).unwrap());
     for mut event in payload {
-        event.apikey_value = Some(service_apikey.unwrap().to_string());
+        event.bucket_key = Some(bucket_key.unwrap().to_string());
         if let Err(err) = ctx
             .event_writer
             .send(LogEventChannelMessage::Data(Box::new(event)))

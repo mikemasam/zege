@@ -1,3 +1,4 @@
+import { useNotifyStore } from "@/stores/notify";
 import axios, { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 
@@ -17,6 +18,7 @@ api.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    (config as any).requestId = useNotifyStore.getState().add_task();
     return config;
   },
   (error) => ({
@@ -29,6 +31,8 @@ api.interceptors.request.use(
 // Response interceptor: handle errors / auto logout on 401
 api.interceptors.response.use(
   (response) => {
+    const requestId = (response.config as any).requestId;
+    useNotifyStore.getState().remove_task(requestId);
     if (response.data) return response.data;
 
     return {
@@ -38,6 +42,8 @@ api.interceptors.response.use(
     };
   },
   (err: AxiosError) => {
+    const requestId = (err?.config as any)?.requestId || "unknown";
+    useNotifyStore.getState().remove_task(requestId);
     return {
       status: err?.status ?? 0,
       message: err?.message ?? "Request failed",

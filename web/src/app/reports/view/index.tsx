@@ -7,11 +7,10 @@ import { useParams } from "react-router";
 
 export default function ZegeReportView() {
   const params = useParams();
-  const {
-    data: report,
-    loading,
-    error,
-  } = useApi(() => api.get(`/reports/${params?.id}`), {});
+  const { data: report, error } = useApi(
+    () => api.get(`/reports/${params?.id}`),
+    {},
+  );
   return (
     <Page
       title={report?.report_name ?? ""}
@@ -22,7 +21,6 @@ export default function ZegeReportView() {
       }
       className="space-y-4"
     >
-      {loading && <p className="text-gray-500 text-sm">Loading reports...</p>}
       {error && <p className="text-red-500 text-sm">Failed to load reports.</p>}
       {report && <Item item={report} />}
       {report && <ReportRender report_id={report.id} />}
@@ -32,7 +30,7 @@ export default function ZegeReportView() {
 
 function Item({ item }: { item: any }) {
   return (
-    <div className="flex items-center justify-between border-l-2 border-blue-300 p-2 rounded">
+    <div className="flex items-center justify-between p-2 box">
       <div className="flex flex-col gap-2">
         <span className="text-sm text-gray-500">
           {item.report_type.toUpperCase()}

@@ -3,15 +3,14 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::lib::services::Service;
+use crate::lib::buckets::Bucket;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LogEvent {
     pub event_ui: Option<String>,
-    pub event_organization_id: i64,
     pub event_created_at: DateTime<FixedOffset>,
     pub event_name: String,
-    pub event_service_name: String,
+    pub service_name: String,
     pub timestamp: DateTime<FixedOffset>,
     pub event_type: Option<String>,
     pub severity: Option<String>,
@@ -23,35 +22,11 @@ pub struct LogEvent {
     pub tracing: Option<TracingInfo>,
     pub user: Option<UserInfo>,
     pub http: Option<HttpInfo>,
-    pub request: Option<RequestInfo>,
     pub tags: Option<Vec<String>>,
     pub labels: Option<HashMap<String, String>>,
     pub data: Option<HashMap<String, serde_json::Value>>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct LogEventInput {
-    pub apikey_value: Option<String>,
-    pub event_service_name: Option<String>,
-    pub event_organization_id: Option<i64>,
-    pub event_service_id: Option<i64>,
-    pub timestamp: DateTime<FixedOffset>,
-    pub event_name: String,
-    pub event_type: Option<String>,
-    pub severity: Option<String>,
-    pub message: Option<String>,
-    pub error: Option<ErrorInfo>,
-    pub app: Option<AppInfo>,
-    pub service: Option<ServiceInfo>,
-    pub host: Option<HostInfo>,
-    pub tracing: Option<TracingInfo>,
-    pub user: Option<UserInfo>,
-    pub http: Option<HttpInfo>,
-    pub request: Option<RequestInfo>,
-    pub tags: Option<Vec<String>>,
-    pub labels: Option<HashMap<String, String>>,
-    pub data: Option<HashMap<String, serde_json::Value>>,
-}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ServiceInfo {
@@ -63,8 +38,6 @@ pub struct ServiceInfo {
 pub struct HostInfo {
     pub hostname: Option<String>,
     pub host_ip: Option<String>,
-    pub region: Option<String>,
-    pub provider: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -72,6 +45,7 @@ pub struct TracingInfo {
     pub trace_id: Option<String>,
     pub span_id: Option<String>,
     pub transaction_id: Option<String>,
+    pub request_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -84,19 +58,15 @@ pub struct UserInfo {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct HttpInfo {
-    pub headers: Option<HashMap<String, serde_json::Value>>,
     pub method: Option<String>,
     pub path: Option<String>,
     pub url: Option<String>,
-    pub origin: Option<String>,
     pub status: Option<i32>,
     pub client_ip: Option<String>,
-    pub user_agent: Option<String>,
 }
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ErrorInfo {
     pub error_type: Option<String>,
-    pub error_message: Option<String>,
     pub stack_trace: Option<String>,
 }
 
@@ -105,20 +75,6 @@ pub struct AppInfo {
     pub instance_id: Option<String>,
     pub build_commit: Option<String>,
     pub build_id: Option<String>,
-    pub region: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct RequestInfo {
-    pub request_id: Option<String>,
-    pub referrer: Option<String>,
-    pub protocol: Option<String>,
-    pub response_size_bytes: Option<i64>,
-}
-
-pub enum LogEventChannelMessage {
-    Data(Box<LogEventInput>),
-    Shutdown,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -126,29 +82,27 @@ pub struct ZegeEventRow {
     pub id: i64,
     pub event_ui: Option<String>,
     pub event_organization_id: i64,
-    pub event_service_name: String,
+    pub event_bucket_id: i64,
     pub event_created_at: DateTime<FixedOffset>,
     pub timestamp: DateTime<FixedOffset>,
+    pub service_name: String,
+    pub service_version: Option<String>,
+    pub service_environment: Option<String>,
     pub event_name: String,
     pub event_type: Option<String>,
     pub severity: Option<String>,
     pub message: Option<String>,
     pub error_type: Option<String>,
-    pub error_message: Option<String>,
     pub stack_trace: Option<String>,
     pub app_instance_id: Option<String>,
     pub build_commit: Option<String>,
     pub build_id: Option<String>,
-    pub app_region: Option<String>,
-    pub host_region: Option<String>,
-    pub service_version: Option<String>,
-    pub environment: Option<String>,
     pub hostname: Option<String>,
     pub host_ip: Option<String>,
-    pub host_provider: Option<String>,
     pub trace_id: Option<String>,
     pub span_id: Option<String>,
     pub transaction_id: Option<String>,
+    pub request_id: Option<String>,
     pub user_id: Option<String>,
     pub user_name: Option<String>,
     pub user_email: Option<String>,
@@ -156,15 +110,8 @@ pub struct ZegeEventRow {
     pub http_method: Option<String>,
     pub http_path: Option<String>,
     pub http_url: Option<String>,
-    pub http_origin: Option<String>,
     pub http_status: Option<i32>,
-    pub http_headers: Option<serde_json::Value>,
     pub client_ip: Option<String>,
-    pub user_agent: Option<String>,
-    pub request_id: Option<String>,
-    pub referrer: Option<String>,
-    pub protocol: Option<String>,
-    pub response_size_bytes: Option<i64>,
     pub tags: Option<serde_json::Value>,
     pub labels: Option<serde_json::Value>,
     pub data: Option<serde_json::Value>,
@@ -174,18 +121,16 @@ impl ZegeEventRow {
     pub fn to_event(self) -> LogEvent {
         LogEvent {
             event_ui: self.event_ui,
-            event_organization_id: self.event_organization_id,
             timestamp: self.timestamp,
             event_created_at: self.event_created_at,
             event_name: self.event_name,
             event_type: self.event_type,
-            event_service_name: self.event_service_name,
+            service_name: self.service_name,
             severity: self.severity,
             message: self.message,
 
             error: Some(ErrorInfo {
                 error_type: self.error_type,
-                error_message: self.error_message,
                 stack_trace: self.stack_trace,
             }),
 
@@ -193,25 +138,23 @@ impl ZegeEventRow {
                 instance_id: self.app_instance_id,
                 build_commit: self.build_commit,
                 build_id: self.build_id,
-                region: self.app_region,
             }),
 
             service: Some(ServiceInfo {
                 version: self.service_version,
-                environment: self.environment,
+                environment: self.service_environment,
             }),
 
             host: Some(HostInfo {
                 hostname: self.hostname,
                 host_ip: self.host_ip,
-                region: self.host_region, // ⚠️ you have no `host_region` field — using `region`
-                provider: self.host_provider,
             }),
 
             tracing: Some(TracingInfo {
                 trace_id: self.trace_id,
                 span_id: self.span_id,
                 transaction_id: self.transaction_id,
+                request_id: self.request_id,
             }),
 
             user: Some(UserInfo {
@@ -225,20 +168,8 @@ impl ZegeEventRow {
                 method: self.http_method,
                 path: self.http_path,
                 url: self.http_url,
-                origin: self.http_origin,
                 status: self.http_status,
                 client_ip: self.client_ip,
-                user_agent: self.user_agent,
-                headers: Some(
-                    serde_json::from_value(self.http_headers.unwrap()).unwrap_or_default(),
-                ),
-            }),
-
-            request: Some(RequestInfo {
-                request_id: self.request_id,
-                referrer: self.referrer,
-                protocol: self.protocol,
-                response_size_bytes: self.response_size_bytes,
             }),
             tags: Some(serde_json::from_value(self.tags.unwrap()).unwrap_or_default()),
             labels: Some(serde_json::from_value(self.labels.unwrap()).unwrap_or_default()),

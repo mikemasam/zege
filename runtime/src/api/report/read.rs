@@ -4,7 +4,7 @@ use crate::{
     ctx::{appcontext::AppContext, dbmanager::DatabasePool},
     lib::auth::user::papers::UserPaper,
     utils::{
-        dbutil::StreamJsonExt,
+        dbutil::{JsonRow, StreamJsonExt},
         http::{AppResponse, AppResult},
     },
 };
@@ -12,6 +12,7 @@ use anyhow::Result;
 use axum::extract::{Extension, Path};
 use serde::Serialize;
 use serde_json::Value;
+use sqlx::Acquire;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -43,12 +44,19 @@ pub async fn report_read_route(
     let rows: Result<std::vec::Vec<serde_json::Value>> = match ctx.storage.pool.as_ref().unwrap() {
         DatabasePool::Postgres(pool) => {
             let mut tx = pool.begin().await?;
-            sqlx::query("SET LOCAL app.organization_id = $1")
-                .bind(organization_id)
-                .execute(&mut *tx)
+            sqlx::query(format!("SET LOCAL app.organization_id = {organization_id}").as_str())
+                .execute(tx.as_mut())
                 .await?;
+            sqlx::query("SET LOCAL ROLE zege_events_read_user")
+                .execute(tx.as_mut())
+                .await?;
+            let res = sqlx::query("SHOW app.organization_id")
+                .fetch_one(tx.as_mut())
+                .await?;
+            println!("After SET: {:?}", res.get_json_value(0));
+
             let rows = sqlx::query(report.as_ref().unwrap().report_sql.as_str())
-                .fetch(&mut *tx)
+                .fetch(tx.as_mut())
                 .json(100)
                 .await?;
 

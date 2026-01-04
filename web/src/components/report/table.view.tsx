@@ -48,14 +48,18 @@ export function TableView<T extends Record<string, unknown>>({
               </td>
               {columns.map((column) => {
                 const value = row[column.key];
-                const is_printable = typeof value != "object";
+                let _val: any = "";
+                if (typeof value == "string" || typeof value == "number") {
+                  _val = value;
+                } else if (value === null) {
+                  _val = "";
+                }
                 return (
                   <td
                     key={String(column.key)}
                     className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                   >
-                    {!!is_printable && <>{String(value)}</>}
-                    {!is_printable && "<json-data>"}
+                    {_val}
                   </td>
                 );
               })}

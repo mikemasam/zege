@@ -1,13 +1,14 @@
 import { useMemo } from "react";
 import { EventDetail } from "./EventDetail";
+import { DateTime } from "luxon";
 
 type Severity = "INFO" | "WARN" | "ERROR" | "UNKNOWN";
 
 type Event = {
-  timestamp: string | number;
+  timestamp: string;
   severity?: Severity;
   event_name: string;
-  event_service_name: string;
+  service_name: string;
   message: string;
 };
 
@@ -29,23 +30,19 @@ export function EventBox({
 }) {
   const severity: Severity = event.severity ?? "UNKNOWN";
 
-  const formattedTime = useMemo(
-    () => new Date(event.timestamp).toLocaleString(),
-    [event.timestamp],
-  );
+  const formattedTime = useMemo(() => {
+    return DateTime.fromISO(event.timestamp).toFormat("HH:mm dd/MM/yyyy");
+  }, [event.timestamp]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 ">
       <div
         role="button"
         tabIndex={0}
-        className={`flex items-center gap-6 rounded p-2
-                 hover:bg-blue-200 hover:shadow-sm
-                 focus:outline-none focus:ring-2 focus:ring-blue-400
-                 transition cursor-pointer ${isSelected ? "bg-blue-100" : "bg-gray-50"}`}
+        className={`flex items-center gap-6 rounded p-2 box-selectable ${isSelected ? "bg-blue-500" : ""}`}
         onClick={() => onSelect(event)}
       >
-        <span className="font-mono text-xs text-gray-700 whitespace-nowrap">
+        <span className="text-xs whitespace-nowrap font-bold">
           {formattedTime}
         </span>
 
@@ -53,13 +50,13 @@ export function EventBox({
         <span
           className={`px-2 py-0.5 text-xs font-semibold rounded-md ${severityColors[severity]}`}
         >
-          {severity}
+          {event.service_name}
         </span>
 
         {/* Event content */}
         <div className="flex min-w-0 items-center gap-2">
           <span className="text-sm font-extralight text-gray-600 whitespace-nowrap">
-            [{event.event_service_name}]
+            [{severity}]
           </span>
           <span className="text-sm font-semibold text-gray-600 whitespace-nowrap">
             {event.event_name}

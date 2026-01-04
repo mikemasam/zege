@@ -11,7 +11,10 @@ use crate::{
         appcontext::{AppContext, DbStorage},
         dbmanager::DatabasePool,
     },
-    lib::auth::role::{NewRole, Role},
+    lib::{
+        auth::role::{NewRole, Role},
+        buckets::{Bucket, NewBucket},
+    },
     utils::appenv::AppLogger,
 };
 
@@ -110,6 +113,16 @@ impl Organization {
                 organization_id: org.id,
                 user_id: item.user_id,
                 role_id: role.id,
+            },
+        )
+        .await?;
+        Bucket::create(
+            db.clone(),
+            NewBucket {
+                name: "Default Bucket".to_string(),
+                description: "Default Bucket".to_string(),
+                organization_id: org.id,
+                user_id: org.user_id,
             },
         )
         .await?;

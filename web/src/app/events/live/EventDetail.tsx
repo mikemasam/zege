@@ -22,7 +22,7 @@ export function EventDetail({ event }: { event: Event }) {
   if (!event) return null;
   const severity: Severity = event.severity ?? "UNKNOWN";
   return (
-    <div className="flex flex-col gap-2 border rounded-md p-3 bg-blue-50 transition">
+    <div className="flex flex-col gap-2 p-3 box">
       <div className="flex flex-row items-center justify-between gap-2">
         <span
           className={`py-0.5 text-xs font-semibold rounded-md ${

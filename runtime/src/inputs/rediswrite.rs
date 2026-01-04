@@ -3,10 +3,7 @@ use serde_json::Value;
 use std::{env, sync::Arc};
 use tokio::time::{Duration, sleep};
 
-use crate::{
-    ctx::appcontext::AppContext,
-    dto::logevent::{LogEvent, LogEventChannelMessage, LogEventInput}, utils::appenv::AppLogger,
-};
+use crate::{ctx::appcontext::AppContext, dto::logevent::LogEvent, lib::events::input::{LogEventChannelMessage, LogEventInput}, utils::appenv::AppLogger};
 
 pub async fn start_redis_reader(ctx: Arc<AppContext>) {
     let conns = env::var("REDIS_SERVERS").unwrap();
@@ -19,7 +16,7 @@ pub async fn start_redis_reader(ctx: Arc<AppContext>) {
 fn connect_to_server(ctx: Arc<AppContext>, url: String) {
     tokio::task::spawn(async move {
         loop {
-           AppLogger::log(format!("Redis URL: {url}"));
+            AppLogger::log(format!("Redis URL: {url}"));
             match connect_and_listen(ctx.clone(), url.as_str()).await {
                 Ok(_) => {}
                 Err(e) => {

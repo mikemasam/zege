@@ -63,7 +63,7 @@ async fn fetch_postgres(
     }
     qb.push(" ORDER BY id DESC");
     qb.push(" LIMIT ")
-        .push_bind(Into::<i64>::into(query_params.per_page.unwrap_or(15)));
+        .push_bind(Into::<i64>::into(query_params.per_page.unwrap_or(50)));
     qb.push(" OFFSET ").push_bind(Into::<i64>::into(
         query_params.page.unwrap_or(0) * query_params.per_page.unwrap_or(15),
     ));

@@ -16,23 +16,17 @@ export default function EventsLive() {
     }));
   };
   return (
-    <Page
-      title="Live Events"
-      desc="Live incoming events"
-      loading={query.loading}
-    >
+    <Page title="Live Events" desc="Live incoming events">
       <QueryFilter onFilterChange={query.params} />
-      <div className="grid grid-cols-8 gap-2">
-        <div className="col-span-8 flex flex-col gap-2">
-          {query.data?.map((event: any) => (
-            <EventBox
-              key={event.event_ui}
-              isSelected={opts.selected?.event_ui == event.event_ui}
-              event={event}
-              onSelect={onSelect}
-            />
-          ))}
-        </div>
+      <div className="flex flex-col gap-2">
+        {query.data?.map((event: any) => (
+          <EventBox
+            key={event.event_ui}
+            isSelected={opts.selected?.event_ui == event.event_ui}
+            event={event}
+            onSelect={onSelect}
+          />
+        ))}
       </div>
     </Page>
   );

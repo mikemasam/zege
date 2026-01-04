@@ -2,7 +2,7 @@
 use crate::ctx::appcontext::AppContext;
 use crate::ctx::dbmanager::DatabasePool;
 use crate::lib::auth::user::papers::UserPaper;
-use crate::lib::services::Service;
+use crate::lib::buckets::Bucket;
 use crate::utils::http::{AppResponse, AppResult};
 use axum::Extension;
 use chrono::Local;
@@ -12,27 +12,25 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 #[derive(Deserialize, Debug)]
-pub struct ServiceCreate {
+pub struct BucketCreate {
     name: String,
-    label: String,
     description: String,
 }
 
-pub async fn services_create_route(
+pub async fn buckets_create_route(
     Extension(ctx): Extension<Arc<AppContext>>,
     Extension(paper): Extension<UserPaper>,
-    axum::Json(item): axum::extract::Json<ServiceCreate>,
-) -> AppResult<Service> {
-    let service = Service::create(
+    axum::Json(item): axum::extract::Json<BucketCreate>,
+) -> AppResult<Bucket> {
+    let bucket = Bucket::create(
         ctx.storage.clone(),
-        crate::lib::services::NewService {
+        crate::lib::buckets::NewBucket {
             name: item.name,
-            label: item.label,
             description: item.description,
             user_id: paper.id,
             organization_id: paper.organization.map(|o| o.id).unwrap(),
         },
     )
     .await?;
-    AppResponse::created(Some(service), None)
+    AppResponse::created(Some(bucket), None)
 }

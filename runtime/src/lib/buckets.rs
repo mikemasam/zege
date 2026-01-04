@@ -13,90 +13,90 @@ use crate::ctx::{
 };
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct Service {
+pub struct Bucket {
     pub id: i64,
     pub name: String,
-    pub label: Option<String>,
     pub description: Option<String>,
     pub organization_id: i64,
     pub user_id: i64,
+    pub bucket_key: String,
     pub created_at: DateTime<FixedOffset>,
     pub updated_at: DateTime<FixedOffset>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct NewService {
+pub struct NewBucket {
     pub name: String,
-    pub label: String,
     pub description: String,
     pub organization_id: i64,
     pub user_id: i64,
 }
-impl Service {
-    pub async fn create(db: DbStorage, item: NewService) -> Result<Service> {
+impl Bucket {
+    pub async fn create(db: DbStorage, item: NewBucket) -> Result<Bucket> {
         let pool = db.pool.clone();
         ensure!(!item.name.is_empty(), "Name is required");
         ensure!(item.user_id > 0, "user id is required");
         ensure!(item.organization_id > 0, "organization id is required");
         match pool.as_ref().unwrap() {
             DatabasePool::Postgres(pool) => {
-                let dup = sqlx::query_as::<_, Service>(
-                    "select * from services where name = $1 and organization_id = $2",
+                let dup = sqlx::query_as::<_, Bucket>(
+                    "select * from buckets where name = $1 and organization_id = $2",
                 )
                 .bind(&item.name)
                 .bind(item.organization_id)
                 .fetch_optional(pool)
                 .await?;
-                ensure!(dup.is_none(), "Service with the same key already exists");
-                let sql = "INSERT INTO services (name, label, description, organization_id, user_id, apikey_value, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *";
-                let q = sqlx::query_as::<_, Service>(sql)
+                ensure!(dup.is_none(), "Bucket with the same key already exists");
+                let bucket_key = format!("zgb{}", Uuid::now_v7().simple().to_string());
+                let sql = "INSERT INTO buckets (name, description, organization_id, user_id, bucket_key, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *";
+                let q = sqlx::query_as::<_, Bucket>(sql)
                     .bind(&item.name)
-                    .bind(&item.label)
                     .bind(&item.description)
                     .bind(item.organization_id)
                     .bind(item.user_id)
+                    .bind(bucket_key)
                     .bind(Local::now())
                     .bind(Local::now());
-                let service = q.fetch_one(pool).await?;
-                println!("done creating service {:?}", service);
-                Ok(service)
+                let bucket = q.fetch_one(pool).await?;
+                println!("done creating bucket {:?}", bucket);
+                Ok(bucket)
             }
-            _ => todo!("auth_create_service on sqlite"),
+            _ => todo!("auth_create_bucket on sqlite"),
         }
     }
 
-    pub async fn list(db: DbStorage, organization_id: i64) -> Result<Vec<Service>> {
+    pub async fn list(db: DbStorage, organization_id: i64) -> Result<Vec<Bucket>> {
         let pool = db.pool.clone();
-        let sql = "SELECT * FROM services where organization_id = $1 ORDER BY id DESC";
+        let sql = "SELECT * FROM buckets where organization_id = $1 ORDER BY id DESC";
         let reports = match pool.as_ref().unwrap() {
             DatabasePool::Postgres(pool) => {
-                sqlx::query_as::<_, Service>(sql)
+                sqlx::query_as::<_, Bucket>(sql)
                     .bind(organization_id)
                     .fetch_all(pool)
                     .await?
             }
-            _ => todo!("auth_services_list"),
+            _ => todo!("auth_buckets_list"),
         };
         Ok(reports)
     }
-    pub async fn find_by_apikey(db: DbStorage, apikey: String) -> Result<Service> {
+    pub async fn find_by_apikey(db: DbStorage, apikey: String) -> Result<Bucket> {
         let pool = db.pool.clone();
-        let sql = "SELECT * FROM services where apikey_value = $1";
+        let sql = "SELECT * FROM buckets where bucket_key = $1";
         let reports = match pool.as_ref().unwrap() {
             DatabasePool::Postgres(pool) => {
-                sqlx::query_as::<_, Service>(sql)
+                sqlx::query_as::<_, Bucket>(sql)
                     .bind(apikey)
                     .fetch_one(pool)
                     .await?
             }
-            _ => todo!("auth_services_list"),
+            _ => todo!("auth_buckets_list"),
         };
         Ok(reports)
     }
 }
 
 #[derive(Debug, Subcommand, Clone, Serialize, Deserialize)]
-pub enum ServiceCommands {
+pub enum BucketCommands {
     Add {
         #[arg(long)]
         name: String,
@@ -111,32 +111,32 @@ pub enum ServiceCommands {
     },
 }
 
-async fn listServices(db: DbStorage, pattern: Option<String>) -> Result<()> {
+async fn listBuckets(db: DbStorage, pattern: Option<String>) -> Result<()> {
     let pool = db.pool.clone();
-    let services = match pool.as_ref().unwrap() {
+    let buckets = match pool.as_ref().unwrap() {
         DatabasePool::Postgres(pool) => {
             let pattern = format!("%{}%", pattern.unwrap_or_default());
-            let services =
-                sqlx::query_as::<_, Service>("select * from services where name ilike $1")
+            let buckets =
+                sqlx::query_as::<_, Bucket>("select * from buckets where name ilike $1")
                     .bind(&pattern)
                     .fetch_all(pool)
                     .await;
-            services.unwrap()
+            buckets.unwrap()
         }
-        DatabasePool::Sqlite(pool) => todo!("listServices on sqlite"),
+        DatabasePool::Sqlite(pool) => todo!("listBuckets on sqlite"),
     };
-    println!("{}", serde_json::to_string_pretty(&services)?);
+    println!("{}", serde_json::to_string_pretty(&buckets)?);
     Ok(())
 }
-pub async fn auth_service_commands(ctx: Arc<AppContext>, command: ServiceCommands) -> Result<()> {
+pub async fn auth_bucket_commands(ctx: Arc<AppContext>, command: BucketCommands) -> Result<()> {
     match command {
-        ServiceCommands::Add { name } => {
-            //auth_create_service(ctx.storage.clone(), NewService { user_id: 0, name }).await?;
+        BucketCommands::Add { name } => {
+            //auth_create_bucket(ctx.storage.clone(), NewBucket { user_id: 0, name }).await?;
         }
-        ServiceCommands::Search { pattern } => {
-            listServices(ctx.storage.clone(), pattern).await;
+        BucketCommands::Search { pattern } => {
+            listBuckets(ctx.storage.clone(), pattern).await;
         }
-        ServiceCommands::Disable { id } => todo!("service disable not implemented"),
+        BucketCommands::Disable { id } => todo!("bucket disable not implemented"),
     };
     Ok(())
 }

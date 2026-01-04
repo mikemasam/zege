@@ -4,21 +4,20 @@ import api, { useApi } from "@/lib/api";
 import { Link } from "react-router";
 import { UITable } from "@/components/ui/ui-table";
 
-export default function ListServices() {
-  const query = useApi(() => api.get("/services"));
+export default function ListBuckets() {
+  const query = useApi(() => api.get("/buckets"));
   return (
-    <Page title="Services" loading={query.loading}>
+    <Page title="Buckets">
       <div className="flex flex-row justify-end">
-        <Link to="/app/services/create">
-          <Button variant="default">+ New Service</Button>
+        <Link to="/app/buckets/create">
+          <Button variant="default">+ New Bucket</Button>
         </Link>
       </div>
       <UITable
         columns={[
           { key: "name", label: "Name" },
-          { key: "label", label: "Label" },
           { key: "created_at", label: "Create At", type: "date" },
-          { key: "apikey_value", label: "Api Key" },
+          { key: "bucket_key", label: "Bucket Key" },
         ]}
         data={query.data}
       />

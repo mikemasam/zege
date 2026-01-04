@@ -100,14 +100,12 @@ impl UserAccount {
                     dup.is_none(),
                     "User with email already exists with password 6767"
                 );
-                let sql = "INSERT INTO users (email, name, password_hash, apikey_value, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *";
+                let sql = "INSERT INTO users (email, name, password_hash, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *";
                 let password = Security::hash_password(&item.password)?;
-                let apikey_value = format!("zg{}", Uuid::now_v7().simple().to_string());
                 let q = sqlx::query_as::<_, UserAccount>(sql)
                     .bind(&item.email)
                     .bind(&item.name)
                     .bind(password)
-                    .bind(apikey_value)
                     .bind(Local::now())
                     .bind(Local::now());
                 let user = q.fetch_one(pool).await?;

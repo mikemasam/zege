@@ -2,12 +2,10 @@ import Page from "@/components/ui/ui-page";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import api, { useApi } from "@/lib/api";
-import Loading from "@/components/loading";
 import { UITable } from "@/components/ui/ui-table";
 
 export default function ListUsers() {
-  const { data, loading } = useApi(() => api.get("/users"));
-  if (loading) return <Loading />;
+  const query = useApi(() => api.get("/users"));
   return (
     <Page title="Users">
       <div className="flex flex-row justify-end">
@@ -20,7 +18,7 @@ export default function ListUsers() {
           { key: "name", label: "Name" },
           { key: "email", label: "Email" },
         ]}
-        data={data}
+        data={query.data}
       />
     </Page>
   );

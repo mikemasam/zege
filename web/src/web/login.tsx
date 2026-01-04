@@ -1,5 +1,4 @@
 import { authorize_by_token, useAuth } from "@/auth/use.auth";
-import Loading from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import UIForm from "@/components/ui/ui-form";
 import UIInput from "@/components/ui/ui-input";
@@ -29,7 +28,6 @@ export default function LoginPage() {
     }
     navigate("/app");
   };
-  if (auth.loading) return <Loading />;
   return (
     <div className="min-h-screen flex flex-col gap-4 items-center justify-center bg-slate-900">
       <div className="w-full max-w-md p-8 bg-slate-800 rounded-2xl shadow-lg border border-slate-700">

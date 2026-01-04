@@ -48,7 +48,7 @@ impl DbPoolManager {
         self.pool.is_some()
     }
     pub async fn connect(opts: DbManagerConnectOptions) -> Result<Self, DbManagerError> {
-        let db_driver = env::var("DB_DRIVER").unwrap_or("sqlite".to_string());
+        let db_driver = env::var("DB_DRIVER").unwrap_or("pgsql".to_string());
         AppLogger::log(format!("DB selected {}", db_driver));
         if db_driver.eq_ignore_ascii_case("pgsql") {
             DbPoolManager::connect_pgsql(opts).await

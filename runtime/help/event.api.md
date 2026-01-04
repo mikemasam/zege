@@ -18,7 +18,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
   "message": "Something went wrong",
   "error": {
     "error_type": "RuntimeError",
-    "error_message": "Division by zero",
     "stack_trace": "..."
   },
   "app": {
@@ -34,8 +33,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
   "host": {
     "hostname": "server01",
     "host_ip": "10.0.0.1",
-    "region": "us-east-1",
-    "cloud_provider": "AWS"
   },
   "tracing": {
     "trace_id": "abc-def-123",
@@ -53,7 +50,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
     "path": "/api/events",
     "status": 200,
     "client_ip": "192.168.0.1",
-    "user_agent": "Mozilla/5.0"
   },
   "tags": ["backend", "critical"],
   "labels": { "feature": "login", "team": "auth" },
@@ -70,7 +66,7 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | Field       | Type             | Description                                            |
 | ----------- | ---------------- | ------------------------------------------------------ |
 | `timestamp` | string (RFC3339) | When the event occurred. **Required**.                 |
-| `service` | string           | name of service . **Required**.                    |
+| `service_name` | string           | name of service . **Required**.                    |
 | `severity`  | string           | Severity level: `"INFO"`, `"WARN"`, `"ERROR"`, etc.    |
 | `message`   | string           | Human-readable description of the event.               |
 | `error`     | object           | Error details (see **ErrorInfo**).                     |
@@ -93,7 +89,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | Field           | Type   | Description                         |
 | --------------- | ------ | ----------------------------------- |
 | `error_type`    | string | Error type or class.                |
-| `error_message` | string | Human-readable error message.       |
 | `stack_trace`   | string | Optional stack trace for debugging. |
 
 #### AppInfo
@@ -109,6 +104,7 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 
 | Field         | Type   | Description                                    |
 | ------------- | ------ | ---------------------------------------------- |
+| `name`        | string | Service name.                                  |
 | `version`     | string | Service version.                               |
 | `environment` | string | Environment: `"production"`, `"staging"`, etc. |
 
@@ -118,8 +114,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | ---------------- | ------ | ------------------------ |
 | `hostname`       | string | Hostname of the machine. |
 | `host_ip`        | string | IP address of the host.  |
-| `region`         | string | Physical/cloud region.   |
-| `cloud_provider` | string | Cloud provider name.     |
 
 #### TracingInfo
 
@@ -146,7 +140,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | `path`       | string  | Request path.                        |
 | `status`     | integer | HTTP response status code.           |
 | `client_ip`  | string  | IP address of the client.            |
-| `user_agent` | string  | User agent string.                   |
 
 ---
 
