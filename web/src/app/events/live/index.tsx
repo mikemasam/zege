@@ -5,7 +5,7 @@ import QueryFilter from "./QueryFilter";
 import Page from "@/components/ui/ui-page";
 
 export default function EventsLive() {
-  const query = useApi(() => api.get("/events"));
+  const query = useApi((params: any) => api.get("/events", { params }));
   const [opts, setOpts] = useState<{ selected: null | any }>({
     selected: null,
   });
@@ -17,7 +17,7 @@ export default function EventsLive() {
   };
   return (
     <Page title="Live Events" desc="Live incoming events">
-      <QueryFilter onFilterChange={query.params} />
+      <QueryFilter onChange={query.load} />
       <div className="flex flex-col gap-2">
         {query.data?.map((event: any) => (
           <EventBox

@@ -8,7 +8,7 @@ use crate::{
         buckets::Bucket,
         events::input::{LogEventChannelMessage, LogEventInput},
     },
-    utils::{appenv::AppLogger, security::Security},
+    utils::{appconfig::applogger, security::Security},
 };
 use chrono::{Local, SecondsFormat};
 use serde_json::Value;
@@ -53,38 +53,12 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
     loop {
         match receiver.recv_timeout(Duration::from_secs(1)) {
             Ok(LogEventChannelMessage::Data(mut event)) => {
-                let bucket = Bucket::find_by_apikey(
-                    db.clone(),
-                    event.as_ref().bucket_key.as_ref().unwrap().to_string(),
-                )
-                .await;
-                if let Ok(s) = bucket {
-                    if let Some(jwt) = event
-                        .meta
-                        .as_ref()
-                        .and_then(|u| u.jwt.as_deref())
-                        .filter(|jwt| !jwt.is_empty())
-                        .and_then(|jwt| Security::unzip_jwt(jwt).ok())
-                    {
-                        if (event.data.is_none()) {
-                            event.data = Some(HashMap::new());
-                        }
-                        event
-                            .data
-                            .as_mut()
-                            .unwrap()
-                            .insert("meta_jwt".to_string(), jwt);
+                match event.inject(db.clone()).await {
+                    Ok(_) => {
+                        println!("e {}", serde_json::to_string_pretty(&event).unwrap());
+                        events_batch.push(*event)
                     }
-
-                    event.event_bucket_id = Some(s.id);
-                    event.event_organization_id = Some(s.organization_id);
-                    events_batch.push(*event);
-                } else {
-                    AppLogger::error(format!(
-                        "event api key not found {} for event {}",
-                        event.bucket_key.unwrap_or_default(),
-                        event.event_name
-                    ));
+                    Err(e) => applogger::error(format!("{:?}", e)),
                 }
                 if events_batch.len() >= 100 {
                     time_write_events(db.clone(), &mut events_batch).await;
@@ -110,14 +84,14 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
 
 async fn time_write_events(eventsdb: Arc<DbPoolManager>, events_batch: &mut Vec<LogEventInput>) {
     if events_batch.is_empty() {
-        AppLogger::log("# write size: empty, wrote: 0, time: 0".to_string());
+        applogger::log("# write size: empty, wrote: 0, time: 0".to_string());
         return;
     }
     let start_time = Instant::now();
     let written_events_count = match write_events(eventsdb, events_batch).await {
         Ok(t) => t,
         Err(err) => {
-            AppLogger::error(format!("##### WRITE ERROR: {err}"));
+            applogger::error(format!("##### WRITE ERROR: {err}"));
             0
         }
     };
@@ -126,7 +100,7 @@ async fn time_write_events(eventsdb: Arc<DbPoolManager>, events_batch: &mut Vec<
     if written_events_count > 0 {
         events_batch.clear();
     }
-    AppLogger::log(format!(
+    applogger::log(format!(
         "# write size: {size}, wrote: {written_events_count}, time: {elapsed_time:?}"
     ));
 }
@@ -135,7 +109,7 @@ async fn write_events(
     events: &Vec<LogEventInput>,
 ) -> Result<u64, Error> {
     for e in events {
-        AppLogger::debug(format!(
+        applogger::debug(format!(
             "> {} - {:?}:{} - {}",
             e.timestamp,
             e.service,
@@ -151,8 +125,7 @@ async fn write_events(
 async fn pgsql_write_events(pool: &PgPool, events: &Vec<LogEventInput>) -> Result<u64, Error> {
     let INSERT_SQL: &str = "INSERT INTO zege_events (
     timestamp, message,  version, service,
-    host, trace_id, span_id, transaction_id, 
-    request_id,  data, event_name, event_type, 
+    host, data, event_name, event_type, 
     event_bucket_id, event_organization_id, event_ui, event_created_at 
     ) ";
     let mut query = QueryBuilder::<sqlx::Postgres>::new(INSERT_SQL);
@@ -163,10 +136,6 @@ async fn pgsql_write_events(pool: &PgPool, events: &Vec<LogEventInput>) -> Resul
             .push_bind(e.version.clone())
             .push_bind(e.service.clone())
             .push_bind(e.host.clone())
-            .push_bind(e.tracing.as_ref().map(|v| &v.trace_id))
-            .push_bind(e.tracing.as_ref().map(|v| &v.span_id))
-            .push_bind(e.tracing.as_ref().map(|v| &v.transaction_id))
-            .push_bind(e.tracing.as_ref().map(|v| &v.request_id))
             .push_bind(e.data.clone().map(|v| serde_json::to_value(v).ok()))
             .push_bind(e.event_name.clone())
             .push_bind(e.event_type.clone())

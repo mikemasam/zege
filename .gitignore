@@ -1,4 +1,6 @@
 runtime/.env
 runtime/target
+runtime/config.yaml
+runtime/config.yml
 runtime.old
 web/.env

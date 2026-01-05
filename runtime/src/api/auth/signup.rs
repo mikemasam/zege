@@ -5,6 +5,7 @@ use tokio::sync::Mutex;
 use axum::Extension;
 
 use crate::{
+    api_ensure, appconfig,
     ctx::appcontext::AppContext,
     lib::{
         auth::{
@@ -26,6 +27,18 @@ pub async fn auth_signup(
     Extension(ctx): Extension<Arc<AppContext>>,
     axum::Json(item): axum::extract::Json<NewUser>,
 ) -> AppResult<LoginResult> {
+    let enabled = appconfig!()
+        .feature
+        .as_ref()
+        .and_then(|f| f.create_organization.as_deref())
+        .map(|v| v.to_lowercase())
+        .map(|v| v != "no" && v != "false")
+        .unwrap_or(false);
+    api_ensure!(
+        enabled,
+        "Signup not available at the moment, this can be enable on config.{yaml, json, ...}"
+    );
+
     //TODO: handle db rollback
     let user = UserAccount::create(ctx.storage.clone(), item).await?;
     let organization = Organization::create(

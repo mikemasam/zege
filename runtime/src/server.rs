@@ -1,6 +1,5 @@
-use crate::api::api_routes;
+use crate::{api::api_routes, utils::appconfig::applogger};
 use crate::ctx::appcontext::AppContext;
-use crate::utils::appenv::AppLogger;
 use axum::{Extension, Router};
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -9,7 +8,7 @@ use tower_http::cors::{Any, CorsLayer};
 
 pub async fn start_http(ctx: Arc<AppContext>) {
     let addr = SocketAddr::from(([127, 0, 0, 1], 3432));
-    AppLogger::log(format!("Server running at http://{addr}"));
+    applogger::log(format!("Server running at http://{addr}"));
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)

@@ -9,6 +9,7 @@ use sqlx::prelude::FromRow;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
+use crate::appconfig;
 use crate::lib::auth::role::Role;
 use crate::lib::auth::user::user::UserAccount;
 use crate::lib::organization::Organization;
@@ -107,12 +108,16 @@ impl UserPaper {
         Ok(paper)
     }
     pub fn generate_jwt(user: &UserAccount) -> Result<String> {
-        let secret = env::var("JWT_SECRET")?;
+        let jwt_secret = &appconfig!()
+            .feature
+            .as_ref()
+            .and_then(|f| f.jwt_secret.as_deref())
+            .unwrap_or("default-secret");
+
         let exp = Local::now()
             .checked_add_signed(Duration::hours(24))
             .expect("valid timestamp")
             .timestamp() as usize;
-
         let claims = AuthClaims {
             sub: Uuid::now_v7().simple().to_string(),
             user_id: user.id,
@@ -123,12 +128,16 @@ impl UserPaper {
         let token = encode(
             &Header::default(),
             &claims,
-            &EncodingKey::from_secret(secret.as_bytes()),
+            &EncodingKey::from_secret(jwt_secret.as_bytes()),
         )?;
         Ok(token)
     }
     pub fn verify_jwt(token: &str) -> Result<AuthClaims> {
-        let secret = std::env::var("JWT_SECRET")?;
+        let secret = &appconfig!()
+            .feature
+            .as_ref()
+            .and_then(|f| f.jwt_secret.as_deref())
+            .unwrap_or("default-secret");
         let mut validation = Validation::default();
         validation.validate_exp = true;
         let token_data = decode::<AuthClaims>(

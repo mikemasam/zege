@@ -1,17 +1,17 @@
 #![allow(warnings)]
 mod api;
-mod lib;
 mod ctx;
 mod dto;
 mod inputs;
 mod jobs;
+mod lib;
 mod server;
 mod utils;
 use crate::ctx::dbmanager::DbManagerConnectOptions;
 use crate::inputs::rediswrite::start_redis_reader;
 use crate::lib::events::input::LogEventChannelMessage;
 use crate::server::start_http;
-use crate::utils::appenv::AppLogger;
+use crate::utils::appconfig::{applogger, AppConfig};
 use crate::utils::daemon::wait_for_signal_impl;
 use crate::{
     ctx::{appcontext::AppContext, dbmanager::DbPoolManager},
@@ -28,7 +28,8 @@ use std::sync::mpsc;
 use tokio::sync::Mutex;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    AppConfig::init_config()?;
     dotenv().ok();
     install_default_drivers();
     //.layer(axum::middleware::from_fn(custom_middleware)); // apply custom middleware
@@ -43,12 +44,12 @@ async fn main() {
         events_writer.clone(),
     ));
     if !ctx.appargv.started_as_deamon && ctx.appargv.command.is_none() {
-        AppLogger::log(format!("To start an a daemon, use -d",));
-        return;
+        applogger::log(format!("To start an a daemon, use -d",));
+        return Ok(());
     }
     ctx.appargv.match_commands(ctx.clone()).await.unwrap();
     if !ctx.appargv.started_as_deamon {
-        return;
+        return Ok(());
     }
     let _events_writer_thread = start_events_writer_thread(events_reader);
     //tokio::task::spawn(start_scheduler());
@@ -56,4 +57,5 @@ async fn main() {
     tokio::task::spawn(start_redis_reader(ctx.clone()));
 
     wait_for_signal_impl(events_writer, _events_writer_thread).await;
+    Ok(())
 }

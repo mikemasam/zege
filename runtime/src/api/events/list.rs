@@ -45,10 +45,27 @@ async fn fetch_postgres(
     query_params: QueryParams,
 ) -> Vec<LogEvent> {
     let mut qb = QueryBuilder::<Postgres>::new("SELECT * FROM zege_events WHERE ");
-    qb.push("event_organization_id = ").push_bind(organization_id);
-    if let Some(name) = query_params.event_name.filter(|s| !s.trim().is_empty()) {
-        qb.push(" AND event_name LIKE ")
-            .push_bind(format!("%{name}%"));
+    qb.push("event_organization_id = ")
+        .push_bind(organization_id);
+    if let Some(search) = query_params.search.filter(|s| !s.trim().is_empty()) {
+        let fields = ["event_name", "service", "host"];
+        let mut is_empty = true;
+        for (i, (field, value)) in fields.iter().zip(search.split(':')).enumerate() {
+            if (value == "*") {
+                continue;
+            }
+            if !is_empty {
+                qb.push(" AND ");
+            } else {
+                qb.push(" AND ( ");
+            }
+            qb.push(format!("{} ILIKE ", field))
+                .push_bind(format!("%{}%", value));
+            is_empty = false;
+        }
+        if !is_empty {
+            qb.push(")");
+        }
     }
     qb.push(" ORDER BY id DESC");
     qb.push(" LIMIT ")

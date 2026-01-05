@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     ctx::{appcontext::DbStorage, dbmanager::DatabasePool},
-    utils::{appenv::AppLogger, security::Security},
+    utils::{appconfig::applogger, security::Security},
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -114,7 +114,7 @@ impl UserAccount {
             DatabasePool::Sqlite(pool) => todo!("sqlite_auth_create_user on sqlite"),
         };
         if res.as_ref().is_ok() {
-            AppLogger::log(format!(
+            applogger::log(format!(
                 "new user added with id: {}",
                 res.as_ref().unwrap().id
             ));

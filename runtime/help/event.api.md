@@ -18,19 +18,8 @@ This API accepts an event payload in JSON format. Each field is optional unless 
   "version": "1.2.3",
   "environment": "production",
   "host": "server1",
-  "tracing": {
-    "trace_id": "abc-def-123",
-    "span_id": "span-001",
-    "transaction_id": "txn-123"
-  },
   "meta": {
     "jwt": ""
-  },
-  "user": {
-    "id": "user-01",
-    "name": "Alice",
-    "email": "alice@example.com",
-    "session_id": "sess-123"
   },
   "data": { "custom_field": "value" }
 }
@@ -49,19 +38,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | `version`   | string           | environment of service . **Required**.                 |
 | `message`   | string           | Human-readable description of the event.               |
 | `host`      | string           | Host/machine name/id.                  |
-| `tracing`   | object           | Distributed tracing identifiers (see **TracingInfo**). |
 | `data`      | object           | Additional custom metadata.                            |
-
----
-
-### Objects
-
-#### TracingInfo
-
-| Field            | Type   | Description               |
-| ---------------- | ------ | ------------------------- |
-| `trace_id`       | string | Unique trace ID.          |
-| `span_id`        | string | Span ID within the trace. |
-| `transaction_id` | string | Transaction identifier.   |
 
 ---

@@ -7,17 +7,12 @@ CREATE TABLE IF NOT EXISTS zege_events (
   event_created_at TIMESTAMPTZ NOT NULL,
 
   timestamp TIMESTAMPTZ NOT NULL,
-  message TEXT,
-  event_name TEXT,
-  event_type TEXT,
-  host TEXT,
+  event_name VARCHAR(250),
+  event_type VARCHAR(250),
+  host VARCHAR(250),
   service VARCHAR(250),
-  version TEXT,
-  -- Tracing
-  trace_id TEXT,
-  span_id TEXT,
-  transaction_id TEXT,
-  request_id TEXT,
+  version VARCHAR(250),
+  message TEXT,
   data JSONB  
 );
 ALTER TABLE zege_events ENABLE ROW LEVEL SECURITY;
@@ -30,4 +25,14 @@ DROP ROLE IF EXISTS zege_events_read_user;
 CREATE ROLE zege_events_read_user NOLOGIN NOBYPASSRLS;
 GRANT USAGE ON SCHEMA public TO zege_events_read_user;
 GRANT SELECT ON public.zege_events TO zege_events_read_user;
+
+
+CREATE INDEX zege_events_service_index ON zege_events (service);
+CREATE INDEX zege_events_event_name_index ON zege_events (event_name);
+CREATE INDEX zege_events_host_index ON zege_events (host);
+CREATE INDEX zege_events_message_index ON zege_events (message);
+CREATE INDEX zege_events_timestamp_index ON zege_events (timestamp);
+CREATE INDEX zege_events_event_organization_id_index ON zege_events (event_organization_id);
+CREATE INDEX zege_events_event_bucket_id_index ON zege_events (event_bucket_id);
+
 

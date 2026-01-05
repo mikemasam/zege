@@ -6,7 +6,9 @@ use crate::{
     ctx::{
         appcontext::{AppContext, DbStorage},
         dbmanager::DatabasePool,
-    }, lib::auth::user::user::UserAccount, utils::{appenv::AppLogger, security::Security}
+    },
+    lib::auth::user::user::UserAccount,
+    utils::{appconfig::applogger, security::Security},
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -65,7 +67,7 @@ impl UserAccount {
             DatabasePool::Sqlite(pool) => todo!("sqlite_auth_create_user on sqlite"),
         };
         if res.as_ref().is_ok() {
-            AppLogger::log(format!(
+            applogger::log(format!(
                 "user with email {} has changed there password to {:?}",
                 item.email,
                 item.new_password.unwrap()

@@ -4,6 +4,7 @@ use crate::ctx::dbmanager::DatabasePool;
 use crate::lib::auth::user::papers::UserPaper;
 use crate::lib::organization::{NewOrganization, Organization};
 use crate::utils::http::{AppResponse, AppResult};
+use crate::{api_ensure, appconfig};
 use axum::Extension;
 use chrono::Local;
 use serde::Deserialize;
@@ -21,6 +22,15 @@ pub async fn organizations_create_route(
     Extension(user): Extension<UserPaper>,
     axum::Json(item): axum::extract::Json<OrganizationCreate>,
 ) -> AppResult<Organization> {
+    let enabled = appconfig!()
+        .feature
+        .as_ref()
+        .and_then(|f| f.create_organization.as_deref())
+        .map(|v| v.to_lowercase())
+        .map(|v| v != "no" && v != "false")
+        .unwrap_or(true);
+    api_ensure!(enabled, "create_organization not available at the moment");
+
     let organization = Organization::create(
         ctx.storage.clone(),
         NewOrganization {

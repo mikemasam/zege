@@ -1,22 +1,28 @@
+use anyhow::{Result, ensure};
 use redis::{AsyncCommands, Client};
 use serde_json::Value;
 use std::{env, sync::Arc};
 use tokio::time::{Duration, sleep};
 
-use crate::{ctx::appcontext::AppContext, dto::logevent::LogEvent, lib::events::input::{LogEventChannelMessage, LogEventInput}, utils::appenv::AppLogger};
+use crate::{
+    appconfig,
+    ctx::appcontext::AppContext,
+    dto::logevent::LogEvent,
+    lib::events::input::{LogEventChannelMessage, LogEventInput},
+    utils::appconfig::applogger,
+};
 
 pub async fn start_redis_reader(ctx: Arc<AppContext>) {
-    let conns = env::var("REDIS_SERVERS").unwrap();
-    let conns_list: Vec<String> = conns.split(',').map(|s| s.to_string()).collect();
-
-    for url in conns_list {
+    let redis_config = &appconfig!().redis;
+    let servers = redis_config.servers.clone().unwrap_or_default();
+    for url in servers {
         connect_to_server(ctx.clone(), url);
     }
 }
 fn connect_to_server(ctx: Arc<AppContext>, url: String) {
     tokio::task::spawn(async move {
         loop {
-            AppLogger::log(format!("Redis URL: {url}"));
+            applogger::log(format!("Redis URL: {url}"));
             match connect_and_listen(ctx.clone(), url.as_str()).await {
                 Ok(_) => {}
                 Err(e) => {
@@ -28,12 +34,12 @@ fn connect_to_server(ctx: Arc<AppContext>, url: String) {
     });
 }
 async fn connect_and_listen(ctx: Arc<AppContext>, url: &str) -> redis::RedisResult<()> {
-    AppLogger::log(format!("Connecting to Redis -> {}", url));
+    applogger::log(format!("Connecting to Redis -> {}", url));
 
     let client = Client::open(url)?;
     let mut conn = client.get_multiplexed_async_connection().await?;
 
-    AppLogger::log(format!("Redis connected -> {}", url));
+    applogger::log(format!("Redis connected -> {}", url));
 
     loop {
         let result: redis::RedisResult<(String, String)> = redis::cmd("BLPOP")
@@ -46,13 +52,13 @@ async fn connect_and_listen(ctx: Arc<AppContext>, url: &str) -> redis::RedisResu
             Ok((_key, payload)) => match serde_json::from_str::<Value>(&payload) {
                 Ok(body) => {
                     if let Err(e) = event_writer(ctx.clone(), body).await {
-                        eprintln!("event_writer error: {}", e);
+                        applogger::error(format!("event_writer error: {}", e));
                     }
                 }
-                Err(e) => eprintln!("JSON parse error: {}", e),
+                Err(e) => applogger::error(format!("JSON parse error: {}", e)),
             },
             Err(e) => {
-                eprintln!("BLPOP error on {} -> {}", url, e);
+                applogger::error(format!("BLPOP error on: {} -> {}", url, e));
                 return Err(e); // triggers reconnect loop
             }
         }
@@ -60,19 +66,26 @@ async fn connect_and_listen(ctx: Arc<AppContext>, url: &str) -> redis::RedisResu
 }
 
 /// Stub replacement for event$writer
-async fn event_writer(ctx: Arc<AppContext>, event: serde_json::Value) -> Result<(), String> {
-    //println!("{}", serde_json::to_string_pretty(&event).unwrap());
-    let parser: Result<LogEventInput, serde_json::Error> = serde_json::from_value(event);
-    if parser.is_err() {
-        eprintln!("> Redis: Failed to process event {:?}", parser.err());
-        return Ok(());
-    }
+async fn event_writer(ctx: Arc<AppContext>, eventValue: serde_json::Value) -> Result<()> {
+    let parser: Result<LogEventInput, serde_json::Error> =
+        serde_json::from_value(eventValue.clone());
+    ensure!(
+        parser.is_ok(),
+        format!("> Redis: Failed to process event {:?}", parser.err())
+    );
+    let event: LogEventInput = parser.unwrap();
+
+    ensure!(
+        event.bucket_key.is_some(),
+        format!("event missing bucket_key {}", eventValue)
+    );
+
     let wr = ctx
         .event_writer
-        .send(LogEventChannelMessage::Data(Box::new(parser.unwrap())));
-    if wr.is_err() {
-        eprintln!("> Redis: Failed to process event {:?}", wr.err());
-        return Ok(());
-    }
+        .send(LogEventChannelMessage::Data(Box::new(event)));
+    ensure!(
+        wr.is_ok(),
+        format!("> Redis: Failed to process event {:?}", wr.err())
+    );
     Ok(())
 }

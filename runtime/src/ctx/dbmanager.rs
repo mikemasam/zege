@@ -12,7 +12,8 @@ use sqlx::prelude::FromRow;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 use sqlx::{AnyPool, ConnectOptions, Error, PgPool, SqlitePool};
 
-use crate::utils::appenv::AppLogger;
+use crate::appconfig;
+use crate::utils::appconfig::applogger;
 
 #[derive(Debug, Clone)]
 pub enum DatabasePool {
@@ -48,14 +49,19 @@ impl DbPoolManager {
         self.pool.is_some()
     }
     pub async fn connect(opts: DbManagerConnectOptions) -> Result<Self, DbManagerError> {
-        let db_driver = env::var("DB_DRIVER").unwrap_or("pgsql".to_string());
-        AppLogger::log(format!("DB selected {}", db_driver));
+        let db_driver = appconfig!()
+            .database
+            .driver
+            .clone()
+            .unwrap_or("pgsql".to_string());
+        applogger::log(format!("DB selected {}", db_driver));
         if db_driver.eq_ignore_ascii_case("pgsql") {
             DbPoolManager::connect_pgsql(opts).await
         } else {
             Err(DbManagerError::UnsupportedDriver(db_driver.to_owned()))
         }
     }
+    /*
     async fn connect_sqlite(opts: DbManagerConnectOptions) -> Result<Self, DbManagerError> {
         todo!("db driver not supported");
         let mut dbname = env::var("DB_NAME").unwrap_or("zege.db".to_string());
@@ -83,18 +89,16 @@ impl DbPoolManager {
             pool: Some(DatabasePool::Sqlite(sqlite_pool)),
         })
     }
+    */
     async fn connect_pgsql(opts: DbManagerConnectOptions) -> Result<Self, DbManagerError> {
-        let dbname = env::var("DB_NAME").expect("env: expected DB_NAME");
-        let dbhost = env::var("DB_HOST").expect("env: expected DB_HOST");
-        let dbusername = env::var("DB_USERNAME").expect("env: expected DB_USERNAME");
-        let dbpassword = env::var("DB_PASSWORD").expect("env: expected DB_PASSWORD");
+        let db_config = &appconfig!().database;
         let migration_path = "migrations/pgsql";
         let options = PgConnectOptions::new()
-            .database(&dbname)
-            .host(&dbhost)
-            .username(&dbusername)
+            .database(db_config.name.as_str())
+            .host(db_config.host.as_str())
+            .username(db_config.username.as_str())
             .ssl_mode(sqlx::postgres::PgSslMode::Allow)
-            .password(&dbpassword);
+            .password(db_config.password.as_str());
         let pool = PgPoolOptions::new()
             .max_connections(10)
             .connect_with(options.clone())
@@ -105,7 +109,7 @@ impl DbPoolManager {
             migrator.run(&pool).await?;
         }
         Ok(DbPoolManager {
-            id: dbname.to_owned(),
+            id: db_config.name.clone(),
             pool: Some(DatabasePool::Postgres(pool)),
         })
     }

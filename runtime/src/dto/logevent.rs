@@ -14,17 +14,8 @@ pub struct LogEvent {
     pub version: Option<String>,
     pub timestamp: DateTime<FixedOffset>,
     pub message: Option<String>,
-    pub tracing: Option<TracingInfo>,
     pub event_name: String,
     pub event_type: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct TracingInfo {
-    pub trace_id: Option<String>,
-    pub span_id: Option<String>,
-    pub transaction_id: Option<String>,
-    pub request_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -41,10 +32,6 @@ pub struct ZegeEventRow {
     pub event_name: String,
     pub event_type: Option<String>,
     pub message: Option<String>,
-    pub trace_id: Option<String>,
-    pub span_id: Option<String>,
-    pub transaction_id: Option<String>,
-    pub request_id: Option<String>,
     pub data: Option<serde_json::Value>,
 }
 
@@ -59,12 +46,6 @@ impl ZegeEventRow {
             event_type: self.event_type,
             timestamp: self.timestamp,
             message: self.message,
-            tracing: Some(TracingInfo {
-                trace_id: self.trace_id,
-                span_id: self.span_id,
-                transaction_id: self.transaction_id,
-                request_id: self.request_id,
-            }),
             data: Some(serde_json::from_value(self.data.unwrap_or_default()).unwrap_or_default()),
         }
     }

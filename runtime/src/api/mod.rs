@@ -1,9 +1,9 @@
 mod auth;
+mod buckets;
 mod events;
 mod organizations;
 mod report;
 mod roles;
-mod buckets;
 mod users;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -14,13 +14,17 @@ use serde_json::Value;
 use crate::{
     api::{
         auth::{auth_private_routes, auth_public_routes},
+        buckets::buckets_routes,
         events::{events_routes, old_event_input_routes},
         organizations::organizations_routes,
         report::report_routes,
         roles::roles_routes,
-        buckets::buckets_routes,
         users::users_routes,
-    }, api_ensure, ctx::appcontext::{self, AppContext}, lib::auth::user::papers::UserPaper, utils::{appenv::AppLogger, http::AppResponse}
+    },
+    api_ensure,
+    ctx::appcontext::{self, AppContext},
+    lib::auth::user::papers::UserPaper,
+    utils::{appconfig::applogger, http::AppResponse},
 };
 
 pub fn api_routes() -> Router {
@@ -46,7 +50,7 @@ async fn auth_middleware<B>(
     let appcontext = match req.extensions().get::<Arc<AppContext>>() {
         Some(ctx) => ctx.clone(),
         None => {
-            AppLogger::debug(format!(
+            applogger::debug(format!(
                 "Unauthorized {} {}",
                 req.method(),
                 req.uri().path()
@@ -61,7 +65,7 @@ async fn auth_middleware<B>(
     {
         Some(t) => t,
         None => {
-            AppLogger::debug(format!(
+            applogger::debug(format!(
                 "Unauthorized {} {}",
                 req.method(),
                 req.uri().path()
@@ -71,7 +75,7 @@ async fn auth_middleware<B>(
     };
     let papers_result = UserPaper::verify_token(appcontext.storage.clone(), token).await;
     if (papers_result.is_err()) {
-        AppLogger::debug(format!(
+        applogger::debug(format!(
             "Unauthorized {} {}",
             req.method(),
             req.uri().path()
