@@ -1,0 +1,11 @@
+verbose: all
+feature:
+  jwt_secret: default-secret
+database:
+  name: zegedb
+  host: localhost
+  username: postgres 
+  password: postgres
+#redis:
+#  servers:
+#    - redis://localhost:6379

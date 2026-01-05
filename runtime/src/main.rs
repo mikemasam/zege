@@ -19,7 +19,6 @@ use crate::{
 };
 use anyhow::Result;
 use clap::Parser;
-use dotenv::dotenv;
 use sqlx::any::install_default_drivers;
 use std::env;
 use std::process::{Command, exit};
@@ -30,7 +29,6 @@ use tokio::sync::Mutex;
 #[tokio::main]
 async fn main() -> Result<()> {
     AppConfig::init_config()?;
-    dotenv().ok();
     install_default_drivers();
     //.layer(axum::middleware::from_fn(custom_middleware)); // apply custom middleware
     let (events_writer, events_reader) = mpsc::channel::<LogEventChannelMessage>();
