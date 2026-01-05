@@ -10,7 +10,7 @@ use tower_http::services::fs::ServeDir;
 
 pub async fn start_http(ctx: Arc<AppContext>) {
     let port = appconfig!().port.unwrap_or(3432);
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     applogger::log(format!("Server running at http://{addr}"));
     let cors = CorsLayer::new()
         .allow_origin(Any)
