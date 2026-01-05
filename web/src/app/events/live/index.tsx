@@ -12,7 +12,7 @@ export default function EventsLive() {
   const onSelect = (item: any) => {
     setOpts((o) => ({
       ...o,
-      selected: item?.event_ui == o.selected?.event_ui ? null : item,
+      selected: item?.ui == o.selected?.ui ? null : item,
     }));
   };
   return (
@@ -21,8 +21,8 @@ export default function EventsLive() {
       <div className="flex flex-col gap-2">
         {query.data?.map((event: any) => (
           <EventBox
-            key={event.event_ui}
-            isSelected={opts.selected?.event_ui == event.event_ui}
+            key={event.ui}
+            isSelected={opts.selected?.ui == event.ui}
             event={event}
             onSelect={onSelect}
           />

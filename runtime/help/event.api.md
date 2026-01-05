@@ -1,12 +1,10 @@
 ---
-
-# Event API 
+# Event API
 
 This API accepts an event payload in JSON format. Each field is optional unless specified. Events are used for logging, observability, and analytics.
 
 **Content-Type:** `application/json`
 **Method:** `POST`
-
 ---
 
 ## JSON Structure
@@ -19,25 +17,14 @@ This API accepts an event payload in JSON format. Each field is optional unless 
   "message": "Something went wrong",
   "version": "1.2.3",
   "environment": "production",
-  "severity": "ERROR",
-  "error": {
-    "error_type": "RuntimeError",
-    "stack_trace": "..."
-  },
-  "app": {
-    "instance_id": "app-01",
-    "build_commit": "abc123",
-    "build_id": "42",
-    "region": "us-east-1"
-  },
-  "host": {
-    "hostname": "server01",
-    "host_ip": "10.0.0.1",
-  },
+  "host": "server1",
   "tracing": {
     "trace_id": "abc-def-123",
     "span_id": "span-001",
     "transaction_id": "txn-123"
+  },
+  "meta": {
+    "jwt": ""
   },
   "user": {
     "id": "user-01",
@@ -45,13 +32,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
     "email": "alice@example.com",
     "session_id": "sess-123"
   },
-  "http": {
-    "method": "POST",
-    "path": "/api/events",
-    "status": 200,
-    "client_ip": "192.168.0.1",
-  },
-  "tags": ["backend", "critical"],
   "data": { "custom_field": "value" }
 }
 ```
@@ -60,51 +40,21 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 
 ## Field Descriptions
 
-### Top-level
+### Event
 
 | Field       | Type             | Description                                            |
 | ----------- | ---------------- | ------------------------------------------------------ |
 | `timestamp` | string (RFC3339) | When the event occurred. **Required**.                 |
-| `service`   | string           | version of service . **Required**.                    |
-| `version`   | string           | environment of service . **Required**.                    |
-| `environment` | string         | name of service . **Required**.                    |
-| `severity`  | string           | Severity level: `"INFO"`, `"WARN"`, `"ERROR"`, etc.    |
+| `service`   | string           | version of service . **Required**.                     |
+| `version`   | string           | environment of service . **Required**.                 |
 | `message`   | string           | Human-readable description of the event.               |
-| `error`     | object           | Error details (see **ErrorInfo**).                     |
-| `app`       | object           | Application/deployment information (see **AppInfo**).  |
-| `host`      | object           | Host/machine info (see **HostInfo**).                  |
+| `host`      | string           | Host/machine name/id.                  |
 | `tracing`   | object           | Distributed tracing identifiers (see **TracingInfo**). |
-| `user`      | object           | User context (see **UserInfo**).                       |
-| `http`      | object           | HTTP request/response context (see **HttpInfo**).      |
-| `tags`      | array of strings | Optional tags for categorization.                      |
 | `data`      | object           | Additional custom metadata.                            |
 
 ---
 
-### Sub-Objects
-
-#### ErrorInfo
-
-| Field           | Type   | Description                         |
-| --------------- | ------ | ----------------------------------- |
-| `error_type`    | string | Error type or class.                |
-| `stack_trace`   | string | Optional stack trace for debugging. |
-
-#### AppInfo
-
-| Field          | Type   | Description                         |
-| -------------- | ------ | ----------------------------------- |
-| `instance_id`  | string | Unique instance of the application. |
-| `build_commit` | string | Git commit hash.                    |
-| `build_id`     | string | Build identifier.                   |
-| `region`       | string | Deployment region.                  |
-
-#### HostInfo
-
-| Field            | Type   | Description              |
-| ---------------- | ------ | ------------------------ |
-| `hostname`       | string | Hostname of the machine. |
-| `host_ip`        | string | IP address of the host.  |
+### Objects
 
 #### TracingInfo
 
@@ -114,24 +64,4 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | `span_id`        | string | Span ID within the trace. |
 | `transaction_id` | string | Transaction identifier.   |
 
-#### UserInfo
-
-| Field        | Type   | Description         |
-| ------------ | ------ | ------------------- |
-| `id`         | string | User ID.            |
-| `name`       | string | User name.          |
-| `email`      | string | User email.         |
-| `session_id` | string | Session identifier. |
-
-#### HttpInfo
-
-| Field        | Type    | Description                          |
-| ------------ | ------- | ------------------------------------ |
-| `method`     | string  | HTTP method: `"GET"`, `"POST"`, etc. |
-| `path`       | string  | Request path.                        |
-| `status`     | integer | HTTP response status code.           |
-| `client_ip`  | string  | IP address of the client.            |
-
 ---
-
-

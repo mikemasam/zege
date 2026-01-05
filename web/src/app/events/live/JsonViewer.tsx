@@ -136,7 +136,7 @@ const JsonObject = ({ itemKey, obj, indent }: any): any => {
 };
 const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
   return (
-    <pre className="bg-gray-100 p-2 rounded border border-gray-200 overflow-x-hidden text-xs max-h-[400px]">
+    <pre className="bg-gray-100 p-2 rounded border border-gray-200 overflow-x-hidden text-xs max-h-[400px] shadow-inner">
       {renderValue(null, data)}
     </pre>
   );

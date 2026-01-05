@@ -17,10 +17,6 @@ export default function QueryFilter({
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState({
     event_name: "",
-    url: "",
-    http_path: "",
-    hostname: "",
-    severity: "",
   });
 
   const handleChange = (name: string, value: string) => {
@@ -34,10 +30,6 @@ export default function QueryFilter({
   const handleReset = () => {
     const cleared = {
       event_name: "",
-      url: "",
-      http_path: "",
-      hostname: "",
-      severity: "",
     };
     setFilters(cleared);
     onFilterChange?.(cleared);
@@ -73,34 +65,6 @@ export default function QueryFilter({
               value={filters.event_name}
               onChange={(e) => handleChange("event_name", e.target.value)}
             />
-            <Input
-              placeholder="URL"
-              value={filters.url}
-              onChange={(e) => handleChange("url", e.target.value)}
-            />
-            <Input
-              placeholder="PATH"
-              value={filters.http_path}
-              onChange={(e) => handleChange("http_path", e.target.value)}
-            />
-            <Input
-              placeholder="Host"
-              value={filters.hostname}
-              onChange={(e) => handleChange("hostname", e.target.value)}
-            />
-            <Select
-              value={filters.severity}
-              onValueChange={(v) => handleChange("severity", v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Severity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="INFO">INFO</SelectItem>
-                <SelectItem value="WARN">WARN</SelectItem>
-                <SelectItem value="ERROR">ERROR</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="flex justify-end gap-2">

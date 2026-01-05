@@ -7,49 +7,17 @@ CREATE TABLE IF NOT EXISTS zege_events (
   event_created_at TIMESTAMPTZ NOT NULL,
 
   timestamp TIMESTAMPTZ NOT NULL,
-  severity TEXT,
   message TEXT,
   event_name TEXT,
   event_type TEXT,
-
-  -- Error info
-  error_type TEXT,
-  stack_trace TEXT,
-
-  -- Application / deployment info
-  app_instance_id TEXT,
-  build_commit TEXT,
-  build_id TEXT,
-
-  -- Service info
+  host TEXT,
   service VARCHAR(250),
   version TEXT,
-  environment TEXT,
-
-  -- Host info
-  hostname TEXT,
-  host_ip TEXT,
-
   -- Tracing
   trace_id TEXT,
   span_id TEXT,
   transaction_id TEXT,
   request_id TEXT,
-
-  -- User info
-  user_id TEXT,
-  user_name TEXT,
-  user_email TEXT,
-  session_id TEXT,
-
-  -- HTTP context
-  http_method TEXT,
-  http_path TEXT,
-  http_url TEXT,
-  http_status INT,
-  client_ip TEXT,
-
-  tags JSONB, 
   data JSONB  
 );
 ALTER TABLE zege_events ENABLE ROW LEVEL SECURITY;

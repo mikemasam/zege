@@ -17,10 +17,7 @@ pub struct QueryParams {
     page: Option<u32>,
     per_page: Option<u32>,
     event_name: Option<String>,
-    hostname: Option<String>,
-    http_path: Option<String>,
-    severity: Option<String>,
-    http_url: Option<String>,
+    host: Option<String>,
 }
 
 pub async fn list_events_route(
@@ -52,14 +49,6 @@ async fn fetch_postgres(
     if let Some(name) = query_params.event_name.filter(|s| !s.trim().is_empty()) {
         qb.push(" AND event_name LIKE ")
             .push_bind(format!("%{name}%"));
-    }
-    if let Some(hostname) = query_params.hostname.filter(|s| !s.trim().is_empty()) {
-        qb.push(" AND hostname LIKE ")
-            .push_bind(format!("%{hostname}%"));
-    }
-    if let Some(path) = query_params.http_path.filter(|s| !s.trim().is_empty()) {
-        qb.push(" AND http_path LIKE ")
-            .push_bind(format!("%{path}%"));
     }
     qb.push(" ORDER BY id DESC");
     qb.push(" LIMIT ")
