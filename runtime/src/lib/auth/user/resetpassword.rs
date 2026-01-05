@@ -64,7 +64,7 @@ impl UserAccount {
                 q.execute(pool).await?;
                 Ok(())
             }
-            DatabasePool::Sqlite(pool) => todo!("sqlite_auth_create_user on sqlite"),
+            _ => todo!("sqlite_auth_create_user on sqlite"),
         };
         if res.as_ref().is_ok() {
             applogger::log(format!(

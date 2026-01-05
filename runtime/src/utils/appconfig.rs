@@ -9,7 +9,7 @@ pub struct AppConfig {
     pub verbose: Option<String>,
     pub port: Option<u16>,
     pub database: Database,
-    pub redis: RedisDatabase,
+    pub redis: Option<RedisDatabase>,
     pub feature: Option<FeatureConfig>,
 }
 

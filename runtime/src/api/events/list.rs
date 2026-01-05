@@ -7,7 +7,7 @@ use crate::utils::http::{AppResponse, AppResult};
 use axum::{Extension, extract::Query};
 use futures::StreamExt;
 use serde::Deserialize;
-use sqlx::{Pool, Postgres, QueryBuilder, Sqlite};
+use sqlx::{Pool, Postgres, QueryBuilder};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -96,6 +96,3 @@ async fn fetch_postgres(
     results
 }
 
-async fn fetch_sqlite(pool: &Pool<Sqlite>, query_params: QueryParams) -> Vec<LogEvent> {
-    todo!("events_list_fetch_sqlite")
-}

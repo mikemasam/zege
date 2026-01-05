@@ -14,7 +14,15 @@ use crate::{
 
 pub async fn start_redis_reader(ctx: Arc<AppContext>) {
     let redis_config = &appconfig!().redis;
-    let servers = redis_config.servers.clone().unwrap_or_default();
+    if (redis_config.is_none()) {
+        return;
+    }
+    let servers = redis_config
+        .as_ref()
+        .unwrap()
+        .servers
+        .clone()
+        .unwrap_or_default();
     for url in servers {
         connect_to_server(ctx.clone(), url);
     }

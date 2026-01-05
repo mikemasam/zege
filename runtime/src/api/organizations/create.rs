@@ -8,7 +8,7 @@ use crate::{api_ensure, appconfig};
 use axum::Extension;
 use chrono::Local;
 use serde::Deserialize;
-use sqlx::{PgPool, SqlitePool};
+use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 

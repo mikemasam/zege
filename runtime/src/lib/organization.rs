@@ -67,7 +67,6 @@ impl Organization {
         ensure!(!item.name.is_empty(), "Name is required");
         ensure!(item.user_id > 0, "User id is required");
         match pool.as_ref().unwrap() {
-            DatabasePool::Sqlite(pool) => todo!("auth_create_organization on sqlite"),
             DatabasePool::Postgres(pool) => {
                 let dup = sqlx::query_as::<_, Organization>(
                     "select * from organizations where name = $1 and user_id = $2",
@@ -87,6 +86,7 @@ impl Organization {
                 applogger::log(format!("done creating organization {:?}", org));
                 Ok(org)
             }
+            _ => todo!("auth_create_organization on sqlite"),
         }
     }
     pub async fn create(db: DbStorage, item: NewOrganization) -> Result<Organization> {
@@ -278,7 +278,7 @@ impl Organization {
                     .fetch_all(pool)
                     .await?
             }
-            DatabasePool::Sqlite(pool) => todo!("auth_organizations_list"),
+            _ => todo!("auth_organizations_list"),
         };
         Ok(reports)
     }

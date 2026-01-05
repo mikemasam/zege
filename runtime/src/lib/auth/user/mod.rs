@@ -9,7 +9,7 @@ use chrono::{DateTime, FixedOffset, Local};
 use clap::{Args, Subcommand};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use sqlx::{Pool, Postgres, Sqlite, prelude::FromRow};
+use sqlx::{Pool, Postgres, prelude::FromRow};
 use std::{default, env};
 use tokio::sync::Mutex;
 
@@ -54,7 +54,7 @@ async fn listUsers(storage: DbStorage, pattern: Option<String>) -> Result<()> {
             .await;
             users.unwrap()
         }
-        DatabasePool::Sqlite(pool) => todo!("auth_search_users on sqlite"),
+        _ => todo!("auth_search_users on sqlite"),
     };
     println!("{}", serde_json::to_string_pretty(&users)?);
     Ok(())

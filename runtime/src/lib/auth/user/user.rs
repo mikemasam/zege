@@ -76,7 +76,7 @@ impl UserAccount {
                 ensure!(user.is_ok(), "User with id {id} not found");
                 Ok(user.unwrap())
             }
-            DatabasePool::Sqlite(pool) => todo!("auth_find_user_by_id on sqlite"),
+            _ => todo!("auth_find_user_by_id on sqlite"),
         }
     }
 
@@ -111,7 +111,7 @@ impl UserAccount {
                 let user = q.fetch_one(pool).await?;
                 Ok(user)
             }
-            DatabasePool::Sqlite(pool) => todo!("sqlite_auth_create_user on sqlite"),
+            _ => todo!("sqlite_auth_create_user on sqlite"),
         };
         if res.as_ref().is_ok() {
             applogger::log(format!(

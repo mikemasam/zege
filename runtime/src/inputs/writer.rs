@@ -12,7 +12,7 @@ use crate::{
 };
 use chrono::{Local, SecondsFormat};
 use serde_json::Value;
-use sqlx::{Error, PgPool, QueryBuilder, SqlitePool};
+use sqlx::{Error, PgPool, QueryBuilder};
 use std::{
     collections::HashMap,
     ops::DerefMut,

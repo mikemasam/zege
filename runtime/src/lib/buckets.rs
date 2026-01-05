@@ -4,7 +4,7 @@ use anyhow::{Result, ensure};
 use chrono::{DateTime, FixedOffset, Local};
 use clap::Subcommand;
 use serde::{Deserialize, Serialize};
-use sqlx::{Pool, Postgres, Sqlite, prelude::FromRow};
+use sqlx::{Pool, Postgres, prelude::FromRow};
 use uuid::Uuid;
 
 use crate::ctx::{
@@ -123,7 +123,7 @@ async fn listBuckets(db: DbStorage, pattern: Option<String>) -> Result<()> {
                     .await;
             buckets.unwrap()
         }
-        DatabasePool::Sqlite(pool) => todo!("listBuckets on sqlite"),
+        _ => todo!("listBuckets on sqlite"),
     };
     println!("{}", serde_json::to_string_pretty(&buckets)?);
     Ok(())

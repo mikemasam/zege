@@ -1,7 +1,7 @@
 use anyhow::{Result, ensure};
 use chrono::{DateTime, FixedOffset, Local};
 use serde::{Deserialize, Serialize};
-use sqlx::{Pool, Postgres, Sqlite, prelude::FromRow};
+use sqlx::{Pool, Postgres, prelude::FromRow};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -56,7 +56,7 @@ impl Role {
                 println!("done creating role {:?}", role);
                 Ok(role)
             }
-            DatabasePool::Sqlite(pool) => todo!("auth_create_role on sqlite"),
+            _ => todo!("auth_create_role on sqlite"),
         }
     }
 }

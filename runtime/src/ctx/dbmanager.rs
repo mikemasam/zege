@@ -9,15 +9,13 @@ use sqlx::any::{AnyConnectOptions, AnyPoolOptions};
 use sqlx::migrate::Migrator;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::prelude::FromRow;
-use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
-use sqlx::{AnyPool, ConnectOptions, Error, PgPool, SqlitePool};
+use sqlx::{AnyPool, ConnectOptions, Error, PgPool};
 
 use crate::appconfig;
 use crate::utils::appconfig::applogger;
 
 #[derive(Debug, Clone)]
 pub enum DatabasePool {
-    Sqlite(SqlitePool),
     Postgres(PgPool),
 }
 
@@ -115,15 +113,14 @@ impl DbPoolManager {
     }
     pub async fn close_db(self) {
         if self.pool.is_some() {
-            if let DatabasePool::Sqlite(pool) = self.pool.as_ref().unwrap() {
-                pool.close().await;
-            } else if let DatabasePool::Postgres(pool) = self.pool.as_ref().unwrap() {
+            if let DatabasePool::Postgres(pool) = self.pool.as_ref().unwrap() {
                 pool.close().await;
             }
         }
     }
 }
 
+/*
 fn sqlite_insert(_sql: String) {}
 pub async fn check_table_exists(pool: &SqlitePool, table_name: &str) -> Result<bool, sqlx::Error> {
     let checker = r#"
@@ -136,6 +133,7 @@ pub async fn check_table_exists(pool: &SqlitePool, table_name: &str) -> Result<b
         .await?;
     Ok(row.0 > 0)
 }
+*/
 /*
 async fn _migrate(pool: &SqlitePool) {
     sqlx::migrate!("migrations/events")
