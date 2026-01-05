@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AppConfig {
     pub verbose: Option<String>,
+    pub port: Option<u16>,
     pub database: Database,
     pub redis: RedisDatabase,
     pub feature: Option<FeatureConfig>,
