@@ -3,7 +3,7 @@ import axios, { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3432/api/v1",
+  baseURL: import.meta.env.VITE_API_URL || "/api/v1",
   timeout: 10000,
   validateStatus: () => true,
   headers: {
