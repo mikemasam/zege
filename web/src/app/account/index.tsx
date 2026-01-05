@@ -10,7 +10,7 @@ export default function AccountPage() {
   const auth = useAuth();
   const query = useApi(() => api.get("/organizations"));
   const switchOrg = async (org: any) => {
-    const res = await api.post("/auth/switch-organization", {
+    const _ = await api.post("/auth/switch-organization", {
       org_id: org.id,
     });
     query.load();
