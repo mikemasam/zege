@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 async-channel = "2.3.1"
-sqlx = { version = "0.7.4", features = ["sqlite", "postgres", "runtime-tokio-native-tls", "chrono"] }
+sqlx = { version = "0.7.4", features = ["sqlite", "postgres", "runtime-tokio", "tls-rustls", "chrono"] }
 tokio = { version = "1.37.0", features = ["full"] } 
 futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
