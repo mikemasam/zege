@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
-use crate::dto::logevent::{AppInfo, ErrorInfo, HostInfo, HttpInfo, ServiceInfo, TracingInfo};
+use crate::dto::logevent::{AppInfo, ErrorInfo, HostInfo, HttpInfo, TracingInfo};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LogEventInput {
@@ -11,20 +11,20 @@ pub struct LogEventInput {
     pub event_organization_id: Option<i64>,
     pub event_bucket_id: Option<i64>,
     pub timestamp: DateTime<FixedOffset>,
-    pub service_name: String,
+    pub service: String,
     pub event_name: String,
+    pub version: Option<String>,
+    pub environment: Option<String>,
     pub event_type: Option<String>,
     pub severity: Option<String>,
     pub message: Option<String>,
     pub error: Option<ErrorInfo>,
     pub app: Option<AppInfo>,
-    pub service: Option<ServiceInfo>,
     pub host: Option<HostInfo>,
     pub tracing: Option<TracingInfo>,
     pub user: Option<UserInfoInput>,
     pub http: Option<HttpInfo>,
     pub tags: Option<Vec<String>>,
-    pub labels: Option<HashMap<String, String>>,
     pub data: Option<HashMap<String, serde_json::Value>>,
 }
 

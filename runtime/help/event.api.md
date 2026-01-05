@@ -14,8 +14,12 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 ```json
 {
   "timestamp": "2025-09-12T10:00:00Z",
-  "severity": "ERROR",
+  "service": "app1",
+  "event_name": "test1",
   "message": "Something went wrong",
+  "version": "1.2.3",
+  "environment": "production",
+  "severity": "ERROR",
   "error": {
     "error_type": "RuntimeError",
     "stack_trace": "..."
@@ -25,10 +29,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
     "build_commit": "abc123",
     "build_id": "42",
     "region": "us-east-1"
-  },
-  "service": {
-    "version": "1.2.3",
-    "environment": "production"
   },
   "host": {
     "hostname": "server01",
@@ -52,7 +52,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
     "client_ip": "192.168.0.1",
   },
   "tags": ["backend", "critical"],
-  "labels": { "feature": "login", "team": "auth" },
   "data": { "custom_field": "value" }
 }
 ```
@@ -66,18 +65,18 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | Field       | Type             | Description                                            |
 | ----------- | ---------------- | ------------------------------------------------------ |
 | `timestamp` | string (RFC3339) | When the event occurred. **Required**.                 |
-| `service_name` | string           | name of service . **Required**.                    |
+| `service`   | string           | version of service . **Required**.                    |
+| `version`   | string           | environment of service . **Required**.                    |
+| `environment` | string         | name of service . **Required**.                    |
 | `severity`  | string           | Severity level: `"INFO"`, `"WARN"`, `"ERROR"`, etc.    |
 | `message`   | string           | Human-readable description of the event.               |
 | `error`     | object           | Error details (see **ErrorInfo**).                     |
 | `app`       | object           | Application/deployment information (see **AppInfo**).  |
-| `service`   | object           | Service information (see **ServiceInfo**).             |
 | `host`      | object           | Host/machine info (see **HostInfo**).                  |
 | `tracing`   | object           | Distributed tracing identifiers (see **TracingInfo**). |
 | `user`      | object           | User context (see **UserInfo**).                       |
 | `http`      | object           | HTTP request/response context (see **HttpInfo**).      |
 | `tags`      | array of strings | Optional tags for categorization.                      |
-| `labels`    | object           | Flexible key/value labels.                             |
 | `data`      | object           | Additional custom metadata.                            |
 
 ---
@@ -99,14 +98,6 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 | `build_commit` | string | Git commit hash.                    |
 | `build_id`     | string | Build identifier.                   |
 | `region`       | string | Deployment region.                  |
-
-#### ServiceInfo
-
-| Field         | Type   | Description                                    |
-| ------------- | ------ | ---------------------------------------------- |
-| `name`        | string | Service name.                                  |
-| `version`     | string | Service version.                               |
-| `environment` | string | Environment: `"production"`, `"staging"`, etc. |
 
 #### HostInfo
 

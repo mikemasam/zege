@@ -4,7 +4,10 @@ use crate::{
         dbmanager::{DatabasePool, DbManagerConnectOptions, DbPoolManager},
     },
     dto::logevent::LogEvent,
-    lib::{buckets::Bucket, events::input::{LogEventChannelMessage, LogEventInput}},
+    lib::{
+        buckets::Bucket,
+        events::input::{LogEventChannelMessage, LogEventInput},
+    },
     utils::{appenv::AppLogger, security::Security},
 };
 use chrono::{Local, SecondsFormat};
@@ -159,7 +162,7 @@ async fn write_events(
         AppLogger::debug(format!(
             "> {} - {:?}:{} - {}",
             e.timestamp,
-            e.service_name,
+            e.service,
             e.event_name,
             e.message.clone().unwrap_or("".to_owned()).as_str()
         ));
@@ -172,12 +175,12 @@ async fn write_events(
 async fn pgsql_write_events(pool: &PgPool, events: &Vec<LogEventInput>) -> Result<u64, Error> {
     let INSERT_SQL: &str = "INSERT INTO zege_events (
     timestamp, severity, message, error_type, stack_trace,
-    app_instance_id, build_commit, build_id, service_version, 
-    service_environment, hostname , host_ip, trace_id, span_id,
+    app_instance_id, build_commit, build_id, version, service,
+    environment, hostname , host_ip, trace_id, span_id,
     transaction_id, user_id, user_name, user_email, session_id,
     http_method, http_path, http_status, client_ip, request_id,
-    tags,  labels, data, event_name, event_type, http_url, 
-    service_name, event_bucket_id, event_organization_id, event_ui, 
+    tags, data, event_name, event_type, http_url, 
+     event_bucket_id, event_organization_id, event_ui, 
     event_created_at ) ";
     let mut query = QueryBuilder::<sqlx::Postgres>::new(INSERT_SQL);
 
@@ -190,8 +193,9 @@ async fn pgsql_write_events(pool: &PgPool, events: &Vec<LogEventInput>) -> Resul
             .push_bind(e.app.as_ref().map(|v| &v.instance_id))
             .push_bind(e.app.as_ref().map(|v| &v.build_commit))
             .push_bind(e.app.as_ref().map(|v| &v.build_id))
-            .push_bind(e.service.as_ref().map(|v| &v.version))
-            .push_bind(e.service.as_ref().map(|v| &v.environment))
+            .push_bind(e.version.clone())
+            .push_bind(e.service.clone())
+            .push_bind(e.environment.clone())
             .push_bind(e.host.as_ref().map(|v| &v.hostname))
             .push_bind(e.host.as_ref().map(|v| &v.host_ip))
             .push_bind(e.tracing.as_ref().map(|v| &v.trace_id))
@@ -207,12 +211,10 @@ async fn pgsql_write_events(pool: &PgPool, events: &Vec<LogEventInput>) -> Resul
             .push_bind(e.http.as_ref().map(|v| &v.client_ip))
             .push_bind(e.tracing.as_ref().map(|v| &v.request_id))
             .push_bind(e.tags.clone().map(|v| serde_json::to_value(v).ok()))
-            .push_bind(e.labels.clone().map(|v| serde_json::to_value(v).ok()))
             .push_bind(e.data.clone().map(|v| serde_json::to_value(v).ok()))
             .push_bind(e.event_name.clone())
             .push_bind(e.event_type.clone())
             .push_bind(e.http.as_ref().map(|v| &v.url))
-            .push_bind(e.service_name.clone())
             .push_bind(e.event_bucket_id)
             .push_bind(e.event_organization_id)
             .push_bind(Uuid::now_v7().simple().to_string())

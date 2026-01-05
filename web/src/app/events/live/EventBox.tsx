@@ -2,13 +2,13 @@ import { useMemo } from "react";
 import { EventDetail } from "./EventDetail";
 import { DateTime } from "luxon";
 
-type Severity = "INFO" | "WARN" | "ERROR" | "UNKNOWN";
+type Severity = "INFO" | "WARN" | "ERROR" | "?";
 
 type Event = {
   timestamp: string;
   severity?: Severity;
   event_name: string;
-  service_name: string;
+  service: string;
   message: string;
 };
 
@@ -16,7 +16,7 @@ const severityColors: Record<Severity, string> = {
   INFO: "bg-blue-100 text-blue-800",
   WARN: "bg-yellow-100 text-yellow-800",
   ERROR: "bg-red-100 text-red-800",
-  UNKNOWN: "bg-gray-200 text-gray-700",
+  "?": "bg-gray-200 text-gray-700",
 };
 
 export function EventBox({
@@ -28,7 +28,7 @@ export function EventBox({
   isSelected: boolean;
   onSelect: Function;
 }) {
-  const severity: Severity = event.severity ?? "UNKNOWN";
+  const severity: Severity = event.severity ?? "?";
 
   const formattedTime = useMemo(() => {
     return DateTime.fromISO(event.timestamp).toFormat("HH:mm dd/MM/yyyy");
@@ -50,7 +50,7 @@ export function EventBox({
         <span
           className={`px-2 py-0.5 text-xs font-semibold rounded-md ${severityColors[severity]}`}
         >
-          {event.service_name}
+          {event.service}
         </span>
 
         {/* Event content */}

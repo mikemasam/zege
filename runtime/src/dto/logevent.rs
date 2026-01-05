@@ -10,28 +10,21 @@ pub struct LogEvent {
     pub event_ui: Option<String>,
     pub event_created_at: DateTime<FixedOffset>,
     pub event_name: String,
-    pub service_name: String,
+    pub service: String,
+    pub version: Option<String>,
+    pub environment: Option<String>,
     pub timestamp: DateTime<FixedOffset>,
     pub event_type: Option<String>,
     pub severity: Option<String>,
     pub message: Option<String>,
     pub error: Option<ErrorInfo>,
     pub app: Option<AppInfo>,
-    pub service: Option<ServiceInfo>,
     pub host: Option<HostInfo>,
     pub tracing: Option<TracingInfo>,
     pub user: Option<UserInfo>,
     pub http: Option<HttpInfo>,
     pub tags: Option<Vec<String>>,
-    pub labels: Option<HashMap<String, String>>,
     pub data: Option<HashMap<String, serde_json::Value>>,
-}
-
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ServiceInfo {
-    pub version: Option<String>,
-    pub environment: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -85,9 +78,9 @@ pub struct ZegeEventRow {
     pub event_bucket_id: i64,
     pub event_created_at: DateTime<FixedOffset>,
     pub timestamp: DateTime<FixedOffset>,
-    pub service_name: String,
-    pub service_version: Option<String>,
-    pub service_environment: Option<String>,
+    pub service: String,
+    pub version: Option<String>,
+    pub environment: Option<String>,
     pub event_name: String,
     pub event_type: Option<String>,
     pub severity: Option<String>,
@@ -113,7 +106,6 @@ pub struct ZegeEventRow {
     pub http_status: Option<i32>,
     pub client_ip: Option<String>,
     pub tags: Option<serde_json::Value>,
-    pub labels: Option<serde_json::Value>,
     pub data: Option<serde_json::Value>,
 }
 
@@ -125,7 +117,9 @@ impl ZegeEventRow {
             event_created_at: self.event_created_at,
             event_name: self.event_name,
             event_type: self.event_type,
-            service_name: self.service_name,
+            service: self.service,
+            version: self.version,
+            environment: self.environment,
             severity: self.severity,
             message: self.message,
 
@@ -138,11 +132,6 @@ impl ZegeEventRow {
                 instance_id: self.app_instance_id,
                 build_commit: self.build_commit,
                 build_id: self.build_id,
-            }),
-
-            service: Some(ServiceInfo {
-                version: self.service_version,
-                environment: self.service_environment,
             }),
 
             host: Some(HostInfo {
@@ -171,9 +160,8 @@ impl ZegeEventRow {
                 status: self.http_status,
                 client_ip: self.client_ip,
             }),
-            tags: Some(serde_json::from_value(self.tags.unwrap()).unwrap_or_default()),
-            labels: Some(serde_json::from_value(self.labels.unwrap()).unwrap_or_default()),
-            data: Some(serde_json::from_value(self.data.unwrap()).unwrap_or_default()),
+            tags: Some(serde_json::from_value(self.tags.unwrap_or_default()).unwrap_or_default()),
+            data: Some(serde_json::from_value(self.data.unwrap_or_default()).unwrap_or_default()),
         }
     }
 }

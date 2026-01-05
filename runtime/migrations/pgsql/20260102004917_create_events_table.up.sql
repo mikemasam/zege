@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS zege_events (
   event_bucket_id BIGINT NOT NULL REFERENCES buckets(id) ON DELETE CASCADE,
   event_created_at TIMESTAMPTZ NOT NULL,
 
-
   timestamp TIMESTAMPTZ NOT NULL,
   severity TEXT,
   message TEXT,
@@ -23,9 +22,9 @@ CREATE TABLE IF NOT EXISTS zege_events (
   build_id TEXT,
 
   -- Service info
-  service_name VARCHAR(250),
-  service_version TEXT,
-  service_environment TEXT,
+  service VARCHAR(250),
+  version TEXT,
+  environment TEXT,
 
   -- Host info
   hostname TEXT,
@@ -50,9 +49,7 @@ CREATE TABLE IF NOT EXISTS zege_events (
   http_status INT,
   client_ip TEXT,
 
-
   tags JSONB, 
-  labels JSONB,
   data JSONB  
 );
 ALTER TABLE zege_events ENABLE ROW LEVEL SECURITY;
@@ -61,6 +58,7 @@ ALTER TABLE zege_events FORCE ROW LEVEL SECURITY;
 CREATE POLICY zege_events_organization_isolation ON zege_events
 FOR ALL USING (event_organization_id = NULLIF(current_setting('app.organization_id', true), '0')::BIGINT);
 
+DROP ROLE IF EXISTS zege_events_read_user;
 CREATE ROLE zege_events_read_user NOLOGIN NOBYPASSRLS;
 GRANT USAGE ON SCHEMA public TO zege_events_read_user;
 GRANT SELECT ON public.zege_events TO zege_events_read_user;

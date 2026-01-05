@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import JsonViewer from "./JsonViewer";
 
-type Severity = "INFO" | "WARN" | "ERROR" | "UNKNOWN";
+type Severity = "INFO" | "WARN" | "ERROR" | "?";
 
 type Event = {
   timestamp: string | number;
@@ -16,11 +16,11 @@ const severityColors: Record<Severity, string> = {
   INFO: "bg-blue-100 text-blue-800",
   WARN: "bg-yellow-100 text-yellow-800",
   ERROR: "bg-red-100 text-red-800",
-  UNKNOWN: "bg-gray-200 text-gray-700",
+  "?": "bg-gray-200 text-gray-700",
 };
 export function EventDetail({ event }: { event: Event }) {
   if (!event) return null;
-  const severity: Severity = event.severity ?? "UNKNOWN";
+  const severity: Severity = event.severity ?? "?";
   return (
     <div className="flex flex-col gap-2 p-3 box">
       <div className="flex flex-row items-center justify-between gap-2">
