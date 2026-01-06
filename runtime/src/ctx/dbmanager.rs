@@ -52,7 +52,6 @@ impl DbPoolManager {
             .driver
             .clone()
             .unwrap_or("pgsql".to_string());
-        applogger::log(format!("DB selected {}", db_driver));
         if db_driver.eq_ignore_ascii_case("pgsql") {
             DbPoolManager::connect_pgsql(opts).await
         } else {
@@ -90,6 +89,7 @@ impl DbPoolManager {
     */
     async fn connect_pgsql(opts: DbManagerConnectOptions) -> Result<Self, DbManagerError> {
         let db_config = &appconfig!().database;
+        applogger::log(format!("DB psql {}", db_config.name.as_str()));
         let migration_path = "migrations/pgsql";
         let options = PgConnectOptions::new()
             .database(db_config.name.as_str())
