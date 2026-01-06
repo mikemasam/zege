@@ -64,6 +64,13 @@ macro_rules! appconfig {
 pub struct applogger {}
 
 impl applogger {
+    pub fn info(str: String) {
+        let enabled = matches!(appconfig!().verbose.as_deref(), Some("all") | Some("info"));
+        if (!enabled) {
+            return;
+        }
+        println!("LOG: > {}", str);
+    }
     pub fn log(str: String) {
         let enabled = matches!(appconfig!().verbose.as_deref(), Some("all") | Some("log"));
         if (!enabled) {

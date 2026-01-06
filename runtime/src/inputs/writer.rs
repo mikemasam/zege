@@ -55,7 +55,10 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
             Ok(LogEventChannelMessage::Data(mut event)) => {
                 match event.inject(db.clone()).await {
                     Ok(_) => {
-                        println!("e {}", serde_json::to_string_pretty(&event).unwrap());
+                        applogger::info(format!(
+                            "e {}",
+                            serde_json::to_string_pretty(&event).unwrap()
+                        ));
                         events_batch.push(*event)
                     }
                     Err(e) => applogger::error(format!("{:?}", e)),

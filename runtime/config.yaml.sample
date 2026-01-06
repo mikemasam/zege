@@ -3,7 +3,7 @@ feature:
   jwt_secret: default-secret
 database:
   name: zegedb
-  host: localhost
+  host: host.docker.internal
   username: postgres 
   password: postgres
 #redis:

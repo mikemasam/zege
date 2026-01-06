@@ -1,6 +1,7 @@
 runtime/.env
 runtime/target
 runtime/config.yaml
+runtime/config.yaml.docker
 runtime/config.yml
 runtime.old
 web/.env
