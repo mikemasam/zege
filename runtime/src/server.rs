@@ -1,7 +1,11 @@
 use crate::appconfig;
 use crate::ctx::appcontext::AppContext;
 use crate::{api::api_routes, utils::appconfig::applogger};
+use axum::body::Body;
+use axum::http::Request;
+use axum::response::Html;
 use axum::{Extension, Router};
+use tower_http::services::ServeFile;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -17,7 +21,10 @@ pub async fn start_http(ctx: Arc<AppContext>) {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    let frontend = ServeDir::new("./static").append_index_html_on_directories(true);
+    let frontend = ServeDir::new("./static")
+        .append_index_html_on_directories(true)
+        .not_found_service(ServeFile::new("./static/index.html"));
+    //let frontend = ServeDir::new("./static").append_index_html_on_directories(true);
 
     let app = Router::new()
         .nest("/api/v1/", api_routes())
