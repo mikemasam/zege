@@ -53,7 +53,7 @@ http://localhost:3432
 
 ### Logging Event API 
 ```bash
-http://localhost:3432/api/v1/events/i?bucket_key=zgb019b8f8.....
+http://localhost:3432/api/v1/e/i?bucket_key=zgb019b8f8.....
 ```
 
 This API accepts an event payload in JSON format. Each field is optional unless specified. Events are used for logging, observability, and analytics.
