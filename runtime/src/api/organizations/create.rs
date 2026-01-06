@@ -27,7 +27,7 @@ pub async fn organizations_create_route(
         .as_ref()
         .and_then(|f| f.create_organization.as_deref())
         .map(|v| v.to_lowercase())
-        .map(|v| v != "no" && v != "false")
+        .map(|v| v == "yes" || v == "true")
         .unwrap_or(true);
     api_ensure!(enabled, "create_organization not available at the moment");
 

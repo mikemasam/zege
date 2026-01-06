@@ -30,9 +30,9 @@ pub async fn auth_signup(
     let enabled = appconfig!()
         .feature
         .as_ref()
-        .and_then(|f| f.create_organization.as_deref())
+        .and_then(|f| f.signup.as_deref())
         .map(|v| v.to_lowercase())
-        .map(|v| v != "no" && v != "false")
+        .map(|v| v == "yes" || v == "true")
         .unwrap_or(false);
     api_ensure!(
         enabled,

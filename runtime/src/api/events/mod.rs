@@ -12,5 +12,6 @@ pub fn old_event_input_routes() -> Router {
 pub fn events_routes() -> Router {
     Router::new()
         .route("/", routing::get(list_events_route))
+        .route("/i", routing::post(event_write_route))
         .route("/i/basic", routing::post(event_write_route))
 }
