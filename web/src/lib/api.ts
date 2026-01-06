@@ -2,6 +2,7 @@ import { useNotifyStore } from "@/stores/notify";
 import axios, { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 
+console.log("ENV URL", import.meta.env.VITE_API_URL);
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api/v1",
   timeout: 10000,
