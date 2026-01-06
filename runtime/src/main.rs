@@ -29,6 +29,7 @@ use tokio::sync::Mutex;
 #[tokio::main]
 async fn main() -> Result<()> {
     AppConfig::init_config()?;
+    AppConfig::printlog();
     install_default_drivers();
     //.layer(axum::middleware::from_fn(custom_middleware)); // apply custom middleware
     let (events_writer, events_reader) = mpsc::channel::<LogEventChannelMessage>();

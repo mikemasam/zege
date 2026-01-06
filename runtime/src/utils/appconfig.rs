@@ -4,6 +4,8 @@ use anyhow::{Ok, Result};
 use config::{Config, Environment, File};
 use serde::{Deserialize, Serialize};
 
+use crate::utils::appconfig;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AppConfig {
     pub verbose: Option<String>,
@@ -43,8 +45,13 @@ impl AppConfig {
             .build()?
             .try_deserialize()
             .unwrap();
+
         CONFIG.set(cfg).expect("config already initialized");
         Ok(())
+    }
+    pub fn printlog() {
+        let config = AppConfig::config();
+        applogger::debug(serde_json::to_string_pretty(config).unwrap());
     }
 
     pub fn config() -> &'static AppConfig {
