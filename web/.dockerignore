@@ -1,6 +1,0 @@
-.env
-dist
-.dockerignore
-.gitignore
-build
-node_modules

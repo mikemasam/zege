@@ -1,4 +1,5 @@
 runtime/.env
+runtime/docs
 runtime/target
 runtime/config.yaml
 runtime/config.yaml.docker
