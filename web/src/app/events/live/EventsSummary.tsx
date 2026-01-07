@@ -24,16 +24,16 @@ export default function EventsSummary() {
         {time_rangs.map((t) => (
           <div
             onClick={() => setRg(t.value)}
-            className={`rounded bg-blue-50 text-gray-500 font-bold px-2 text-xs cursor-pointer hover:bg-blue-400 hover:text-white ${t.value == rg ? "bg-blue-500 text-white" : ""}`}
+            className={`rounded bg-green-50 text-gray-500 font-bold px-2 text-xs cursor-pointer hover:bg-green-400 hover:text-white ${t.value == rg ? "bg-green-500 text-white" : ""}`}
           >
             {t.label}
           </div>
         ))}
       </div>
       {query.data?.map((section: any) => (
-        <div key={section.label} className="flex flex-col gap-2">
+        <div key={section.label} className="text-green-800 flex flex-col gap-2">
           {/* Section label */}
-          <div className="text-gray-500 text-xs uppercase border-b border-blue-200 py-2 font-bold">
+          <div className="text-xs uppercase border-b border-green-200 py-2 font-bold">
             {section.label}
           </div>
 
@@ -42,9 +42,9 @@ export default function EventsSummary() {
             {section.items.map((item: any) => (
               <div
                 key={item.label}
-                className={`flex justify-between gap-2 items-center px-2 py-1 rounded border border-blue-200 text-gray-600  hover:bg-blue-800 hover:text-white`}
+                className={`flex justify-between gap-2 items-center px-2 py-1 rounded hover:shadow-md cursor-pointer border border-green-200 border-b-2`}
               >
-                <span className="font-medium text-xs">{item.label}</span>
+                <span className="font-bold text-xs">{item.label}</span>
                 <span className="px-2 py-0.5 rounded text-xs font-semibold">
                   {item.count}
                 </span>
