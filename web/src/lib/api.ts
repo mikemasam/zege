@@ -56,10 +56,12 @@ api.interceptors.response.use(
 const initial: {
   status: number;
   data: any;
+  cursor?: null | { page: number; per_page: number };
   message: string;
 } = {
   status: 0,
   data: null,
+  cursor: null,
   message: "",
 };
 
@@ -99,6 +101,7 @@ export function useApi(callback: Function, opts?: { prefrech?: boolean }) {
     params,
     result,
     data: result.data,
+    cursor: result.cursor,
     error: result.status == 0 ? result.message : null,
     loading,
     load,

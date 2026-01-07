@@ -7,13 +7,36 @@ use serde::{Deserialize, Serialize};
 use sqlx::Error as SqlxError;
 
 use crate::utils::appconfig::applogger;
-
+#[derive(Debug, Deserialize, Serialize)]
+pub struct DataCursor {
+    pub page: i32,
+    pub per_page: i32,
+}
+impl DataCursor {
+    pub fn new(page: i32, per_page: i32) -> DataCursor {
+        let mut _page = page;
+        if (page < 0) {
+            _page = 0;
+        };
+        DataCursor {
+            page: _page,
+            per_page,
+        }
+    }
+    pub fn offset(&self) -> i64 {
+        return (self.page * self.per_page) as i64;
+    }
+    pub fn limit(&self) -> i64 {
+        return self.per_page as i64;
+    }
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AppResponse<T> {
     pub status: i32,
     pub message: String,
     pub data: Option<T>,
+    pub cursor: Option<DataCursor>,
 }
 impl<T> IntoResponse for AppResponse<T>
 where
@@ -35,6 +58,7 @@ impl<T> AppResponse<T> {
             status: 201,
             message: message.unwrap_or("").to_string(),
             data,
+            cursor: None,
         })
     }
     pub fn ok(data: Option<T>, message: Option<&str>) -> Result<Self, AppError> {
@@ -42,6 +66,19 @@ impl<T> AppResponse<T> {
             status: 200,
             message: message.unwrap_or("").to_string(),
             data,
+            cursor: None,
+        })
+    }
+    pub fn cursor(
+        data: Option<T>,
+        cursor: DataCursor,
+        message: Option<&str>,
+    ) -> Result<Self, AppError> {
+        Ok(AppResponse {
+            status: 200,
+            message: message.unwrap_or("").to_string(),
+            data,
+            cursor: Some(cursor),
         })
     }
     pub fn error(message: &str, data: Option<T>) -> Result<Self, AppError> {
@@ -49,6 +86,7 @@ impl<T> AppResponse<T> {
             status: 400,
             message: message.to_string(),
             data,
+            cursor: None,
         })
     }
     pub fn unauthorized(message: &str) -> Result<Self, AppError> {
@@ -56,6 +94,7 @@ impl<T> AppResponse<T> {
             status: 401,
             message: message.to_string(),
             data: None,
+            cursor: None,
         })
     }
 }

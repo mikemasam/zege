@@ -1,9 +1,12 @@
 use axum::{Router, routing};
 
-use crate::api::events::{create::event_write_route, list::list_events_route};
+use crate::api::events::{
+    create::event_write_route, list::list_events_route, summary::summary_events_route,
+};
 
 mod create;
 mod list;
+mod summary;
 
 pub fn old_event_input_routes() -> Router {
     Router::new()
@@ -12,5 +15,7 @@ pub fn old_event_input_routes() -> Router {
 }
 
 pub fn events_routes() -> Router {
-    Router::new().route("/", routing::get(list_events_route))
+    Router::new()
+        .route("/", routing::get(list_events_route))
+        .route("/summary", routing::get(summary_events_route))
 }

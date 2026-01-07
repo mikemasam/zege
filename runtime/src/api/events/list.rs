@@ -3,7 +3,7 @@ use crate::ctx::appcontext::AppContext;
 use crate::ctx::dbmanager::DatabasePool;
 use crate::dto::logevent::{LogEvent, ZegeEventRow};
 use crate::lib::auth::user::papers::UserPaper;
-use crate::utils::http::{AppResponse, AppResult};
+use crate::utils::http::{AppResponse, AppResult, DataCursor};
 use axum::{Extension, extract::Query};
 use futures::StreamExt;
 use serde::Deserialize;
@@ -14,8 +14,8 @@ use tokio::sync::Mutex;
 #[derive(Deserialize, Debug)]
 pub struct QueryParams {
     search: Option<String>,
-    page: Option<u32>,
-    per_page: Option<u32>,
+    page: Option<i32>,
+    per_page: Option<i32>,
     event_name: Option<String>,
     host: Option<String>,
 }
@@ -25,7 +25,7 @@ pub async fn list_events_route(
     Extension(paper): Extension<UserPaper>,
     Query(query_params): Query<QueryParams>,
 ) -> AppResult<Vec<LogEvent>> {
-    let rows = match ctx.storage.pool.as_ref().unwrap() {
+    let (cursor, rows) = match ctx.storage.pool.as_ref().unwrap() {
         DatabasePool::Postgres(pool) => {
             fetch_postgres(
                 pool,
@@ -36,17 +36,21 @@ pub async fn list_events_route(
         }
         _ => todo!("list_events_route"),
     };
-    AppResponse::ok(Some(rows), None)
+    AppResponse::cursor(Some(rows), cursor, None)
 }
 
 async fn fetch_postgres(
     pool: &Pool<Postgres>,
     organization_id: i64,
     query_params: QueryParams,
-) -> Vec<LogEvent> {
+) -> (DataCursor, Vec<LogEvent>) {
     let mut qb = QueryBuilder::<Postgres>::new("SELECT * FROM zege_events WHERE ");
     qb.push("event_organization_id = ")
         .push_bind(organization_id);
+    let cursor = DataCursor::new(
+        query_params.page.unwrap_or(0),
+        query_params.per_page.unwrap_or(15),
+    );
     if let Some(search) = query_params.search.filter(|s| !s.trim().is_empty()) {
         let fields = ["event_name", "service", "host"];
         let mut is_empty = true;
@@ -68,11 +72,8 @@ async fn fetch_postgres(
         }
     }
     qb.push(" ORDER BY id DESC");
-    qb.push(" LIMIT ")
-        .push_bind(Into::<i64>::into(query_params.per_page.unwrap_or(50)));
-    qb.push(" OFFSET ").push_bind(Into::<i64>::into(
-        query_params.page.unwrap_or(0) * query_params.per_page.unwrap_or(15),
-    ));
+    qb.push(" LIMIT ").push_bind(cursor.limit());
+    qb.push(" OFFSET ").push_bind(cursor.offset());
 
     // Build a typed query
     let query = qb.build_query_as::<ZegeEventRow>();
@@ -93,6 +94,5 @@ async fn fetch_postgres(
         }
     }
 
-    results
+    (cursor, results)
 }
-
