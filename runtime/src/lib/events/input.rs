@@ -29,7 +29,7 @@ pub struct Meta {
 
 pub enum LogEventChannelMessage {
     Data(Box<LogEventInput>),
-    Shutdown,
+    Flush,
 }
 
 impl LogEventInput {

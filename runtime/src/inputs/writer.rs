@@ -55,7 +55,7 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
             Ok(LogEventChannelMessage::Data(mut event)) => {
                 match event.inject(db.clone()).await {
                     Ok(_) => {
-                        applogger::info(format!(
+                        applogger::debug(format!(
                             "e {}",
                             serde_json::to_string_pretty(&event).unwrap()
                         ));
@@ -67,9 +67,9 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
                     time_write_events(db.clone(), &mut events_batch).await;
                 }
             }
-            Ok(LogEventChannelMessage::Shutdown) => {
+            Ok(LogEventChannelMessage::Flush) => {
                 time_write_events(db.clone(), &mut events_batch).await;
-                break;
+                //break;
             }
             Err(RecvTimeoutError::Timeout) => {
                 if !events_batch.is_empty() {

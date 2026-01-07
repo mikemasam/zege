@@ -88,7 +88,7 @@ impl applogger {
     pub fn debug(str: String) {
         let enabled = matches!(
             appconfig!().verbose.as_deref(),
-            Some("all") | Some("log") | Some("debug")
+            Some("all") | Some("debug")
         );
         if (!enabled) {
             return;

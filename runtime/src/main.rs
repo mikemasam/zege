@@ -11,7 +11,7 @@ use crate::ctx::dbmanager::DbManagerConnectOptions;
 use crate::inputs::rediswrite::start_redis_reader;
 use crate::lib::events::input::LogEventChannelMessage;
 use crate::server::start_http;
-use crate::utils::appconfig::{applogger, AppConfig};
+use crate::utils::appconfig::{AppConfig, applogger};
 use crate::utils::daemon::wait_for_signal_impl;
 use crate::{
     ctx::{appcontext::AppContext, dbmanager::DbPoolManager},
@@ -33,6 +33,7 @@ async fn main() -> Result<()> {
     install_default_drivers();
     //.layer(axum::middleware::from_fn(custom_middleware)); // apply custom middleware
     let (events_writer, events_reader) = mpsc::channel::<LogEventChannelMessage>();
+    let keep_me = events_writer.clone();
     let _db = DbPoolManager::connect(DbManagerConnectOptions {
         backup: false,
         migrate: true,
@@ -50,11 +51,11 @@ async fn main() -> Result<()> {
     if !ctx.appargv.started_as_deamon {
         return Ok(());
     }
-    let _events_writer_thread = start_events_writer_thread(events_reader);
+    start_events_writer_thread(events_reader);
     //tokio::task::spawn(start_scheduler());
     tokio::task::spawn(start_http(ctx.clone()));
     tokio::task::spawn(start_redis_reader(ctx.clone()));
 
-    wait_for_signal_impl(events_writer, _events_writer_thread).await;
+    wait_for_signal_impl(events_writer).await;
     Ok(())
 }

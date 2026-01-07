@@ -51,7 +51,7 @@ async fn fetch_postgres(
         let fields = ["event_name", "service", "host"];
         let mut is_empty = true;
         for (i, (field, value)) in fields.iter().zip(search.split(':')).enumerate() {
-            if (value == "*") {
+            if (value.is_empty() || value == "*") {
                 continue;
             }
             if !is_empty {
