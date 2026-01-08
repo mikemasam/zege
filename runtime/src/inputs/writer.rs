@@ -81,13 +81,13 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
                 break;
             }
         }
-        //println!("pending size {} ", events_batch.len());
+        //println!("write loop {}", events_batch.len());
     }
 }
 
 async fn time_write_events(eventsdb: Arc<DbPoolManager>, events_batch: &mut Vec<LogEventInput>) {
     if events_batch.is_empty() {
-        applogger::log("# write size: empty, wrote: 0, time: 0".to_string());
+        applogger::info("EventWriter - size: empty, wrote: 0, time: 0".to_string());
         return;
     }
     let start_time = Instant::now();
@@ -103,8 +103,8 @@ async fn time_write_events(eventsdb: Arc<DbPoolManager>, events_batch: &mut Vec<
     if written_events_count > 0 {
         events_batch.clear();
     }
-    applogger::log(format!(
-        "# write size: {size}, wrote: {written_events_count}, time: {elapsed_time:?}"
+    applogger::info(format!(
+        "EventWriter - size: {size}, wrote: {written_events_count}, time: {elapsed_time:?}"
     ));
 }
 async fn write_events(

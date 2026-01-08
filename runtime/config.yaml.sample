@@ -1,6 +1,12 @@
 verbose: all
-feature:
+auth:
   jwt_secret: default-secret
+  jwt_minutes: 60
+feature:
+  signup: _
+  create_bucket: _
+  login: _
+  create_organization: _
 database:
   name: zegedb
   host: host.docker.internal

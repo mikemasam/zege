@@ -108,14 +108,26 @@ impl UserPaper {
         Ok(paper)
     }
     pub fn generate_jwt(user: &UserAccount) -> Result<String> {
-        let jwt_secret = &appconfig!()
-            .feature
+        let config = appconfig!();
+        let jwt_secret = config
+            .auth
             .as_ref()
             .and_then(|f| f.jwt_secret.as_deref())
+            .or_else(|| {
+                config
+                    .feature
+                    .as_ref()
+                    .and_then(|a| a.jwt_secret.as_deref())
+            })
             .unwrap_or("default-secret");
 
+        let jwt_expiry = config
+            .auth
+            .as_ref()
+            .and_then(|f| f.jwt_minutes)
+            .unwrap_or(60);
         let exp = Local::now()
-            .checked_add_signed(Duration::hours(24))
+            .checked_add_signed(Duration::minutes(jwt_expiry as i64))
             .expect("valid timestamp")
             .timestamp() as usize;
         let claims = AuthClaims {
