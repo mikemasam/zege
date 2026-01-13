@@ -10,9 +10,9 @@ type PageProps = {
 };
 export default function Page(props: PageProps) {
   return (
-    <div className={`flex flex-col gap-2`}>
+    <div className={`flex flex-col gap-1`}>
       <HeaderMenu />
-      <div className="flex flex-col items-start px-4 py-3 m-2 box">
+      <div className="flex flex-col items-start px-4 py-2 mx-2 mt-1 box">
         <h1 className="text-lg font-semibold text-gray-900">{props.title}</h1>
         <p className="text-sm text-gray-500">{props.desc}</p>
       </div>

@@ -13,7 +13,7 @@ export default function ReportRender({
   report_id: number;
 }) {
   const [type, setType] = useState("");
-  const query = useApi(() => api.get(`/reports/${report_id}/read`), {
+  const query = useApi(() => api.post(`/reports/${report_id}/read`), {
     prefrech: false,
   });
   const [report, data] = useMemo(() => {
@@ -32,16 +32,16 @@ export default function ReportRender({
   }, [report_id]);
   console.log(report, data);
   return (
-    <div>
+    <div className="">
       {!minimal && (
-        <UICard className="flex flex-row justify-between items-center">
+        <div className="flex flex-row justify-between items-center p-2">
           <div className="text-lg">Data View</div>
           <div className="flex flex-row gap-1">
             <Button variant="outline">Table</Button>
             <Button variant="outline">Bar</Button>
             <Button variant="outline">Line</Button>
           </div>
-        </UICard>
+        </div>
       )}
       {type == "table" && <TableView data={data} />}
       {type == "tile" && <TileView data={data} />}

@@ -10,7 +10,7 @@ export default function AppLayout() {
     return <Navigate to="/login" replace />;
   }
   return (
-    <div className="flex gap-0 bg-[#f7f5f5]">
+    <div className="flex gap-0 min-h-screen bg-blue-[rgb(251, 253, 255)]">
       <Header />
       <div className="flex-1 flex flex-col overflow-y-scroll">
         <Outlet />

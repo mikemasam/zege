@@ -1,6 +1,6 @@
 use axum::{Router, routing};
 
-use crate::api::explore::read::data_read_route;
+use crate::api::data::read::data_read_route;
 
 mod read;
 

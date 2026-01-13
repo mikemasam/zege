@@ -1,7 +1,7 @@
 mod auth;
 mod buckets;
+mod data;
 mod events;
-mod explore;
 mod organizations;
 mod report;
 mod roles;
@@ -15,7 +15,14 @@ use serde_json::Value;
 
 use crate::{
     api::{
-        auth::{auth_private_routes, auth_public_routes}, buckets::buckets_routes, events::{events_routes, old_event_input_routes}, explore::data_routes, organizations::organizations_routes, report::report_routes, roles::roles_routes, users::users_routes
+        auth::{auth_private_routes, auth_public_routes},
+        buckets::buckets_routes,
+        data::data_routes,
+        events::{events_routes, old_event_input_routes},
+        organizations::organizations_routes,
+        report::report_routes,
+        roles::roles_routes,
+        users::users_routes,
     },
     api_ensure,
     ctx::appcontext::{self, AppContext},

@@ -1,5 +1,4 @@
 import ReportRender from "@/components/report/report.render";
-import { TableView } from "@/components/report/table.view";
 import Page from "@/components/ui/ui-page";
 import api, { useApi } from "@/lib/api";
 import { DateTime } from "luxon";
@@ -23,7 +22,11 @@ export default function ZegeReportView() {
     >
       {error && <p className="text-red-500 text-sm">Failed to load reports.</p>}
       {report && <Item item={report} />}
-      {report && <ReportRender report_id={report.id} />}
+      {report && (
+        <div className="box p-2">
+          <ReportRender report_id={report.id} />
+        </div>
+      )}
     </Page>
   );
 }

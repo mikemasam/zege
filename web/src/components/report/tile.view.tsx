@@ -1,27 +1,53 @@
-import { useMemo } from "react";
-
-interface TileProps<T> {
-  data: T[]; // Array of row data
-  className?: string; // Optional Tailwind classes for wrapper
+interface TileItem {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  hint?: React.ReactNode;
 }
-export function TileView<T extends Record<string, unknown>>({
-  data,
-  className = "",
-}: TileProps<T>) {
-  const tileData = useMemo(() => {
-    if (!Array.isArray(data) || !data?.length) return [];
-    return data;
-  }, [data]);
-  console.log(data);
+
+interface TileViewProps {
+  data: TileItem[];
+  className?: string;
+}
+
+export function TileView({ data, className = "" }: TileViewProps) {
+  if (!data?.length) return null;
+
   return (
-    <div className="flex flex-row flex-wrap gap-4 py-2">
-      {tileData.map((row: any, index) => (
+    <div
+      className={`
+        grid gap-4
+        grid-cols-[repeat(auto-fill,minmax(220px,1fr))]
+        ${className}
+      `}
+    >
+      {data.map((item, i) => (
         <div
-          key={index}
-          className="rounded-lg min-w-[200px] border p-4 shadow hover:shadow-md transition-shadow bg-white flex flex-row items-center justify-between gap-4"
+          key={i}
+          className="
+            relative
+            rounded-lg
+            bg-white
+            px-5 py-4
+            shadow-sm
+            ring-1 ring-slate-200
+            transition
+            hover:shadow-md
+          "
         >
-          <div className="text-base text-gray-500">{row.label}</div>
-          <div className="font-semibold underline text-right">{row.value}</div>
+          {/* Label */}
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            {item.label}
+          </div>
+
+          {/* Value */}
+          <div className="mt-2 text-3xl font-semibold text-slate-900">
+            {item.value}
+          </div>
+
+          {/* Optional hint */}
+          {item.hint && (
+            <div className="mt-1 text-xs text-slate-400">{item.hint}</div>
+          )}
         </div>
       ))}
     </div>

@@ -23,7 +23,7 @@ export function TableView<T extends Record<string, unknown>>({
   }, [data]);
 
   return (
-    <div className={`overflow-x-auto ${className} border-l-2 border-blue-300`}>
+    <div className={`overflow-x-auto ${className}`}>
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -73,22 +73,3 @@ export function TableView<T extends Record<string, unknown>>({
     </div>
   );
 }
-
-// Usage Example:
-// const users = [
-//   { id: 1, name: 'John Doe', email: 'john@example.com', age: 30 },
-//   { id: 2, name: 'Jane Smith', email: 'jane@example.com', age: 25 },
-// ];
-//
-// const columns = [
-//   { key: 'name', label: 'Name' },
-//   { key: 'email', label: 'Email' },
-//   { key: 'age', label: 'Age' },
-//   {
-//     key: 'actions',
-//     label: 'Actions',
-//     render: (value, row) => <button className="text-blue-600">Edit</button>,
-//   },
-// ];
-//
-// <GenericTable data={users} columns={columns} />
