@@ -1,12 +1,12 @@
-use crate::ctx::dbmanager::{DbPoolManager, DbManagerConnectOptions};
-use crate::utils::appconfig::applogger;
+use crate::ctx::dbmanager::{DbManagerConnectOptions, DbPoolManager};
+use crate::utils::logging::AppLogger;
 use core::panic;
 use tokio::runtime::Handle;
 use tokio::time::{self, Instant};
 
 pub async fn start_scheduler() {
     let mut interval = time::interval(time::Duration::from_secs(60 * 5));
-    applogger::log(format!(
+    AppLogger::log(format!(
         "Starting Background Job #{:?}.",
         std::thread::current().id()
     ));
@@ -22,7 +22,9 @@ pub async fn start_scheduler() {
         .await;
         let elapsed_time = start_time.elapsed();
         let workers_count = Handle::current().metrics().num_workers();
-        applogger::log(format!("# rotation time: {elapsed_time:?}, workers: {workers_count}"));
+        AppLogger::log(format!(
+            "# rotation time: {elapsed_time:?}, workers: {workers_count}"
+        ));
     }
 }
 

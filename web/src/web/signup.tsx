@@ -1,4 +1,4 @@
-import { authorize_by_token } from "@/auth/use.auth";
+import { authorize_by_token, useAuth } from "@/auth/use.auth";
 import { Button } from "@/components/ui/button";
 import UIForm from "@/components/ui/ui-form";
 import UIInput from "@/components/ui/ui-input";
@@ -11,9 +11,13 @@ const DEFAULT_VALUE = {
   password: "",
 };
 export default function SignupPage() {
+  const auth = useAuth();
   let navigate = useNavigate();
+  if (auth.config?.features?.signup === false) {
+    navigate("/login");
+  }
   const onSubmit = async (form: any) => {
-    const res: any = await api.post("/signup", form);
+    const res: any = await api.post("/auth/signup", form);
     if (res.status != 201) {
       toast(res.message);
       return;

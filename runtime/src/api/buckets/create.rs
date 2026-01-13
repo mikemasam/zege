@@ -3,6 +3,7 @@ use crate::ctx::appcontext::AppContext;
 use crate::ctx::dbmanager::DatabasePool;
 use crate::lib::auth::user::papers::UserPaper;
 use crate::lib::buckets::Bucket;
+use crate::utils::appconfig::AppFeature;
 use crate::utils::http::{AppResponse, AppResult};
 use crate::{api_ensure, appconfig};
 use axum::Extension;
@@ -23,13 +24,7 @@ pub async fn buckets_create_route(
     Extension(paper): Extension<UserPaper>,
     axum::Json(item): axum::extract::Json<BucketCreate>,
 ) -> AppResult<Bucket> {
-    let enabled = appconfig!()
-        .feature
-        .as_ref()
-        .and_then(|f| f.create_bucket.as_deref())
-        .map(|v| v.to_lowercase())
-        .map(|v| v != "no" && v != "false")
-        .unwrap_or(true);
+    let enabled = appconfig!().feature_enabled(AppFeature::CreateBucket);
     api_ensure!(enabled, "create_bucket not available at the moment");
 
     let bucket = Bucket::create(

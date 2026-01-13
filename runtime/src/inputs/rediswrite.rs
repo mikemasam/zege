@@ -8,8 +8,7 @@ use crate::{
     appconfig,
     ctx::appcontext::AppContext,
     dto::logevent::LogEvent,
-    lib::events::input::{LogEventChannelMessage, LogEventInput},
-    utils::appconfig::applogger,
+    lib::events::input::{LogEventChannelMessage, LogEventInput}, utils::logging::AppLogger,
 };
 
 pub async fn start_redis_reader(ctx: Arc<AppContext>) {
@@ -30,7 +29,7 @@ pub async fn start_redis_reader(ctx: Arc<AppContext>) {
 fn connect_to_server(ctx: Arc<AppContext>, url: String) {
     tokio::task::spawn(async move {
         loop {
-            applogger::log(format!("Redis URL: {url}"));
+            AppLogger::log(format!("Redis URL: {url}"));
             match connect_and_listen(ctx.clone(), url.as_str()).await {
                 Ok(_) => {}
                 Err(e) => {
@@ -42,12 +41,12 @@ fn connect_to_server(ctx: Arc<AppContext>, url: String) {
     });
 }
 async fn connect_and_listen(ctx: Arc<AppContext>, url: &str) -> redis::RedisResult<()> {
-    applogger::log(format!("Connecting to Redis -> {}", url));
+    AppLogger::log(format!("Connecting to Redis -> {}", url));
 
     let client = Client::open(url)?;
     let mut conn = client.get_multiplexed_async_connection().await?;
 
-    applogger::log(format!("Redis connected -> {}", url));
+    AppLogger::log(format!("Redis connected -> {}", url));
 
     loop {
         let result: redis::RedisResult<(String, String)> = redis::cmd("BLPOP")
@@ -60,13 +59,13 @@ async fn connect_and_listen(ctx: Arc<AppContext>, url: &str) -> redis::RedisResu
             Ok((_key, payload)) => match serde_json::from_str::<Value>(&payload) {
                 Ok(body) => {
                     if let Err(e) = event_writer(ctx.clone(), body).await {
-                        applogger::error(format!("event_writer error: {}", e));
+                        AppLogger::error(format!("event_writer error: {}", e));
                     }
                 }
-                Err(e) => applogger::error(format!("JSON parse error: {}", e)),
+                Err(e) => AppLogger::error(format!("JSON parse error: {}", e)),
             },
             Err(e) => {
-                applogger::error(format!("BLPOP error on: {} -> {}", url, e));
+                AppLogger::error(format!("BLPOP error on: {} -> {}", url, e));
                 return Err(e); // triggers reconnect loop
             }
         }

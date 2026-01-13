@@ -19,7 +19,7 @@ export default function EventsSummary() {
     } catch (e) {}
   }, [rg]);
   return (
-    <div className="flex flex-col p-2 gap-2 box !border-green-400">
+    <div className="flex flex-col gap-2 box !border-green-400">
       <div className="flex flex-row gap-2 py-2">
         {time_rangs.map((t) => (
           <div
@@ -31,9 +31,9 @@ export default function EventsSummary() {
         ))}
       </div>
       {query.data?.map((section: any) => (
-        <div key={section.label} className="text-green-800 flex flex-col gap-2">
+        <div key={section.label} className="flex flex-col gap-2 border-b-2 border-green-200 p-2">
           {/* Section label */}
-          <div className="text-xs uppercase border-b border-green-200 py-2 font-bold">
+          <div className="text-xs uppercase text-green-800 py-2 font-mono">
             {section.label}
           </div>
 
@@ -42,10 +42,12 @@ export default function EventsSummary() {
             {section.items.map((item: any) => (
               <div
                 key={item.label}
-                className={`flex justify-between gap-2 items-center px-2 py-1 rounded hover:shadow-md cursor-pointer border border-green-200 border-b-2`}
+                className={`flex justify-between gap-2 items-center px-2 py-1 rounded hover:shadow cursor-pointer border border-green-100 border-b-2`}
               >
-                <span className="font-bold text-xs">{item.label}</span>
-                <span className="px-2 py-0.5 rounded text-xs font-semibold">
+                <span className="font-bold text-xs text-gray-700">
+                  {item.label}
+                </span>
+                <span className="px-2 py-0.5 rounded text-xs font-semibold text-gray-500">
                   {item.count}
                 </span>
               </div>

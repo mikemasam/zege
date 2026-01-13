@@ -8,7 +8,7 @@ use crate::{
         buckets::Bucket,
         events::input::{LogEventChannelMessage, LogEventInput},
     },
-    utils::{appconfig::applogger, security::Security},
+    utils::{logging::AppLogger, security::Security},
 };
 use chrono::{Local, SecondsFormat};
 use serde_json::Value;
@@ -55,13 +55,13 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
             Ok(LogEventChannelMessage::Data(mut event)) => {
                 match event.inject(db.clone()).await {
                     Ok(_) => {
-                        applogger::debug(format!(
+                        AppLogger::debug(format!(
                             "e {}",
                             serde_json::to_string_pretty(&event).unwrap()
                         ));
                         events_batch.push(*event)
                     }
-                    Err(e) => applogger::error(format!("{:?}", e)),
+                    Err(e) => AppLogger::error(format!("{:?}", e)),
                 }
                 if events_batch.len() >= 100 {
                     time_write_events(db.clone(), &mut events_batch).await;
@@ -87,14 +87,14 @@ async fn event_write_worker(receiver: Receiver<LogEventChannelMessage>) {
 
 async fn time_write_events(eventsdb: Arc<DbPoolManager>, events_batch: &mut Vec<LogEventInput>) {
     if events_batch.is_empty() {
-        applogger::info("EventWriter - size: empty, wrote: 0, time: 0".to_string());
+        AppLogger::log("EventWriter - size: empty, wrote: 0, time: 0".to_string());
         return;
     }
     let start_time = Instant::now();
     let written_events_count = match write_events(eventsdb, events_batch).await {
         Ok(t) => t,
         Err(err) => {
-            applogger::error(format!("##### WRITE ERROR: {err}"));
+            AppLogger::error(format!("##### WRITE ERROR: {err}"));
             0
         }
     };
@@ -103,7 +103,7 @@ async fn time_write_events(eventsdb: Arc<DbPoolManager>, events_batch: &mut Vec<
     if written_events_count > 0 {
         events_batch.clear();
     }
-    applogger::info(format!(
+    AppLogger::log(format!(
         "EventWriter - size: {size}, wrote: {written_events_count}, time: {elapsed_time:?}"
     ));
 }
@@ -112,8 +112,8 @@ async fn write_events(
     events: &Vec<LogEventInput>,
 ) -> Result<u64, Error> {
     for e in events {
-        applogger::debug(format!(
-            "> {} - {:?}:{} - {}",
+        AppLogger::debug(format!(
+            " {} - {:?}:{} - {}",
             e.timestamp,
             e.service,
             e.event_name,

@@ -11,8 +11,9 @@ use crate::ctx::dbmanager::DbManagerConnectOptions;
 use crate::inputs::rediswrite::start_redis_reader;
 use crate::lib::events::input::LogEventChannelMessage;
 use crate::server::start_http;
-use crate::utils::appconfig::{AppConfig, applogger};
+use crate::utils::appconfig::{AppConfig};
 use crate::utils::daemon::wait_for_signal_impl;
+use crate::utils::logging::AppLogger;
 use crate::{
     ctx::{appcontext::AppContext, dbmanager::DbPoolManager},
     inputs::writer::start_events_writer_thread,
@@ -44,7 +45,7 @@ async fn main() -> Result<()> {
         events_writer.clone(),
     ));
     if !ctx.appargv.started_as_deamon && ctx.appargv.command.is_none() {
-        applogger::log(format!("To start an a daemon, use -d",));
+        AppLogger::log(format!("To start an a daemon, use -d",));
         return Ok(());
     }
     ctx.appargv.match_commands(ctx.clone()).await.unwrap();

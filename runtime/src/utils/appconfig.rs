@@ -5,7 +5,7 @@ use chrono::Local;
 use config::{Config, Environment, File};
 use serde::{Deserialize, Serialize};
 
-use crate::utils::appconfig;
+use crate::utils::logging::{AppLogger, LogLevel};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AppConfig {
@@ -31,11 +31,18 @@ pub struct AuthConfig {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FeatureConfig {
     pub jwt_secret: Option<String>,
+    #[serde(default = "default_no")]
     pub signup: Option<String>,
     pub login: Option<String>,
     pub create_bucket: Option<String>,
     pub create_organization: Option<String>,
+    pub landing: Option<String>,
 }
+
+fn default_no() -> Option<String> {
+    Some("no".to_string())
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RedisDatabase {
     pub servers: Option<Vec<String>>,
@@ -68,7 +75,7 @@ impl AppConfig {
     }
     pub fn printlog() {
         let config = AppConfig::config();
-        applogger::debug(serde_json::to_string_pretty(config).unwrap());
+        AppLogger::debug(serde_json::to_string_pretty(config).unwrap());
     }
 
     pub fn state() -> &'static AppState {
@@ -79,6 +86,26 @@ impl AppConfig {
             .get()
             .map(|s| &s.config)
             .expect("app state not initialized")
+    }
+    pub fn feature_enabled(&self, feature: AppFeature) -> bool {
+        let f = match &self.feature {
+            Some(f) => f,
+            None => return false,
+        };
+
+        let raw = match feature {
+            AppFeature::Signup => f.signup.as_deref(),
+            AppFeature::Login => f.login.as_deref(),
+            AppFeature::Landing => f.landing.as_deref(),
+            AppFeature::CreateBucket => f.create_bucket.as_deref(),
+            AppFeature::CreateOrganization => f.create_organization.as_deref(),
+        };
+
+        raw.map(|v| {
+            let v = v.to_lowercase();
+            v != "false" && v != "no"
+        })
+        .unwrap_or(true)
     }
 }
 
@@ -91,51 +118,11 @@ macro_rules! appconfig {
     };
 }
 
-pub struct applogger {}
-
-impl applogger {
-    pub fn mark(label: &str) -> String {
-        let delta = AppConfig::state().startUp.elapsed();
-        let d_secs = delta.as_secs();
-        let days = d_secs / 86_400;
-        let hours = (d_secs % 86_400) / 3_600;
-        let minutes = (d_secs % 3_600) / 60;
-        let secs = d_secs % 60;
-        return format!(
-            "{} - {}<{}d{}h{}m{}s> ",
-            Local::now().format("%Y-%d-%mT%H:%M:%S"),
-            label,
-            days,
-            hours,
-            minutes,
-            secs
-        );
-    }
-    pub fn info(str: String) {
-        let enabled = matches!(
-            appconfig!().verbose.as_deref(),
-            Some("all") | Some("info") | Some("log") | Some("debug")
-        );
-        if (!enabled) {
-            return;
-        }
-        println!("{}{}", applogger::mark("info"), str);
-    }
-    pub fn log(str: String) {
-        let enabled = matches!(appconfig!().verbose.as_deref(), Some("all") | Some("log"));
-        if (!enabled) {
-            return;
-        }
-        println!("{}{}", applogger::mark("log"), str);
-    }
-    pub fn debug(str: String) {
-        let enabled = matches!(appconfig!().verbose.as_deref(), Some("all") | Some("debug"));
-        if (!enabled) {
-            return;
-        }
-        println!("{}{}", applogger::mark("debug"), str);
-    }
-    pub fn error(str: String) {
-        println!("{}{}", applogger::mark("error"), str);
-    }
+#[derive(Debug, Copy, Clone)]
+pub enum AppFeature {
+    Signup,
+    Login,
+    Landing,
+    CreateBucket,
+    CreateOrganization,
 }

@@ -46,13 +46,12 @@ function Menu() {
 function Header() {
   const auth = useAuth();
   if (!auth.valid) return null;
-
   return (
-    <aside className="w-56 min-h-screen border-r flex flex-col gap-2">
+    <aside className="w-56 min-h-screen border-r flex flex-col">
       <OrganizationMenu auth={auth} />
 
       <Link to="/app/account">
-        <div className="flex items-center gap-3 px-2 bg-white py-2 mx-2 rounded-lg shadow">
+        <div className="flex items-center gap-3 bg-white  px-2 py-2 mb-2 rounded">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-900">
             <span className="text-xs font-medium text-white">
               {auth.user?.name?.[0] ?? "U"}

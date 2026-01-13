@@ -1,14 +1,25 @@
 use anyhow::ensure;
-use std::sync::Arc;
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
-use axum::{Extension, http::HeaderMap};
+use axum::http::Request;
 
 use crate::{
-    lib::auth::user::papers::UserPaper,
+    lib::auth::user::{config::ConfigPaper, papers::UserPaper},
     utils::http::{AppResponse, AppResult},
 };
 
-pub async fn papers_please(Extension(paper): Extension<UserPaper>) -> AppResult<UserPaper> {
+#[derive(Clone, Deserialize, Serialize, Debug)]
+pub struct Paper {
+    pub user: Option<UserPaper>,
+    pub config: ConfigPaper,
+}
+
+pub async fn papers_please<B>(mut req: Request<B>) -> AppResult<Paper> {
+    let userpaper = req.extensions().get::<UserPaper>().map(|p| p.to_owned());
+    let paper = Paper {
+        user: userpaper,
+        config: ConfigPaper::new(),
+    };
     AppResponse::ok(Some(paper), None)
 }

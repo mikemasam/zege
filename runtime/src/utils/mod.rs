@@ -4,3 +4,4 @@ pub mod dbutil;
 pub mod security;
 pub mod appargv;
 pub mod appconfig;
+pub mod logging;

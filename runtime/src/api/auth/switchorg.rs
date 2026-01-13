@@ -22,7 +22,7 @@ pub async fn switch_organization(
     Extension(ctx): Extension<Arc<AppContext>>,
     Extension(paper): Extension<UserPaper>,
     axum::Json(item): axum::extract::Json<SwitchForm>,
-) -> AppResult<UserPaper> {
+) -> AppResult<()> {
     OrganizationMembership::switch(
         ctx.storage.clone(),
         SwitchOrganizationMembership {

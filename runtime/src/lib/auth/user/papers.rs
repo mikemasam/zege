@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use crate::appconfig;
 use crate::lib::auth::role::Role;
+use crate::lib::auth::user::config::ConfigPaper;
 use crate::lib::auth::user::user::UserAccount;
 use crate::lib::organization::Organization;
 use crate::{

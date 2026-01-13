@@ -18,7 +18,7 @@ export default function LoginPage() {
     if (auth.valid) navigate("/app");
   }, [auth.valid]);
   const onSubmit = async (form: any) => {
-    const res: any = await api.post("/login", form);
+    const res: any = await api.post("/auth/login", form);
     if (res.status != 201) {
       toast(res.message);
       return;
@@ -80,15 +80,17 @@ export default function LoginPage() {
           </a>
         </div>
       </div>
-      <div className="mt-6 text-center text-sm text-gray-400">
-        New to Zege?{" "}
-        <a
-          href="/signup"
-          className="font-semibold text-sky-400 hover:text-sky-300 transition"
-        >
-          Create Account
-        </a>
-      </div>
+      {auth.config?.features?.signup && (
+        <div className="mt-6 text-center text-sm text-gray-400">
+          New to Zege?{" "}
+          <a
+            href="/signup"
+            className="font-semibold text-sky-400 hover:text-sky-300 transition"
+          >
+            Create Account
+          </a>
+        </div>
+      )}
     </div>
   );
 }

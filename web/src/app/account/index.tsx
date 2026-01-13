@@ -66,11 +66,15 @@ export default function AccountPage() {
           ]}
           data={query.data}
         >
-          <div className="flex flex-row justify-end flex-1">
-            <Link to="/app/organizations/create">
-              <Button variant="default">+</Button>
-            </Link>
-          </div>
+          <>
+            {auth.config?.features?.create_organization && (
+              <div className="flex flex-row justify-end flex-1">
+                <Link to="/app/organizations/create">
+                  <Button variant="default">+</Button>
+                </Link>
+              </div>
+            )}
+          </>
         </UITable>
       </div>
     </Page>

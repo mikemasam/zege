@@ -1,4 +1,16 @@
+import { useAuth } from "@/auth/use.auth";
+import { useNavigate } from "react-router";
+
 export default function Home() {
+  let navigate = useNavigate();
+  const auth = useAuth();
+  console.log(auth);
+  if (auth.loading) {
+    return null;
+  }
+  if (auth.config?.features?.landing === false) {
+    navigate("/login");
+  }
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
@@ -33,7 +45,7 @@ function Header() {
             href="/login"
             className="px-8 py-3 rounded-lg border-white/40 bg-white/15  font-bold"
           >
-           Login 
+            Login
           </a>
         </nav>
       </div>

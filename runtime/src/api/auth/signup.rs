@@ -20,20 +20,14 @@ use crate::{
             SwitchOrganizationMembership,
         },
     },
-    utils::http::{AppResponse, AppResult},
+    utils::{appconfig::AppFeature, http::{AppResponse, AppResult}},
 };
 
 pub async fn auth_signup(
     Extension(ctx): Extension<Arc<AppContext>>,
     axum::Json(item): axum::extract::Json<NewUser>,
 ) -> AppResult<LoginResult> {
-    let enabled = appconfig!()
-        .feature
-        .as_ref()
-        .and_then(|f| f.signup.as_deref())
-        .map(|v| v.to_lowercase())
-        .map(|v| v == "yes" || v == "true")
-        .unwrap_or(false);
+    let enabled = appconfig!().feature_enabled(AppFeature::Signup);
     api_ensure!(
         enabled,
         "Signup not available at the moment, this can be enable on config.{yaml, json, ...}"

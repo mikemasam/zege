@@ -1,9 +1,14 @@
-import { Outlet, Route, Routes } from "react-router";
+import { Outlet, Route, Routes, useNavigate } from "react-router";
 import Home from "./home";
 import LoginPage from "./login";
 import SignupPage from "./signup";
+import { useAuth } from "@/auth/use.auth";
 
 function WebLayout() {
+  const auth = useAuth();
+  if (!auth.ready) {
+    return null;
+  }
   return (
     <div className="flex-1 flex flex-col overflow-y-scroll">
       <Outlet />

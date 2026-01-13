@@ -4,10 +4,10 @@ import { useEffect } from "react";
 export function useAuth() {
   const auth = useAuthStore();
   useEffect(() => {
-    if (!auth._booted) {
+    if (!auth.ready) {
       auth.load();
     }
-  }, [auth._booted]);
+  }, [auth.ready]);
   return {
     ...auth,
     valid: !!auth.user,

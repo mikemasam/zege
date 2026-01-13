@@ -12,7 +12,7 @@ use sqlx::prelude::FromRow;
 use sqlx::{AnyPool, ConnectOptions, Error, PgPool};
 
 use crate::appconfig;
-use crate::utils::appconfig::applogger;
+use crate::utils::logging::AppLogger;
 
 #[derive(Debug, Clone)]
 pub enum DatabasePool {
@@ -89,7 +89,7 @@ impl DbPoolManager {
     */
     async fn connect_pgsql(opts: DbManagerConnectOptions) -> Result<Self, DbManagerError> {
         let db_config = &appconfig!().database;
-        applogger::log(format!("DB psql {}:{}", db_config.name.as_str(), db_config.host.as_str()));
+        AppLogger::log(format!("DB psql {}:{}", db_config.name.as_str(), db_config.host.as_str()));
         let migration_path = "migrations/pgsql";
         let options = PgConnectOptions::new()
             .database(db_config.name.as_str())

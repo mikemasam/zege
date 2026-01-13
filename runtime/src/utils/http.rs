@@ -6,7 +6,8 @@ use anyhow::Error as AnyhowError;
 use serde::{Deserialize, Serialize};
 use sqlx::Error as SqlxError;
 
-use crate::utils::appconfig::applogger;
+use crate::utils::logging::AppLogger;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DataCursor {
     pub page: i32,
@@ -117,7 +118,7 @@ impl From<SqlxError> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
-        applogger::error(format!("error occured {:?}", self));
+        AppLogger::error(format!("error occured {:?}", self));
         AppResponse::<()>::error(self.0.to_string().as_str(), None).into_response()
     }
 }

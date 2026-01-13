@@ -14,8 +14,7 @@ use crate::{
     lib::{
         auth::role::{NewRole, Role},
         buckets::{Bucket, NewBucket},
-    },
-    utils::appconfig::applogger,
+    }, utils::logging::AppLogger,
 };
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -83,7 +82,7 @@ impl Organization {
                     .bind(Local::now())
                     .bind(Local::now());
                 let org = q.fetch_one(pool).await?;
-                applogger::log(format!("done creating organization {:?}", org));
+                AppLogger::log(format!("done creating organization {:?}", org));
                 Ok(org)
             }
             _ => todo!("auth_create_organization on sqlite"),
@@ -160,7 +159,7 @@ impl OrganizationMembership {
                     .await;
 
                 if (default_org.is_err()) {
-                    applogger::error(format!("failed to find default_org {:?}", default_org));
+                    AppLogger::error(format!("failed to find default_org {:?}", default_org));
                     return None;
                 }
                 let switched = OrganizationMembership::switch(
@@ -172,7 +171,7 @@ impl OrganizationMembership {
                 )
                 .await;
                 if (switched.is_err()) {
-                    applogger::error(format!("failed to switch organization {:?}", switched));
+                    AppLogger::error(format!("failed to switch organization {:?}", switched));
                     println!("switch org failed");
                     return None;
                 }
@@ -238,7 +237,7 @@ impl OrganizationMembership {
                     .bind(Local::now())
                     .bind(Local::now());
                 let organization_membership = q.fetch_one(pool).await?;
-                applogger::log(format!(
+                AppLogger::log(format!(
                     "done creating organization_memberships {:?}",
                     organization_membership
                 ));

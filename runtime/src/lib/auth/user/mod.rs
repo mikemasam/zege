@@ -1,4 +1,5 @@
 pub mod papers;
+pub mod config;
 mod resetpassword;
 pub mod user;
 use std::sync::Arc;
