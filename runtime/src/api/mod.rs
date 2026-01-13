@@ -1,6 +1,7 @@
 mod auth;
 mod buckets;
 mod events;
+mod explore;
 mod organizations;
 mod report;
 mod roles;
@@ -14,13 +15,7 @@ use serde_json::Value;
 
 use crate::{
     api::{
-        auth::{auth_private_routes, auth_public_routes},
-        buckets::buckets_routes,
-        events::{events_routes, old_event_input_routes},
-        organizations::organizations_routes,
-        report::report_routes,
-        roles::roles_routes,
-        users::users_routes,
+        auth::{auth_private_routes, auth_public_routes}, buckets::buckets_routes, events::{events_routes, old_event_input_routes}, explore::data_routes, organizations::organizations_routes, report::report_routes, roles::roles_routes, users::users_routes
     },
     api_ensure,
     ctx::appcontext::{self, AppContext},
@@ -36,6 +31,7 @@ pub fn api_routes() -> Router {
         .nest("/organizations", organizations_routes())
         .nest("/events", events_routes())
         .nest("/reports", report_routes())
+        .nest("/data", data_routes())
         .nest("/auth", auth_private_routes())
         .layer(middleware::from_fn(private_middleware));
     let _public = Router::new()

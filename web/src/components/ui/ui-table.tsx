@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { DateTime } from "luxon";
+import { Link } from "react-router";
 
 // Props for the generic table component
 interface Column<T> {
@@ -11,6 +12,7 @@ interface Column<T> {
 interface Action<T> {
   label: string; // Header label
   icon?: string;
+  href?: (row: T) => string; // For clickable actions (e.g., onClick handler)
   action?: (row: T) => void; // For clickable actions (e.g., onClick handler)
 }
 
@@ -22,7 +24,14 @@ interface TableProps<T> {
   className?: string; // Optional Tailwind classes for wrapper
   children?: React.ReactNode;
 }
-
+const iconBtn =
+  "inline-flex items-center justify-center " +
+  "h-9 w-9 rounded-md border border-slate-200 " +
+  "bg-white text-slate-600 " +
+  "hover:bg-slate-100 hover:text-slate-900 " +
+  "hover:border-slate-300 " +
+  "active:scale-95 transition " +
+  "shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 export function UITable<T extends Record<string, unknown>>({
   title,
   data,
@@ -53,13 +62,13 @@ export function UITable<T extends Record<string, unknown>>({
             {columns.map((column) => (
               <th
                 key={String(column.key)}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider  border-l-2 border-gray-200"
               >
                 {column.label}
               </th>
             ))}
             {actions && actions.length > 0 && (
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider  border-l-2 border-gray-200">
                 *
               </th>
             )}
@@ -73,7 +82,7 @@ export function UITable<T extends Record<string, unknown>>({
                   return (
                     <td
                       key={String(col.key)}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900  border-l-2 border-gray-200"
                     >
                       {DateTime.fromISO(String(row[col.key])).toFormat(
                         "yyyy-MM-dd",
@@ -85,7 +94,7 @@ export function UITable<T extends Record<string, unknown>>({
                   return (
                     <td
                       key={String(col.key)}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900  border-l-2 border-gray-200"
                     >
                       {DateTime.fromISO(String(row[col.key])).toFormat(
                         "yyyy-MM-dd HH:mm:ss",
@@ -97,7 +106,7 @@ export function UITable<T extends Record<string, unknown>>({
                   return (
                     <td
                       key={String(col.key)}
-                      className="px-4 py-2 flex flex-row items-center"
+                      className="px-4 py-2 flex flex-row items-center  border-l-2 border-gray-200"
                     >
                       {col.render(row[col.key], row)}
                     </td>
@@ -106,27 +115,41 @@ export function UITable<T extends Record<string, unknown>>({
                 return (
                   <td
                     key={String(col.key)}
-                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900  border-l-2 border-gray-200"
                   >
                     {String(row[col.key])}
                   </td>
                 );
               })}
 
-              {actions?.map((act) => {
-                return (
-                  <td className="px-4 py-2">
-                    <button
-                      aria-label={act.label}
-                      title={act.label}
-                      className="text-blue-600 hover:underline cursor-pointer hover:shadow-2xl"
-                      onClick={() => act.action?.(row)}
-                    >
-                      <span className="material-icons">{act.icon}</span>
-                    </button>
-                  </td>
-                );
-              })}
+              {actions?.length && (
+                <td className="px-4 py-2 gap-4 flex flex-row items-center border-l-2 border-gray-200">
+                  {actions?.map((act) => {
+                    if (act.href) {
+                      return (
+                        <Link
+                          to={act.href?.(row)}
+                          aria-label={act.label}
+                          title={act.label}
+                          className={iconBtn}
+                        >
+                          <span className="material-icons">{act.icon}</span>
+                        </Link>
+                      );
+                    }
+                    return (
+                      <button
+                        aria-label={act.label}
+                        title={act.label}
+                        className={iconBtn}
+                        onClick={() => act.action?.(row)}
+                      >
+                        <span className="material-icons">{act.icon}</span>
+                      </button>
+                    );
+                  })}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

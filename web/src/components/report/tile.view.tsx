@@ -12,14 +12,15 @@ export function TileView<T extends Record<string, unknown>>({
     if (!Array.isArray(data) || !data?.length) return [];
     return data;
   }, [data]);
+  console.log(data);
   return (
     <div className="flex flex-row flex-wrap gap-4 py-2">
       {tileData.map((row: any, index) => (
         <div
           key={index}
-          className="rounded-lg border p-4 shadow hover:shadow-md transition-shadow bg-white flex flex-row items-center justify-between gap-4"
+          className="rounded-lg min-w-[200px] border p-4 shadow hover:shadow-md transition-shadow bg-white flex flex-row items-center justify-between gap-4"
         >
-          <div className="text-sm text-gray-500">{row.label}</div>
+          <div className="text-base text-gray-500">{row.label}</div>
           <div className="font-semibold underline text-right">{row.value}</div>
         </div>
       ))}

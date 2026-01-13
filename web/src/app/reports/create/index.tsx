@@ -1,21 +1,20 @@
-import UICard from "@/components/ui/ui-card";
 import UIDropdown from "@/components/ui/ui-dropdown";
 import UIInput from "@/components/ui/ui-input";
-import UITextAreaInput from "@/components/ui/ui-text-area-input";
 import { Button } from "@/components/ui/button";
 import api, { useApi } from "@/lib/api";
 import UIForm from "@/components/ui/ui-form";
 import Page from "@/components/ui/ui-page";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import ReportRender from "@/components/report/report.render";
+import { SqlEditor } from "@/components/sqleditor";
 
 export default function ZegeReportEditor() {
   const [id, setId] = useState(null);
+  //{id && <ReportRender report_id={id} />}
   return (
-    <Page title="New Zege Report" className="space-y-4">
+    <Page title="New Report" className="space-y-4">
       <ReportForm onChange={setId} />
-      {id && <ReportRender report_id={id} />}
     </Page>
   );
 }
@@ -27,6 +26,7 @@ const reportTypes = [
   { label: "Line", value: "line" },
 ];
 function ReportForm({ onChange }: any) {
+  const navigate = useNavigate();
   const params = useParams();
   const [defaultValues, setDefaultValues] = useState<any>(undefined);
   const { data: report, load } = useApi(
@@ -62,34 +62,35 @@ function ReportForm({ onChange }: any) {
     const res = await api.post("/reports", form);
     console.log(res);
     if (res.status != 201) return;
-    load({ id: res.data.id });
-    onChange(res.data.id);
+    navigate(`/app/reports/${res.data.id}`);
+    //load({ id: res.data.id });
+    //onChange(res.data.id);
   };
   console.log(report, defaultValues);
   if (defaultValues == undefined) return null;
   return (
-    <UICard className="flex flex-col gap-2">
-      <UIForm onSubmit={onSubmit} defaultValues={defaultValues}>
-        <UIInput
-          label="Name"
-          name="report_name"
-          placeholder="Enter report name"
-        ></UIInput>
-        <UIDropdown
-          label="Type"
-          name="report_type"
-          placeholder="Select report type"
-          items={reportTypes}
-        />
-        <UITextAreaInput
-          label="SQL"
-          name="report_sql"
-          placeholder="Enter report sql"
-        ></UITextAreaInput>
-        <div className="flex flex-row justify-end gap-2">
+    <UIForm onSubmit={onSubmit} defaultValues={defaultValues}>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2 box p-2">
+          <UIInput
+            label="Name"
+            name="report_name"
+            placeholder="Enter report name"
+          ></UIInput>
+          <UIDropdown
+            label="Type"
+            name="report_type"
+            placeholder="Select report type"
+            items={reportTypes}
+          />
+        </div>
+        <div className="overflow-hidden box">
+          <SqlEditor name="report_sql" />
+        </div>
+        <div className="flex flex-row justify-end gap-2 box p-2">
           <Button type="submit">Save</Button>
         </div>
-      </UIForm>
-    </UICard>
+      </div>
+    </UIForm>
   );
 }

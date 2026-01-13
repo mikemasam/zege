@@ -22,6 +22,7 @@ export default function AppLayout() {
 const menu_items = [
   { label: "Home", href: "/app", icon: "home" },
   { label: "Events", href: "/app/events/live", icon: "hive" },
+  { label: "Data", href: "/app/explore", icon: "hive" },
   { label: "Users", href: "/app/users", icon: "group" },
   { label: "Roles", href: "/app/roles" },
   { label: "Buckets", href: "/app/buckets" },

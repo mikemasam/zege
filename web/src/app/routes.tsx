@@ -12,6 +12,7 @@ import ListBuckets from "./buckets";
 import BucketCreate from "./buckets/create";
 import AccountPage from "./account";
 import UserCreate from "./users/create";
+import DataExplore from "./explore";
 
 export default function AppRoutes() {
   return (
@@ -20,6 +21,7 @@ export default function AppRoutes() {
         <Route index element={<Home />} />
         <Route path="events/live" element={<EventsLive />} />
         <Route path="account" element={<AccountPage />} />
+        <Route path="explore" element={<DataExplore />} />
         <Route path="reports">
           <Route index element={<ZegeReports />} />
           <Route path="new" element={<ZegeReportEditor />} />

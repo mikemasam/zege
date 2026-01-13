@@ -2,10 +2,10 @@ import Page from "@/components/ui/ui-page";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import api, { useApi } from "@/lib/api";
+import { UITable } from "@/components/ui/ui-table";
 
 export default function ZegeReports() {
-  const { data, result, error } = useApi(() => api.get("/reports"));
-  console.log(data, result);
+  const query = useApi(() => api.get("/reports"));
   return (
     <Page title="Zege Reports">
       <div className="flex flex-row justify-end">
@@ -14,22 +14,32 @@ export default function ZegeReports() {
         </Link>
       </div>
 
-      {/* Reports List */}
-      <div className="space-y-2">
-        {error && (
-          <p className="text-red-500 text-sm">Failed to load reports.</p>
-        )}
-
-        {data && data.length > 0 ? (
-          <ul className="divide-y divide-gray-200 border rounded-xl">
-            {data.map((item: any) => (
-              <Item key={item.id} item={item} />
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-500 text-sm">No reports found.</p>
-        )}
-      </div>
+      <UITable
+        columns={[
+          { key: "report_name", label: "Name" },
+          {
+            key: "report_type",
+            label: "Type",
+          },
+        ]}
+        data={query.data}
+        actions={[
+          {
+            label: "Edit",
+            icon: "edit",
+            href: (i: any) => {
+              return `/app/reports/${i.id}/edit`;
+            },
+          },
+          {
+            label: "View",
+            icon: "arrow_right_alt",
+            href: (i: any) => {
+              return `/app/reports/${i.id}`;
+            },
+          },
+        ]}
+      />
     </Page>
   );
 }
@@ -46,7 +56,7 @@ function Item({ item }: { item: any }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <Link to={`/app/reports/${item.id}/edit`}>
+        <Link to={""}>
           <Button variant="outline" size="sm">
             Edit
           </Button>
