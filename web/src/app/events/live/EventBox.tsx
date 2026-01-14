@@ -23,7 +23,7 @@ export function EventBox({
   }, [event.timestamp]);
 
   return (
-    <div className="flex flex-col gap-4 ">
+    <div className="flex flex-col">
       <div
         role="button"
         tabIndex={0}
@@ -35,7 +35,9 @@ export function EventBox({
         </span>
 
         {/* Severity */}
-        <span className={`px-2 py-0.5 text-xs font-semibold rounded-md bg-blue-100 text-blue-800`}>
+        <span
+          className={`px-2 py-0.5 text-xs font-semibold rounded-md bg-blue-100 text-blue-800`}
+        >
           {event.service}
         </span>
 
@@ -55,7 +57,11 @@ export function EventBox({
           </span>
         </div>
       </div>
-      {isSelected && <EventDetail event={event as any} />}
+      {isSelected && (
+        <div className="mb-4">
+          <EventDetail event={event as any} />
+        </div>
+      )}
     </div>
   );
 }

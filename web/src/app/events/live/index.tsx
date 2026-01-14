@@ -21,7 +21,7 @@ export default function EventsLive() {
       <QueryFilter
         onChange={(params: any) => query.load({ page: 0, ...params })}
       />
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         {query.data?.map((event: any) => (
           <EventBox
             key={event.ui}
