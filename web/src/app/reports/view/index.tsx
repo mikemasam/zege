@@ -1,4 +1,5 @@
 import ReportRender from "@/components/report/report.render";
+import { useReport } from "@/components/report/use.report";
 import Page from "@/components/ui/ui-page";
 import api, { useApi } from "@/lib/api";
 import { DateTime } from "luxon";
@@ -10,6 +11,9 @@ export default function ZegeReportView() {
     () => api.get(`/reports/${params?.id}`),
     {},
   );
+  const reportQuery = useReport({
+    report_id: report?.id,
+  });
   return (
     <Page
       title={report?.report_name ?? ""}
@@ -24,7 +28,7 @@ export default function ZegeReportView() {
       {report && <Item item={report} />}
       {report && (
         <div className="box p-2">
-          <ReportRender report_id={report.id} />
+          <ReportRender reportQuery={reportQuery} />
         </div>
       )}
     </Page>

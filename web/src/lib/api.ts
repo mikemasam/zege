@@ -19,7 +19,11 @@ api.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    (config as any).requestId = useNotifyStore.getState().add_task();
+    if ((config as any).meta?.notify !== false) {
+      (config as any).requestId = useNotifyStore.getState().add_task();
+    } else {
+      (config as any).requestId = Math.random();
+    }
     return config;
   },
   (error) => ({

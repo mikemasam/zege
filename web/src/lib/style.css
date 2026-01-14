@@ -24,7 +24,7 @@ body {
   }
 }
 .box {
-  @apply border-l-4 border-blue-300 bg-white shadow;
+  @apply border-l-4 border-blue-300 bg-white;
 }
 .box-selectable {
   @apply border-l-4 border-blue-300 bg-white shadow hover:!bg-blue-100 hover:shadow-sm focus:outline-none transition cursor-pointer;

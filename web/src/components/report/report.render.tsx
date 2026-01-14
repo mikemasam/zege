@@ -1,36 +1,15 @@
-import api, { useApi } from "@/lib/api";
 import { TableView } from "./table.view";
-import UICard from "@/components/ui/ui-card";
 import { Button } from "@/components/ui/button";
-import { useEffect, useMemo, useState } from "react";
 import { TileView } from "./tile.view";
 
 export default function ReportRender({
-  report_id,
+  reportQuery,
   minimal,
 }: {
   minimal?: boolean;
-  report_id: number;
+  reportQuery: any;
 }) {
-  const [type, setType] = useState("");
-  const query = useApi(() => api.post(`/reports/${report_id}/read`), {
-    prefrech: false,
-  });
-  const [report, data] = useMemo(() => {
-    const output = query.data;
-    if (!output) return [null, null];
-    return [output.report, output.data];
-  }, [query.data]);
-  useEffect(() => {
-    if (!report) return;
-    setType(report.report_type);
-  }, [report]);
-  useEffect(() => {
-    if (report_id) {
-      query.load();
-    }
-  }, [report_id]);
-  console.log(report, data);
+  if (!reportQuery) return null;
   return (
     <div className="">
       {!minimal && (
@@ -43,8 +22,8 @@ export default function ReportRender({
           </div>
         </div>
       )}
-      {type == "table" && <TableView data={data} />}
-      {type == "tile" && <TileView data={data} />}
+      {reportQuery.type == "table" && <TableView data={reportQuery.data} />}
+      {reportQuery.type == "tile" && <TileView data={reportQuery.data} />}
     </div>
   );
 }
