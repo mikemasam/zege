@@ -47,10 +47,10 @@ pub async fn report_read_route(
         organization_id,
         report.as_ref().unwrap().report_sql.clone(),
     )
-    .await;
+    .await?;
 
     let output = ReadOutput {
-        data: rows.ok(),
+        data: Some(rows),
         report: report.unwrap(),
     };
     AppResponse::ok(Some(output), None)

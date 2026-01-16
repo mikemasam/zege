@@ -30,7 +30,5 @@ pub async fn report_pinned_route(
         }
         _ => todo!("sqlite report_index_route"),
     };
-
-    println!("report_index_route");
     AppResponse::ok(Some(reports), None)
 }

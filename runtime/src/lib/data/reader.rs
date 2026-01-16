@@ -19,7 +19,7 @@ impl DataReader {
                 sqlx::query("SET LOCAL ROLE zege_events_read_user")
                     .execute(tx.as_mut())
                     .await?;
-                let rows = sqlx::query(sql.as_str())
+                let rows = sqlx::raw_sql(sql.as_str())
                     .fetch(tx.as_mut())
                     .json(100)
                     .await?;
