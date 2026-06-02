@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/stores/auth";
 import { useNotifyStore } from "@/stores/notify";
 import axios, { AxiosError } from "axios";
 import { useEffect, useState } from "react";
@@ -38,8 +39,11 @@ api.interceptors.response.use(
   (response) => {
     const requestId = (response.config as any).requestId;
     useNotifyStore.getState().remove_task(requestId);
+    if (response.status == 401) {
+      useAuthStore.getState().logout();
+      window.location = "/" as any;
+    }
     if (response.data) return response.data;
-
     return {
       status: response.status,
       message: response.statusText ?? "Request failed",

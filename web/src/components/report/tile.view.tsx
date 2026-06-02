@@ -27,21 +27,21 @@ export function TileView({ data, className = "" }: TileViewProps) {
             relative
             rounded-lg
             bg-white
-            px-5 py-4
+            px-4 py-4
             shadow-sm
             ring-1 ring-slate-200
             transition
             hover:shadow-md
+            overflow-x-hidden
+          flex flex-col gap-2
           "
         >
-          {/* Label */}
-          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            {item.label}
-          </div>
 
-          {/* Value */}
-          <div className="mt-2 text-3xl font-semibold text-slate-900">
+          <div className="text-xl font-semibold text-slate-900">
             {item.value}
+          </div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500 truncate flex-1">
+            {item.label}
           </div>
 
           {/* Optional hint */}

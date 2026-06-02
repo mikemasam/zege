@@ -31,7 +31,7 @@ const iconBtn =
   "hover:bg-slate-100 hover:text-slate-900 " +
   "hover:border-slate-300 " +
   "active:scale-95 transition " +
-  "shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  "focus:outline-none focus:ring-2 focus:ring-blue-500";
 export function UITable<T extends Record<string, unknown>>({
   title,
   data,

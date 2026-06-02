@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3201",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "dev": "vite --port 3201 ",
+    "build": "tsc && vite build ",
+    "preview": "vite preview "
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

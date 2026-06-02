@@ -99,3 +99,7 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 ---
 
 
+## Roadmap
+- Email Notification Support (bind to event/events)
+- UI Improvements
+- 

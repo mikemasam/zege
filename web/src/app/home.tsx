@@ -15,18 +15,16 @@ export default function AppHome() {
   }, [query.data]);
   return (
     <Page title="Overview" desc="Explore data overview" className="!gap-1">
-      <div className="grid grid-cols-8 gap-4 min-h-[70vh]">
-        <div className="col-span-2 flex flex-col gap-4 pt-4">
-          <div>
-            {query.data?.map((r: any, i: number) => (
-              <MenuItem
-                key={i}
-                item={r}
-                isSelected={selected?.id == r.id}
-                onSelect={setSelected}
-              />
-            ))}
-          </div>
+      <div className="lg:grid grid-cols-8 gap-4 min-h-[70vh]">
+        <div className="col-span-2 flex flex-col gap-2 pt-4">
+          {query.data?.map((r: any, i: number) => (
+            <MenuItem
+              key={i}
+              item={r}
+              isSelected={selected?.id == r.id}
+              onSelect={setSelected}
+            />
+          ))}
         </div>
         <div className="col-span-6 box !border-none !shadow-none">
           {selected ? (
@@ -42,34 +40,29 @@ export default function AppHome() {
   );
 }
 
-function MenuItem({
-  item,
-  onSelect,
-  isSelected,
-}: {
+type MenuItemType = {
   isSelected: boolean;
   item: any;
   onSelect: Function;
-}) {
+};
+function MenuItem({ item, onSelect, isSelected }: MenuItemType) {
   return (
     <div
       onClick={() => onSelect(item)}
       className={`
-        flex items-center gap-4 p-3 rounded-lg cursor-pointer
+        flex items-center gap-4 p-3 rounded cursor-pointer
         bg-white/40 backdrop-blur
-        border border-white/20
-        hover:bg-white/70
+        border hover:bg-white/70
         hover:shadow-md hover:shadow-blue-500/20
         transition-all text-blue-400
+        border-blue-200
         ${isSelected ? "!bg-blue-100 " : ""}
       `}
     >
       <span className="material-icons ">bubble_chart</span>
-
       <div className="text-sm font-mono text-slate-700 uppercase flex-1">
         {item.report_name}
       </div>
-
       <span className="material-icons opacity-70">arrow_right</span>
     </div>
   );

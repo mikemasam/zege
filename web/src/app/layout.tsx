@@ -20,20 +20,23 @@ export default function AppLayout() {
 }
 
 const menu_items = [
-  { label: "Home", href: "/app", icon: "home" },
+  { label: "Overview", href: "/app", icon: "home" },
   { label: "Events", href: "/app/events/live", icon: "hive" },
+  { label: "Reports", href: "/app/reports", icon: "analytics" },
+];
+
+const advanced_menu_items = [
   { label: "Data", href: "/app/explore", icon: "hive" },
   { label: "Users", href: "/app/users", icon: "group" },
   { label: "Roles", href: "/app/roles" },
   { label: "Buckets", href: "/app/buckets" },
-  { label: "Reports", href: "/app/reports", icon: "analytics" },
 ];
 function Menu() {
   return (
     <div className="p-2 flex flex-col gap-2">
       {menu_items.map((m) => (
         <Link to={m.href}>
-          <div className="p-2 border-b border-b-gray-200 hover:shadow cursor-pointer flex flex-row items-center gap-2 bg-white rounded-xl">
+          <div className="p-1 border border-gray-200 hover:shadow cursor-pointer flex flex-row items-center gap-2 bg-white rounded-lg">
             <span className="material-icons !text-base text-gray-500">
               {m.icon ?? "business"}
             </span>
