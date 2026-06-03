@@ -23,27 +23,27 @@ export function TableView<T extends Record<string, unknown>>({
   }, [data]);
 
   return (
-    <div className={`overflow-x-auto ${className}`}>
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              *
+    <div className={`overflow-x-auto rounded-lg border border-gray-200 ${className}`}>
+      <table className="min-w-full">
+        <thead>
+          <tr className="bg-gray-50">
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-10">
+              #
             </th>
             {columns.map((column) => (
               <th
                 key={String(column.key)}
-                className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-l-2 border-gray-200"
+                className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-l border-gray-200"
               >
                 {column.label}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white divide-y divide-gray-100">
           {tableData.map((row, index) => (
-            <tr key={index} className="hover:bg-gray-50">
-              <td className="px-2 py-1 whitespace-nowrap text-sm text-gray-900">
+            <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
+              <td className="px-3 py-2.5 whitespace-nowrap text-sm text-gray-400">
                 {index + 1}
               </td>
               {columns.map((column) => {
@@ -57,7 +57,7 @@ export function TableView<T extends Record<string, unknown>>({
                 return (
                   <td
                     key={String(column.key)}
-                    className="px-2 py-1 whitespace-nowrap text-sm text-gray-900  border-l-2 border-gray-200"
+                    className="px-3 py-2.5 whitespace-nowrap text-sm text-gray-700 border-l border-gray-100 max-w-xs truncate"
                   >
                     {_val}
                   </td>
@@ -68,7 +68,10 @@ export function TableView<T extends Record<string, unknown>>({
         </tbody>
       </table>
       {tableData.length === 0 && (
-        <div className="text-center py-4 text-gray-500">No data available</div>
+        <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+          <span className="material-icons !text-3xl mb-2 text-gray-300">table_rows</span>
+          <p className="text-sm font-medium">No data available</p>
+        </div>
       )}
     </div>
   );

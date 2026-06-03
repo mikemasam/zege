@@ -11,14 +11,14 @@ export default function ReportRender({
 }) {
   if (!reportQuery) return null;
   return (
-    <div className="">
+    <div>
       {!minimal && (
-        <div className="flex flex-row justify-between items-center p-2">
-          <div className="text-lg">Data View</div>
-          <div className="flex flex-row gap-1">
-            <Button variant="outline">Table</Button>
-            <Button variant="outline">Bar</Button>
-            <Button variant="outline">Line</Button>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-700">Data View</h3>
+          <div className="flex gap-1">
+            <Button variant="outline" size="sm">Table</Button>
+            <Button variant="outline" size="sm">Bar</Button>
+            <Button variant="outline" size="sm">Line</Button>
           </div>
         </div>
       )}

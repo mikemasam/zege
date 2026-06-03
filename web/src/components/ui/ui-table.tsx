@@ -1,37 +1,37 @@
-import React, { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { DateTime } from "luxon";
 import { Link } from "react-router";
 
-// Props for the generic table component
 interface Column<T> {
-  key: keyof T; // Accessor for data
-  label: string; // Header label
+  key: keyof T;
+  label: string;
   type?: "date" | "datetime";
-  render?: (value: T[keyof T], row: T) => React.ReactNode; // Optional custom renderer
+  render?: (value: T[keyof T], row: T) => React.ReactNode;
 }
 interface Action<T> {
-  label: string; // Header label
+  label: string;
   icon?: string;
-  href?: (row: T) => string; // For clickable actions (e.g., onClick handler)
-  action?: (row: T) => void; // For clickable actions (e.g., onClick handler)
+  href?: (row: T) => string;
+  action?: (row: T) => void;
 }
 
 interface TableProps<T> {
   title?: string;
-  data: T[]; // Array of row data
-  columns: Column<T>[]; // Column definitions
-  actions?: Action<T>[]; // Action definitions
-  className?: string; // Optional Tailwind classes for wrapper
+  data: T[];
+  columns: Column<T>[];
+  actions?: Action<T>[];
+  className?: string;
   children?: React.ReactNode;
 }
-const iconBtn =
-  "inline-flex items-center justify-center " +
-  "h-9 w-9 rounded-md border border-slate-200 " +
-  "bg-white text-slate-600 " +
-  "hover:bg-slate-100 hover:text-slate-900 " +
-  "hover:border-slate-300 " +
-  "active:scale-95 transition " +
-  "focus:outline-none focus:ring-2 focus:ring-blue-500";
+
+const btnClass =
+  "inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:border-gray-300 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500";
+
+function formatVal(v: unknown): string {
+  if (typeof v == "string" || typeof v == "number") return String(v);
+  return "";
+}
+
 export function UITable<T extends Record<string, unknown>>({
   title,
   data,
@@ -40,114 +40,90 @@ export function UITable<T extends Record<string, unknown>>({
   className = "",
   children,
 }: TableProps<T>) {
-  // Memoize sorted data if needed; extend for sorting later
   const tableData = useMemo(() => {
     if (!Array.isArray(data)) return [];
     return data;
   }, [data]);
 
   return (
-    <div className={`overflow-x-auto ${className} box`}>
+    <div className={`overflow-x-auto rounded-lg border border-gray-200 bg-white ${className}`}>
       {!!title && (
-        <div className="border-b border-gray-200 px-6 py-4 flex flex-row items-center">
-          <h2 className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-            {title}
-          </h2>
-          {children}
+        <div className="border-b border-gray-200 px-5 py-3.5 flex items-center gap-4">
+          <h2 className="text-sm font-semibold text-gray-700">{title}</h2>
+          {children && <div className="ml-auto">{children}</div>}
         </div>
       )}
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
+      <table className="min-w-full">
+        <thead>
+          <tr className="bg-gray-50 border-b border-gray-200">
             {columns.map((column) => (
               <th
                 key={String(column.key)}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider  border-l-2 border-gray-200"
+                className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-l border-gray-200 first:border-l-0"
               >
                 {column.label}
               </th>
             ))}
             {actions && actions.length > 0 && (
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider  border-l-2 border-gray-200">
-                *
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 border-l border-gray-200 first:border-l-0">
+                Actions
               </th>
             )}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="divide-y divide-gray-100">
           {tableData.map((row, index) => (
-            <tr key={index} className="hover:bg-gray-50">
+            <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
               {columns.map((col) => {
-                if (col.type == "date") {
-                  return (
-                    <td
-                      key={String(col.key)}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900  border-l-2 border-gray-200"
-                    >
-                      {DateTime.fromISO(String(row[col.key])).toFormat(
-                        "yyyy-MM-dd",
-                      )}
-                    </td>
-                  );
-                }
-                if (col.type == "datetime") {
-                  return (
-                    <td
-                      key={String(col.key)}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900  border-l-2 border-gray-200"
-                    >
-                      {DateTime.fromISO(String(row[col.key])).toFormat(
-                        "yyyy-MM-dd HH:mm:ss",
-                      )}
-                    </td>
-                  );
-                }
+                let content: React.ReactNode;
+                const val = row[col.key];
                 if (col.render) {
-                  return (
-                    <td
-                      key={String(col.key)}
-                      className="px-4 py-2 flex flex-row items-center  border-l-2 border-gray-200"
-                    >
-                      {col.render(row[col.key], row)}
-                    </td>
-                  );
+                  content = col.render(val, row);
+                } else if (col.type == "date") {
+                  const dt = DateTime.fromISO(formatVal(val));
+                  content = dt.isValid ? dt.toFormat("yyyy-MM-dd") : formatVal(val);
+                } else if (col.type == "datetime") {
+                  const dt = DateTime.fromISO(formatVal(val));
+                  content = dt.isValid ? dt.toFormat("yyyy-MM-dd HH:mm:ss") : formatVal(val);
+                } else {
+                  content = formatVal(val);
                 }
                 return (
                   <td
                     key={String(col.key)}
-                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900  border-l-2 border-gray-200"
+                    className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 border-l border-gray-100 first:border-l-0"
                   >
-                    {String(row[col.key])}
+                    {content}
                   </td>
                 );
               })}
-
-              {actions?.length && (
-                <td className="px-4 py-2 gap-4 flex flex-row items-center border-l-2 border-gray-200">
-                  {actions?.map((act) => {
-                    if (act.href) {
-                      return (
+              {actions && actions.length > 0 && (
+                <td className="px-4 py-3 whitespace-nowrap text-right border-l border-gray-100">
+                  <div className="inline-flex items-center gap-1.5">
+                    {actions.map((act) =>
+                      act.href ? (
                         <Link
-                          to={act.href?.(row)}
+                          key={act.label}
+                          to={act.href(row)}
                           aria-label={act.label}
                           title={act.label}
-                          className={iconBtn}
+                          className={btnClass}
                         >
-                          <span className="material-icons">{act.icon}</span>
+                          <span className="material-icons !text-lg">{act.icon}</span>
                         </Link>
-                      );
-                    }
-                    return (
-                      <button
-                        aria-label={act.label}
-                        title={act.label}
-                        className={iconBtn}
-                        onClick={() => act.action?.(row)}
-                      >
-                        <span className="material-icons">{act.icon}</span>
-                      </button>
-                    );
-                  })}
+                      ) : (
+                        <button
+                          key={act.label}
+                          aria-label={act.label}
+                          title={act.label}
+                          className={btnClass}
+                          onClick={() => act.action?.(row)}
+                        >
+                          <span className="material-icons !text-lg">{act.icon}</span>
+                        </button>
+                      ),
+                    )}
+                  </div>
                 </td>
               )}
             </tr>
@@ -155,7 +131,10 @@ export function UITable<T extends Record<string, unknown>>({
         </tbody>
       </table>
       {tableData.length === 0 && (
-        <div className="text-center py-4 text-gray-500">No data available</div>
+        <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+          <span className="material-icons !text-3xl mb-2 text-gray-300">database</span>
+          <p className="text-sm font-medium">No data available</p>
+        </div>
       )}
     </div>
   );
