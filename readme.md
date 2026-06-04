@@ -102,4 +102,12 @@ This API accepts an event payload in JSON format. Each field is optional unless 
 ## Roadmap
 - Email Notification Support (bind to event/events)
 - UI Improvements
-- 
+- Edit for bucket, organization and user details
+- Bucket statistics collection
+- Bucket retention time
+- Schedule { Events Discovery, Report Render  & more }
+- Zege website {how to use} screenshots
+- Hosted Free storage with limit retention to 1 or 2 days
+- Events Data processing pipeline support
+- Self update when updates are available in github
+-
